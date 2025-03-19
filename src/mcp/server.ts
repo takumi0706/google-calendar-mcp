@@ -30,13 +30,13 @@ class GoogleCalendarMcpServer {
     // getEvents ツール
     this.server.tool(
       'getEvents',
-      z.object({
+      {
         calendarId: z.string().optional(),
         timeMin: z.string().optional(),
         timeMax: z.string().optional(),
         maxResults: z.number().int().positive().optional(),
         orderBy: z.enum(['startTime', 'updated']).optional(),
-      }),
+      },
       async (params) => {
         try {
           logger.info(`Getting events with params: ${JSON.stringify(params)}`);
@@ -55,7 +55,7 @@ class GoogleCalendarMcpServer {
     // createEvent ツール
     this.server.tool(
       'createEvent',
-      z.object({
+      {
         calendarId: z.string().optional(),
         event: z.object({
           summary: z.string().min(1),
@@ -76,7 +76,7 @@ class GoogleCalendarMcpServer {
             displayName: z.string().optional(),
           })).optional(),
         }),
-      }),
+      },
       async (params) => {
         try {
           logger.info(`Creating event: ${JSON.stringify(params)}`);
@@ -95,7 +95,7 @@ class GoogleCalendarMcpServer {
     // updateEvent ツール
     this.server.tool(
       'updateEvent',
-      z.object({
+      {
         calendarId: z.string().optional(),
         eventId: z.string().min(1),
         event: z.object({
@@ -113,7 +113,7 @@ class GoogleCalendarMcpServer {
             timeZone: z.string().optional(),
           }).optional(),
         }),
-      }),
+      },
       async (params) => {
         try {
           logger.info(`Updating event: ${JSON.stringify(params)}`);
@@ -132,10 +132,10 @@ class GoogleCalendarMcpServer {
     // deleteEvent ツール
     this.server.tool(
       'deleteEvent',
-      z.object({
+      {
         calendarId: z.string().optional(),
         eventId: z.string().min(1),
-      }),
+      },
       async (params) => {
         try {
           logger.info(`Deleting event: ${JSON.stringify(params)}`);

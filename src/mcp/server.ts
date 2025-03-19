@@ -4,6 +4,7 @@ import { tools } from './tools';
 import logger from '../utils/logger';
 import config from '../config/config';
 import * as net from 'net';
+import { z } from 'zod';
 
 class GoogleCalendarMcpServer {
   private server: McpServer;
@@ -26,14 +27,129 @@ class GoogleCalendarMcpServer {
   }
 
   private registerTools() {
-    for (const tool of tools) {
-      // ツールの登録と実行ハンドラーの設定
-      this.server.tool(
-        tool.name,
-        tool.description,
-        tool.handler
-      );
-    }
+    // getEvents ツール
+    this.server.tool(
+      'getEvents',
+      z.object({
+        calendarId: z.string().optional(),
+        timeMin: z.string().optional(),
+        timeMax: z.string().optional(),
+        maxResults: z.number().int().positive().optional(),
+        orderBy: z.enum(['startTime', 'updated']).optional(),
+      }),
+      async (params) => {
+        try {
+          logger.info(`Getting events with params: ${JSON.stringify(params)}`);
+          const result = await tools[0].handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error in getEvents: ${error}`);
+          return {
+            content: [{ type: 'text', text: `エラー: ${error}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // createEvent ツール
+    this.server.tool(
+      'createEvent',
+      z.object({
+        calendarId: z.string().optional(),
+        event: z.object({
+          summary: z.string().min(1),
+          description: z.string().optional(),
+          location: z.string().optional(),
+          start: z.object({
+            dateTime: z.string().optional(),
+            date: z.string().optional(),
+            timeZone: z.string().optional(),
+          }),
+          end: z.object({
+            dateTime: z.string().optional(),
+            date: z.string().optional(),
+            timeZone: z.string().optional(),
+          }),
+          attendees: z.array(z.object({
+            email: z.string().email(),
+            displayName: z.string().optional(),
+          })).optional(),
+        }),
+      }),
+      async (params) => {
+        try {
+          logger.info(`Creating event: ${JSON.stringify(params)}`);
+          const result = await tools[1].handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error in createEvent: ${error}`);
+          return {
+            content: [{ type: 'text', text: `エラー: ${error}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // updateEvent ツール
+    this.server.tool(
+      'updateEvent',
+      z.object({
+        calendarId: z.string().optional(),
+        eventId: z.string().min(1),
+        event: z.object({
+          summary: z.string().optional(),
+          description: z.string().optional(),
+          location: z.string().optional(),
+          start: z.object({
+            dateTime: z.string().optional(),
+            date: z.string().optional(),
+            timeZone: z.string().optional(),
+          }).optional(),
+          end: z.object({
+            dateTime: z.string().optional(),
+            date: z.string().optional(),
+            timeZone: z.string().optional(),
+          }).optional(),
+        }),
+      }),
+      async (params) => {
+        try {
+          logger.info(`Updating event: ${JSON.stringify(params)}`);
+          const result = await tools[2].handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error in updateEvent: ${error}`);
+          return {
+            content: [{ type: 'text', text: `エラー: ${error}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // deleteEvent ツール
+    this.server.tool(
+      'deleteEvent',
+      z.object({
+        calendarId: z.string().optional(),
+        eventId: z.string().min(1),
+      }),
+      async (params) => {
+        try {
+          logger.info(`Deleting event: ${JSON.stringify(params)}`);
+          const result = await tools[3].handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error in deleteEvent: ${error}`);
+          return {
+            content: [{ type: 'text', text: `エラー: ${error}` }],
+            isError: true
+          };
+        }
+      }
+    );
   }
 
   public async start(): Promise<void> {

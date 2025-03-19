@@ -6,6 +6,11 @@
   "bin": {
     "google-calendar-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "postbuild": "chmod +x dist/index.js",
@@ -14,15 +19,29 @@
     "test": "jest --passWithNoTests",
     "lint": "eslint . --ext .ts || exit 0",
     "format": "prettier --write 'src/**/*.ts'",
-    "prepare": "npm run build || true"
+    "prepare": "npm run build || true",
+    "prepublishOnly": "npm test && npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takumi0706/google-calendar-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/takumi0706/google-calendar-mcp/issues"
+  },
+  "homepage": "https://github.com/takumi0706/google-calendar-mcp#readme",
   "keywords": [
     "mcp",
     "claude",
     "anthropic",
-    "google-calendar"
+    "google-calendar",
+    "calendar",
+    "claude-desktop",
+    "ai-integration"
   ],
-  "author": "",
+  "author": "takumi0706",
   "license": "MIT",
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -46,5 +65,8 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

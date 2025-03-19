@@ -15,7 +15,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({
       name: 'google-calendar-mcp',
-      version: '0.1.4',
+      version: '0.1.5',
     });
 
     // Stdioトランスポートの設定
@@ -28,11 +28,11 @@ class GoogleCalendarMcpServer {
   private registerTools() {
     for (const tool of tools) {
       // ツールを登録
-      this.server.registerTool({
+      this.server.addTool({
         name: tool.name,
         description: tool.description,
         parameters: tool.parameters,
-        handler: async (params) => {
+        execute: async (params: any) => {
           try {
             logger.info(`Executing tool ${tool.name} with params: ${JSON.stringify(params)}`);
             const result = await tool.handler(params);
@@ -92,7 +92,7 @@ class GoogleCalendarMcpServer {
       }
       
       // サーバーの切断
-      this.server.disconnect();
+      this.server.close();
       this.isRunning = false;
       logger.info('MCP Server stopped');
     } catch (error) {

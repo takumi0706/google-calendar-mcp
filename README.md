@@ -130,15 +130,14 @@ npm install
 npm run dev
 ```
 
-## Changes in version 0.1.5
+## Changes in version 0.1.6
 
-- Fixed TypeScript type errors in MCP server implementation
-- Updated to use the correct McpServer API methods:
-  - `addTool` instead of `registerTool`
-  - `close` instead of `disconnect`
-- Added explicit type annotation for parameters
-- Fixed TCP socket handling for better Claude Desktop compatibility
-- Enhanced error reporting and logging
+- Switched from `McpServer` to `Server` class from the MCP SDK
+- Implemented proper tool registration with `setToolHandler` and `registerTools`
+- Fixed type issues in tool handler methods
+- Updated server initialization to properly configure capabilities
+- Improved connection handling for Claude Desktop compatibility
+- Enhanced error handling and logging
 
 ## License
 

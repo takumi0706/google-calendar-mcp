@@ -8,6 +8,12 @@ import {
 import logger from '../utils/logger';
 import { z } from 'zod';
 
+// カスタムデータ型の定義
+type GetEventsParams = z.infer<typeof getEventsSchema>;
+type CreateEventParams = z.infer<typeof createEventSchema>;
+type UpdateEventParams = z.infer<typeof updateEventSchema>;
+type DeleteEventParams = z.infer<typeof deleteEventSchema>;
+
 // ツール定義
 export const tools = [
   {
@@ -20,7 +26,7 @@ export const tools = [
       maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
       orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
     },
-    handler: async (params) => {
+    handler: async (params: GetEventsParams) => {
       try {
         const validatedParams = getEventsSchema.parse(params);
         logger.info(`Getting events with params: ${JSON.stringify(validatedParams)}`);
@@ -66,7 +72,7 @@ export const tools = [
         })).optional().describe('参加者リスト'),
       }).describe('イベント情報'),
     },
-    handler: async (params) => {
+    handler: async (params: CreateEventParams) => {
       try {
         const validatedParams = createEventSchema.parse(params);
         logger.info(`Creating event: ${validatedParams.event.summary}`);
@@ -105,7 +111,7 @@ export const tools = [
         }).optional().describe('終了日時'),
       }).describe('更新するイベント情報'),
     },
-    handler: async (params) => {
+    handler: async (params: UpdateEventParams) => {
       try {
         const validatedParams = updateEventSchema.parse(params);
         logger.info(`Updating event: ${validatedParams.eventId}`);
@@ -129,7 +135,7 @@ export const tools = [
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
     },
-    handler: async (params) => {
+    handler: async (params: DeleteEventParams) => {
       try {
         const validatedParams = deleteEventSchema.parse(params);
         logger.info(`Deleting event: ${validatedParams.eventId}`);

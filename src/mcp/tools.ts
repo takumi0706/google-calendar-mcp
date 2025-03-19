@@ -14,6 +14,12 @@ type CreateEventParams = z.infer<typeof createEventSchema>;
 type UpdateEventParams = z.infer<typeof updateEventSchema>;
 type DeleteEventParams = z.infer<typeof deleteEventSchema>;
 
+// ツールレスポンスの型
+type ToolResponse = {
+  content: { type: "text"; text: string }[];
+  isError?: boolean;
+};
+
 // ツール定義
 export const tools = [
   {
@@ -26,18 +32,18 @@ export const tools = [
       maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
       orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
     },
-    handler: async (params: GetEventsParams) => {
+    handler: async (params: GetEventsParams): Promise<ToolResponse> => {
       try {
         const validatedParams = getEventsSchema.parse(params);
         logger.info(`Getting events with params: ${JSON.stringify(validatedParams)}`);
         const result = await calendarApi.getEvents(validatedParams);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in getEvents: ${error}`);
         return {
-          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
+          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -72,18 +78,18 @@ export const tools = [
         })).optional().describe('参加者リスト'),
       }).describe('イベント情報'),
     },
-    handler: async (params: CreateEventParams) => {
+    handler: async (params: CreateEventParams): Promise<ToolResponse> => {
       try {
         const validatedParams = createEventSchema.parse(params);
         logger.info(`Creating event: ${validatedParams.event.summary}`);
         const result = await calendarApi.createEvent(validatedParams);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in createEvent: ${error}`);
         return {
-          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
+          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -111,18 +117,18 @@ export const tools = [
         }).optional().describe('終了日時'),
       }).describe('更新するイベント情報'),
     },
-    handler: async (params: UpdateEventParams) => {
+    handler: async (params: UpdateEventParams): Promise<ToolResponse> => {
       try {
         const validatedParams = updateEventSchema.parse(params);
         logger.info(`Updating event: ${validatedParams.eventId}`);
         const result = await calendarApi.updateEvent(validatedParams);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in updateEvent: ${error}`);
         return {
-          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
+          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -135,18 +141,18 @@ export const tools = [
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
     },
-    handler: async (params: DeleteEventParams) => {
+    handler: async (params: DeleteEventParams): Promise<ToolResponse> => {
       try {
         const validatedParams = deleteEventSchema.parse(params);
         logger.info(`Deleting event: ${validatedParams.eventId}`);
         const result = await calendarApi.deleteEvent(validatedParams);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in deleteEvent: ${error}`);
         return {
-          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
+          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }

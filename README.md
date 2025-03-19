@@ -130,14 +130,15 @@ npm install
 npm run dev
 ```
 
-## Changes in version 0.1.6
+## Changes in version 0.2.0
 
-- Switched from `McpServer` to `Server` class from the MCP SDK
-- Implemented proper tool registration with `setToolHandler` and `registerTools`
-- Fixed type issues in tool handler methods
-- Updated server initialization to properly configure capabilities
-- Improved connection handling for Claude Desktop compatibility
-- Enhanced error handling and logging
+- Updated to use the latest MCP SDK API (v1.7.0+)
+- Migrated from `Server` class to the modern `McpServer` class
+- Improved type safety with properly typed tool handlers
+- Fixed update operations to handle partial event updates properly
+- Enhanced error handling with detailed error messages
+- Optimized performance when handling calendar operations
+- Simplified implementation with direct API calls
 
 ## License
 

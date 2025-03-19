@@ -30,7 +30,7 @@ class GoogleCalendarMcpServer {
       // ツールの登録と実行ハンドラーの設定
       this.server.tool(
         tool.name,
-        tool.parameters,
+        tool.description,
         tool.handler
       );
     }

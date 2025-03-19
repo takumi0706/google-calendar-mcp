@@ -198,7 +198,7 @@ class GoogleCalendarMcpServer {
       this.socketServer = net.createServer((socket) => {
         logger.info(`Client connected from ${socket.remoteAddress}:${socket.remotePort}`);
         
-        socket.on('error', (err) => {
+        socket.on('error', (err: Error) => {
           logger.error(`Socket error: ${err}`);
         });
       });

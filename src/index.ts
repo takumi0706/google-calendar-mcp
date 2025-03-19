@@ -16,7 +16,7 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', (error: Error) => {
   logger.error(`Uncaught exception: ${error}`);
   process.exit(1);
 });

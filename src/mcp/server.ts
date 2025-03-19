@@ -23,7 +23,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.1.5',
+      version: '0.2.0',
     });
 
     // Stdioトランスポートの設定
@@ -198,7 +198,7 @@ class GoogleCalendarMcpServer {
       this.socketServer = net.createServer((socket) => {
         logger.info(`Client connected from ${socket.remoteAddress}:${socket.remotePort}`);
         
-        socket.on('error', (err: Error) => {
+        socket.on('error', (err) => {
           logger.error(`Socket error: ${err}`);
         });
       });

@@ -1,3 +1,4 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -12,4 +13,9 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
   ],
+  setupFiles: ['dotenv/config'],
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
+  },
+  testTimeout: 30000,
 };

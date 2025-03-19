@@ -130,14 +130,15 @@ npm install
 npm run dev
 ```
 
-## Changes in version 0.1.4
+## Changes in version 0.1.5
 
-- Updated to use the official McpServer interface from the SDK
-- Switched to StdioServerTransport for improved Claude Desktop compatibility
-- Fixed TypeScript type errors and improved type definitions
-- Simplified tool schema definitions
-- Added better connection handling with fallback TCP server
-- Enhanced error handling and logging
+- Fixed TypeScript type errors in MCP server implementation
+- Updated to use the correct McpServer API methods:
+  - `addTool` instead of `registerTool`
+  - `close` instead of `disconnect`
+- Added explicit type annotation for parameters
+- Fixed TCP socket handling for better Claude Desktop compatibility
+- Enhanced error reporting and logging
 
 ## License
 

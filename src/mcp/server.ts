@@ -30,8 +30,12 @@ class GoogleCalendarMcpServer {
     this.transport = new StdioServerTransport();
 
     // エラーハンドリング
+    // TODO: デバック用であるから後から消す
     this.transport.onmessage = (message: any): void => {
       try {
+        // 受信したメッセージ内容の状態を確認するため、前後に囲い文字を追加して出力
+        logger.info(`Received raw message: [${message}]`);
+        // オブジェクトの文字列化後の出力
         logger.info(`Message from client: ${JSON.stringify(message)}`);
       } catch (err) {
         logger.error(`Error processing message: ${err}`);

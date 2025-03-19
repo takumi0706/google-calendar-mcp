@@ -1,4 +1,4 @@
-import '@types/jest';
+// jest型定義は自動的に利用されるため、明示的なインポートは不要
 import {
   getEventsSchema,
   createEventSchema,

@@ -64,7 +64,7 @@ class McpServer {
   public stop(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.server) {
-        this.server.close(err => {
+        this.server.close((err: Error | undefined) => {
           if (err) {
             logger.error(`Error stopping server: ${err}`);
             reject(err);

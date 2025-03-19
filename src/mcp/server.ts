@@ -9,7 +9,7 @@ import { CalendarEvent } from '../calendar/types';
 
 // ツールレスポンスの型
 type ToolResponse = {
-  content: { type: "text"; text: string }[];
+  content: { type: 'text'; text: string }[];
   isError?: boolean;
 };
 
@@ -23,24 +23,24 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.1.5',
+      version: '0.2.1',
     });
 
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
 
     // エラーハンドリング
-    this.transport.onMessage((message) => {
+    this.transport.onmessage = (message: any): void => {
       try {
         logger.info(`Message from client: ${JSON.stringify(message)}`);
       } catch (err) {
         logger.error(`Error processing message: ${err}`);
       }
-    });
+    };
 
-    this.transport.onError((error) => {
+    this.transport.onerror = (error: any): void => {
       logger.error(`Transport error: ${error}`);
-    });
+    };
 
     // ツールの登録
     this.registerTools();
@@ -62,12 +62,12 @@ class GoogleCalendarMcpServer {
           logger.info(`Executing getEvents with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.getEvents(args);
           return {
-            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+            content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }]
           };
         } catch (error) {
           logger.error(`Error in getEvents: ${error}`);
           return {
-            content: [{ type: "text" as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -104,12 +104,12 @@ class GoogleCalendarMcpServer {
           logger.info(`Executing createEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.createEvent(args);
           return {
-            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+            content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }]
           };
         } catch (error) {
           logger.error(`Error in createEvent: ${error}`);
           return {
-            content: [{ type: "text" as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -159,12 +159,12 @@ class GoogleCalendarMcpServer {
           
           const result = await calendarApi.updateEvent(updateParams);
           return {
-            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+            content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }]
           };
         } catch (error) {
           logger.error(`Error in updateEvent: ${error}`);
           return {
-            content: [{ type: "text" as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -183,12 +183,12 @@ class GoogleCalendarMcpServer {
           logger.info(`Executing deleteEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.deleteEvent(args);
           return {
-            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+            content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }]
           };
         } catch (error) {
           logger.error(`Error in deleteEvent: ${error}`);
           return {
-            content: [{ type: "text" as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
             isError: true
           };
         }

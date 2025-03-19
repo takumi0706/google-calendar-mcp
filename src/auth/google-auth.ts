@@ -110,7 +110,7 @@ class GoogleAuth {
 
             // レスポンスを返してブラウザを閉じるよう促す
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(`<html><body><h3>認証に成功しました。このウィンドウを閉じて操作を続けてください。</h3></body></html>`);
+            res.end(`<html><body><h3>Authentication was successful. Please close this window and continue.</h3></body></html>`);
 
             // サーバーを閉じてプロミスを解決
             server.close(() => {
@@ -124,7 +124,7 @@ class GoogleAuth {
         } catch (error) {
           logger.error(`Error in authorization callback: ${error}`);
           res.writeHead(500, { 'Content-Type': 'text/html' });
-          res.end(`<html><body><h3>認証エラー: ${error}</h3></body></html>`);
+          res.end(`<html><body><h3>Authentication error: ${error}</h3></body></html>`);
           server.close(() => {
             this.authorizationPromise = null;
             reject(error);

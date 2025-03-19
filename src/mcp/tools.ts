@@ -16,7 +16,7 @@ type DeleteEventParams = z.infer<typeof deleteEventSchema>;
 
 // ツールレスポンスの型
 type ToolResponse = {
-  content: { type: "text"; text: string }[];
+  content: { type: 'text'; text: string }[];
   isError?: boolean;
 };
 
@@ -38,12 +38,12 @@ export const tools = [
         logger.info(`Getting events with params: ${JSON.stringify(validatedParams)}`);
         const result = await calendarApi.getEvents(validatedParams);
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in getEvents: ${error}`);
         return {
-          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
+          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -84,12 +84,12 @@ export const tools = [
         logger.info(`Creating event: ${validatedParams.event.summary}`);
         const result = await calendarApi.createEvent(validatedParams);
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in createEvent: ${error}`);
         return {
-          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
+          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -123,12 +123,12 @@ export const tools = [
         logger.info(`Updating event: ${validatedParams.eventId}`);
         const result = await calendarApi.updateEvent(validatedParams);
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in updateEvent: ${error}`);
         return {
-          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
+          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }
@@ -147,12 +147,12 @@ export const tools = [
         logger.info(`Deleting event: ${validatedParams.eventId}`);
         const result = await calendarApi.deleteEvent(validatedParams);
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
         };
       } catch (error) {
         logger.error(`Validation error in deleteEvent: ${error}`);
         return {
-          content: [{ type: "text", text: `パラメータエラー: ${error}` }],
+          content: [{ type: 'text', text: `パラメータエラー: ${error}` }],
           isError: true
         };
       }

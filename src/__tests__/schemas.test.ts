@@ -5,6 +5,11 @@ import {
   deleteEventSchema,
 } from '../mcp/schemas';
 
+// テスト環境を設定
+beforeAll(() => {
+  process.env.NODE_ENV = 'test';
+});
+
 describe('Schemas', () => {
   describe('getEventsSchema', () => {
     it('should validate valid params', () => {

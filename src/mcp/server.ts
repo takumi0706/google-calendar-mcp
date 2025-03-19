@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { tools } from './tools';
 import logger from '../utils/logger';
@@ -6,17 +6,24 @@ import config from '../config/config';
 import * as net from 'net';
 
 class GoogleCalendarMcpServer {
-  private server: McpServer;
+  private server: Server;
   private transport: StdioServerTransport;
   private isRunning = false;
   private socketServer: net.Server | null = null;
 
   constructor() {
     // MCPサーバーの設定
-    this.server = new McpServer({
-      name: 'google-calendar-mcp',
-      version: '0.1.5',
-    });
+    this.server = new Server(
+      { 
+        name: 'google-calendar-mcp',
+        version: '0.1.5',
+      }, 
+      {
+        capabilities: {
+          tools: {}
+        }
+      }
+    );
 
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
@@ -27,23 +34,25 @@ class GoogleCalendarMcpServer {
 
   private registerTools() {
     for (const tool of tools) {
-      // ツールを登録
-      this.server.addTool({
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        execute: async (params: any) => {
-          try {
-            logger.info(`Executing tool ${tool.name} with params: ${JSON.stringify(params)}`);
-            const result = await tool.handler(params);
-            return result;
-          } catch (error) {
-            logger.error(`Error executing tool ${tool.name}: ${error}`);
-            throw error;
-          }
+      // ツールハンドラーの設定
+      this.server.setToolHandler(tool.name, async (params: any) => {
+        try {
+          logger.info(`Executing tool ${tool.name} with params: ${JSON.stringify(params)}`);
+          const result = await tool.handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error executing tool ${tool.name}: ${error}`);
+          throw error;
         }
       });
     }
+
+    // ツールの登録
+    this.server.registerTools(tools.map(tool => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters
+    })));
   }
 
   public async start(): Promise<void> {
@@ -55,7 +64,7 @@ class GoogleCalendarMcpServer {
       logger.info('Starting server...');
       
       // サーバーとトランスポートの接続
-      await this.server.connect(this.transport);
+      await this.server.listen(this.transport);
       
       // TCPリスナーを設定（Claude Desktopとの接続用）
       this.socketServer = net.createServer((socket) => {
@@ -92,7 +101,7 @@ class GoogleCalendarMcpServer {
       }
       
       // サーバーの切断
-      this.server.close();
+      await this.server.close();
       this.isRunning = false;
       logger.info('MCP Server stopped');
     } catch (error) {

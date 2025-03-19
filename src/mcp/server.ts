@@ -23,11 +23,24 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.0',
+      version: '0.1.5',
     });
 
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
+
+    // エラーハンドリング
+    this.transport.onMessage((message) => {
+      try {
+        logger.info(`Message from client: ${JSON.stringify(message)}`);
+      } catch (err) {
+        logger.error(`Error processing message: ${err}`);
+      }
+    });
+
+    this.transport.onError((error) => {
+      logger.error(`Transport error: ${error}`);
+    });
 
     // ツールの登録
     this.registerTools();
@@ -38,15 +51,15 @@ class GoogleCalendarMcpServer {
     this.server.tool(
       'getEvents',
       {
-        calendarId: z.string().optional(),
-        timeMin: z.string().optional(),
-        timeMax: z.string().optional(),
-        maxResults: z.number().int().positive().optional(),
-        orderBy: z.enum(['startTime', 'updated']).optional(),
+        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+        timeMin: z.string().optional().describe('取得開始日時（ISO 8601形式。例: 2025-03-01T00:00:00Z）'),
+        timeMax: z.string().optional().describe('取得終了日時（ISO 8601形式）'),
+        maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
+        orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
       },
       async (args, extra) => {
         try {
-          logger.info(`Getting events with params: ${JSON.stringify(args)}`);
+          logger.info(`Executing getEvents with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.getEvents(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
@@ -65,30 +78,30 @@ class GoogleCalendarMcpServer {
     this.server.tool(
       'createEvent',
       {
-        calendarId: z.string().optional(),
+        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
         event: z.object({
-          summary: z.string().min(1),
-          description: z.string().optional(),
-          location: z.string().optional(),
+          summary: z.string().min(1).describe('イベントの件名（必須）'),
+          description: z.string().optional().describe('イベントの説明'),
+          location: z.string().optional().describe('場所'),
           start: z.object({
-            dateTime: z.string().optional(),
-            date: z.string().optional(),
-            timeZone: z.string().optional(),
+            dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T09:00:00+09:00）'),
+            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+            timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
           }),
           end: z.object({
-            dateTime: z.string().optional(),
-            date: z.string().optional(),
-            timeZone: z.string().optional(),
+            dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T10:00:00+09:00）'),
+            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+            timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
           }),
           attendees: z.array(z.object({
             email: z.string().email(),
             displayName: z.string().optional(),
-          })).optional(),
+          })).optional().describe('参加者リスト'),
         }),
       },
       async (args, extra) => {
         try {
-          logger.info(`Creating event: ${JSON.stringify(args)}`);
+          logger.info(`Executing createEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.createEvent(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
@@ -107,27 +120,27 @@ class GoogleCalendarMcpServer {
     this.server.tool(
       'updateEvent',
       {
-        calendarId: z.string().optional(),
-        eventId: z.string().min(1),
+        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+        eventId: z.string().min(1).describe('更新するイベントのID（必須）'),
         event: z.object({
-          summary: z.string().optional(),
-          description: z.string().optional(),
-          location: z.string().optional(),
+          summary: z.string().optional().describe('イベントの件名'),
+          description: z.string().optional().describe('イベントの説明'),
+          location: z.string().optional().describe('場所'),
           start: z.object({
-            dateTime: z.string().optional(),
-            date: z.string().optional(),
-            timeZone: z.string().optional(),
+            dateTime: z.string().optional().describe('ISO 8601形式の日時'),
+            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+            timeZone: z.string().optional().describe('タイムゾーン'),
           }).optional(),
           end: z.object({
-            dateTime: z.string().optional(),
-            date: z.string().optional(),
-            timeZone: z.string().optional(),
+            dateTime: z.string().optional().describe('ISO 8601形式の日時'),
+            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+            timeZone: z.string().optional().describe('タイムゾーン'),
           }).optional(),
         }),
       },
       async (args, extra) => {
         try {
-          logger.info(`Updating event: ${JSON.stringify(args)}`);
+          logger.info(`Executing updateEvent with params: ${JSON.stringify(args)}`);
           
           // 既存のイベントを取得して、更新データとマージ
           // 必須フィールドを確保
@@ -162,12 +175,12 @@ class GoogleCalendarMcpServer {
     this.server.tool(
       'deleteEvent',
       {
-        calendarId: z.string().optional(),
-        eventId: z.string().min(1),
+        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+        eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
       },
       async (args, extra) => {
         try {
-          logger.info(`Deleting event: ${JSON.stringify(args)}`);
+          logger.info(`Executing deleteEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.deleteEvent(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
@@ -189,7 +202,7 @@ class GoogleCalendarMcpServer {
     }
 
     try {
-      logger.info('Starting server...');
+      logger.info('Initializing server...');
       
       // サーバーとトランスポートの接続
       await this.server.connect(this.transport);
@@ -210,8 +223,6 @@ class GoogleCalendarMcpServer {
       
       logger.info(`Server started and connected successfully`);
       this.isRunning = true;
-      
-      logger.info(`Google Calendar MCP Server is running on ${config.server.host}:${config.server.port}`);
     } catch (error) {
       logger.error(`Failed to start server: ${error}`);
       throw error;

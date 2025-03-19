@@ -7,6 +7,12 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+    },
+  },
+  setupFilesAfterEnv: ['./src/__tests__/setup.ts'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
     'src/**/*.ts',

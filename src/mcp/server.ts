@@ -37,15 +37,17 @@ class GoogleCalendarMcpServer {
         maxResults: z.number().int().positive().optional(),
         orderBy: z.enum(['startTime', 'updated']).optional(),
       },
-      async (params) => {
+      async (args, extra) => {
         try {
-          logger.info(`Getting events with params: ${JSON.stringify(params)}`);
-          const result = await tools[0].handler(params);
-          return result;
+          logger.info(`Getting events with params: ${JSON.stringify(args)}`);
+          const result = await tools[0].handler(args);
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+          };
         } catch (error) {
           logger.error(`Error in getEvents: ${error}`);
           return {
-            content: [{ type: 'text', text: `エラー: ${error}` }],
+            content: [{ type: "text" as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -77,15 +79,17 @@ class GoogleCalendarMcpServer {
           })).optional(),
         }),
       },
-      async (params) => {
+      async (args, extra) => {
         try {
-          logger.info(`Creating event: ${JSON.stringify(params)}`);
-          const result = await tools[1].handler(params);
-          return result;
+          logger.info(`Creating event: ${JSON.stringify(args)}`);
+          const result = await tools[1].handler(args);
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+          };
         } catch (error) {
           logger.error(`Error in createEvent: ${error}`);
           return {
-            content: [{ type: 'text', text: `エラー: ${error}` }],
+            content: [{ type: "text" as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -114,15 +118,17 @@ class GoogleCalendarMcpServer {
           }).optional(),
         }),
       },
-      async (params) => {
+      async (args, extra) => {
         try {
-          logger.info(`Updating event: ${JSON.stringify(params)}`);
-          const result = await tools[2].handler(params);
-          return result;
+          logger.info(`Updating event: ${JSON.stringify(args)}`);
+          const result = await tools[2].handler(args);
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+          };
         } catch (error) {
           logger.error(`Error in updateEvent: ${error}`);
           return {
-            content: [{ type: 'text', text: `エラー: ${error}` }],
+            content: [{ type: "text" as const, text: `エラー: ${error}` }],
             isError: true
           };
         }
@@ -136,15 +142,17 @@ class GoogleCalendarMcpServer {
         calendarId: z.string().optional(),
         eventId: z.string().min(1),
       },
-      async (params) => {
+      async (args, extra) => {
         try {
-          logger.info(`Deleting event: ${JSON.stringify(params)}`);
-          const result = await tools[3].handler(params);
-          return result;
+          logger.info(`Deleting event: ${JSON.stringify(args)}`);
+          const result = await tools[3].handler(args);
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
+          };
         } catch (error) {
           logger.error(`Error in deleteEvent: ${error}`);
           return {
-            content: [{ type: 'text', text: `エラー: ${error}` }],
+            content: [{ type: "text" as const, text: `エラー: ${error}` }],
             isError: true
           };
         }

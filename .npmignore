@@ -1,0 +1,30 @@
+# ソースファイル
+src/
+__tests__/
+test/
+tests/
+*.test.ts
+*.spec.ts
+
+# 設定ファイル
+.eslintrc.json
+.prettierrc
+.github/
+tsconfig.json
+jest.config.js
+.gitignore
+.env
+.env.*
+
+# 開発時に使用するファイル
+node_modules/
+coverage/
+.vscode/
+.idea/
+*.log
+logs/
+token.json
+
+# ビルド前のファイル
+*.ts
+!*.d.ts

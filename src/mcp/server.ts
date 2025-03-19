@@ -5,6 +5,7 @@ import logger from '../utils/logger';
 import config from '../config/config';
 import * as net from 'net';
 import { z } from 'zod';
+import { getEventsSchema, createEventSchema, updateEventSchema, deleteEventSchema } from './schemas';
 
 class GoogleCalendarMcpServer {
   private server: McpServer;
@@ -40,7 +41,10 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Getting events with params: ${JSON.stringify(args)}`);
-          const result = await tools[0].handler(args);
+          // args型をgetEventsSchemaに合わせる
+          const result = await getEventsSchema.parseAsync(args).then(validParams => {
+            return tools[0].handler(validParams);
+          });
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -82,7 +86,10 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Creating event: ${JSON.stringify(args)}`);
-          const result = await tools[1].handler(args);
+          // args型をcreateEventSchemaに合わせる
+          const result = await createEventSchema.parseAsync(args).then(validParams => {
+            return tools[1].handler(validParams);
+          });
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -121,7 +128,10 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Updating event: ${JSON.stringify(args)}`);
-          const result = await tools[2].handler(args);
+          // args型をupdateEventSchemaに合わせる
+          const result = await updateEventSchema.parseAsync(args).then(validParams => {
+            return tools[2].handler(validParams);
+          });
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -145,7 +155,10 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Deleting event: ${JSON.stringify(args)}`);
-          const result = await tools[3].handler(args);
+          // args型をdeleteEventSchemaに合わせる
+          const result = await deleteEventSchema.parseAsync(args).then(validParams => {
+            return tools[3].handler(validParams);
+          });
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };

@@ -6,9 +6,10 @@ import {
   deleteEventSchema,
 } from './schemas';
 import logger from '../utils/logger';
+import { Tool } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // MCP Tool定義
-export const tools = [
+export const tools: Tool[] = [
   {
     name: 'getEvents',
     description: 'Google Calendarからイベントを取得します',

@@ -1,11 +1,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { tools } from './tools';
 import logger from '../utils/logger';
 import config from '../config/config';
 import * as net from 'net';
 import { z } from 'zod';
-import { getEventsSchema, createEventSchema, updateEventSchema, deleteEventSchema } from './schemas';
+import calendarApi from '../calendar/calendar-api';
+
+// ツールレスポンスの型
+type ToolResponse = {
+  content: { type: "text"; text: string }[];
+  isError?: boolean;
+};
 
 class GoogleCalendarMcpServer {
   private server: McpServer;
@@ -41,10 +46,7 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Getting events with params: ${JSON.stringify(args)}`);
-          // args型をgetEventsSchemaに合わせる
-          const result = await getEventsSchema.parseAsync(args).then(validParams => {
-            return tools[0].handler(validParams);
-          });
+          const result = await calendarApi.getEvents(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -86,10 +88,7 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Creating event: ${JSON.stringify(args)}`);
-          // args型をcreateEventSchemaに合わせる
-          const result = await createEventSchema.parseAsync(args).then(validParams => {
-            return tools[1].handler(validParams);
-          });
+          const result = await calendarApi.createEvent(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -128,10 +127,7 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Updating event: ${JSON.stringify(args)}`);
-          // args型をupdateEventSchemaに合わせる
-          const result = await updateEventSchema.parseAsync(args).then(validParams => {
-            return tools[2].handler(validParams);
-          });
+          const result = await calendarApi.updateEvent(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };
@@ -155,10 +151,7 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Deleting event: ${JSON.stringify(args)}`);
-          // args型をdeleteEventSchemaに合わせる
-          const result = await deleteEventSchema.parseAsync(args).then(validParams => {
-            return tools[3].handler(validParams);
-          });
+          const result = await calendarApi.deleteEvent(args);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };

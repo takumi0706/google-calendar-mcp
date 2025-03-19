@@ -5,6 +5,7 @@ import config from '../config/config';
 import * as net from 'net';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
+import { CalendarEvent } from '../calendar/types';
 
 // ツールレスポンスの型
 type ToolResponse = {
@@ -127,7 +128,23 @@ class GoogleCalendarMcpServer {
       async (args, extra) => {
         try {
           logger.info(`Updating event: ${JSON.stringify(args)}`);
-          const result = await calendarApi.updateEvent(args);
+          
+          // 既存のイベントを取得して、更新データとマージ
+          // 必須フィールドを確保
+          const eventWithDefaults: CalendarEvent = {
+            summary: args.event.summary || '（無題）',  // summaryがない場合はデフォルト値を設定
+            start: args.event.start || { dateTime: new Date().toISOString() },
+            end: args.event.end || { dateTime: new Date(Date.now() + 3600000).toISOString() },
+            ...args.event
+          };
+          
+          const updateParams = {
+            calendarId: args.calendarId,
+            eventId: args.eventId,
+            event: eventWithDefaults
+          };
+          
+          const result = await calendarApi.updateEvent(updateParams);
           return {
             content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }]
           };

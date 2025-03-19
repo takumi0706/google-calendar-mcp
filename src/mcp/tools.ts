@@ -7,20 +7,20 @@ import {
 } from './schemas';
 import logger from '../utils/logger';
 import { z } from 'zod';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/server/types.js';
+import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/server/types';
 
 // ツール定義
 export const tools = [
   {
     name: 'getEvents',
     description: 'Google Calendarからイベントを取得します',
-    parameters: z.object({
+    parameters: {
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       timeMin: z.string().optional().describe('取得開始日時（ISO 8601形式。例: 2025-03-01T00:00:00Z）'),
       timeMax: z.string().optional().describe('取得終了日時（ISO 8601形式）'),
       maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
       orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
-    }),
+    },
     handler: async (params: Record<string, unknown>, extra: RequestHandlerExtra) => {
       try {
         const validatedParams = getEventsSchema.parse(params);
@@ -41,7 +41,7 @@ export const tools = [
   {
     name: 'createEvent',
     description: 'Google Calendarに新しいイベントを作成します',
-    parameters: z.object({
+    parameters: {
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       event: z.object({
         summary: z.string().min(1).describe('イベントの件名（必須）'),
@@ -66,7 +66,7 @@ export const tools = [
           displayName: z.string().optional(),
         })).optional().describe('参加者リスト'),
       }).describe('イベント情報'),
-    }),
+    },
     handler: async (params: Record<string, unknown>, extra: RequestHandlerExtra) => {
       try {
         const validatedParams = createEventSchema.parse(params);
@@ -87,7 +87,7 @@ export const tools = [
   {
     name: 'updateEvent',
     description: 'Google Calendar上の既存イベントを更新します',
-    parameters: z.object({
+    parameters: {
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       eventId: z.string().min(1).describe('更新するイベントのID（必須）'),
       event: z.object({
@@ -105,7 +105,7 @@ export const tools = [
           timeZone: z.string().optional().describe('タイムゾーン'),
         }).optional().describe('終了日時'),
       }).describe('更新するイベント情報'),
-    }),
+    },
     handler: async (params: Record<string, unknown>, extra: RequestHandlerExtra) => {
       try {
         const validatedParams = updateEventSchema.parse(params);
@@ -126,10 +126,10 @@ export const tools = [
   {
     name: 'deleteEvent',
     description: 'Google Calendar上のイベントを削除します',
-    parameters: z.object({
+    parameters: {
       calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
       eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
-    }),
+    },
     handler: async (params: Record<string, unknown>, extra: RequestHandlerExtra) => {
       try {
         const validatedParams = deleteEventSchema.parse(params);

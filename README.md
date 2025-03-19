@@ -63,6 +63,21 @@ This MCP server provides the following functions for Google Calendar:
 - `updateEvent`: Update an existing calendar event
 - `deleteEvent`: Delete a calendar event
 
+## Storage and Logging
+
+The server stores the following data:
+
+- **OAuth Token**: Stored in `token.json` in the current working directory
+- **Logs**: Stored in `~/.google-calendar-mcp/logs/` in the user's home directory
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check the logs in your home directory at `~/.google-calendar-mcp/logs/`
+2. Make sure your Google OAuth credentials are correctly configured
+3. Ensure you have sufficient permissions for Google Calendar API access
+
 ## License
 
 MIT

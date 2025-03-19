@@ -23,7 +23,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.3',
+      version: '0.2.4',
     });
 
     // Stdioトランスポートの設定
@@ -32,6 +32,7 @@ class GoogleCalendarMcpServer {
     // エラーハンドリング
     // TODO: デバック用であるから後から消す
     this.transport.onmessage = (data: any): void => {
+      logger.info('👹onmessage callback invoked👹'); // コールバックが呼ばれたか確認
       try {
         // 受信したデータを文字列に変換して余計な文字を除去
         const rawMessage = typeof data === 'string' ? data : JSON.stringify(data);

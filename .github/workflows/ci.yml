@@ -24,7 +24,13 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: npm ci || npm install
+      
+    - name: Create dummy .env file
+      run: |
+        echo "GOOGLE_CLIENT_ID=dummy-id" > .env
+        echo "GOOGLE_CLIENT_SECRET=dummy-secret" >> .env
+        echo "GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback" >> .env
     
     - name: TypeScript Check
       run: npx tsc --noEmit
@@ -34,6 +40,10 @@ jobs:
     
     - name: Build
       run: npm run build
+      env:
+        NODE_ENV: test
       
     - name: Test
       run: npm test
+      env:
+        NODE_ENV: test

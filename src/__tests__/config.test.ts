@@ -1,3 +1,4 @@
+import '@types/jest';
 import config from '../config/config';
 
 // 環境変数を一時的にモック

@@ -130,6 +130,13 @@ npm install
 npm run dev
 ```
 
+## Changes in version 0.1.3
+
+- Updated to use the latest MCP SDK
+- Improved error handling and server initialization
+- Fixed type definitions and API compatibility
+- Enhanced tool definitions
+
 ## License
 
 MIT

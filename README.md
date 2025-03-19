@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server implementation for Google Calendar integra
 
 - Google Calendar event management (get, create, update, delete)
 - OAuth2 authentication with Google Calendar API
-- Seamless integration with Claude Desktop via MCP
+- MCP SDK integration for Claude Desktop
 - Simple setup and configuration
 
 ## Installation
@@ -49,6 +49,26 @@ Add the server to your `claude_desktop_config.json`:
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
         "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
       }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/username/Desktop",
+        "/Users/username/Downloads",
+        "/Users/username/Documents"
+      ]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "your_brave_api_key"
+      }
     }
   }
 }
@@ -62,6 +82,15 @@ This MCP server provides the following functions for Google Calendar:
 - `createEvent`: Create a new calendar event
 - `updateEvent`: Update an existing calendar event
 - `deleteEvent`: Delete a calendar event
+
+## Implementation Details
+
+This server uses:
+
+- **MCP SDK**: `@modelcontextprotocol/sdk` for Claude Desktop integration
+- **Google APIs**: `googleapis` for Google Calendar API access
+- **TypeScript**: For type-safe code
+- **Zod**: For schema validation
 
 ## Storage and Logging
 
@@ -77,6 +106,29 @@ If you encounter any issues:
 1. Check the logs in your home directory at `~/.google-calendar-mcp/logs/`
 2. Make sure your Google OAuth credentials are correctly configured
 3. Ensure you have sufficient permissions for Google Calendar API access
+4. Verify your Claude Desktop configuration is correct
+
+### Common Errors
+
+- **JSON Parsing Errors**: Make sure your MCP server is properly initialized with the latest SDK
+- **Authentication Errors**: Verify your Google OAuth credentials
+- **Connection Errors**: Check that the server is running on the expected port
+
+## Development
+
+To contribute to this project:
+
+```bash
+# Clone the repository
+git clone https://github.com/takumi0706/google-calendar-mcp.git
+cd google-calendar-mcp
+
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run dev
+```
 
 ## License
 

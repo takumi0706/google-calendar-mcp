@@ -9,8 +9,9 @@ config();
 const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
-if (missingEnvVars.length > 0) {
-  logger.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+// 開発/テスト環境以外でのみ警告を表示
+if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
+  logger.warn(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
   logger.info('Please set these variables in your .env file or environment');
 }
 
@@ -25,8 +26,8 @@ const SCOPES = [
 
 export default {
   google: {
-    clientId: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
     redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/oauth2callback',
     scopes: SCOPES,
     tokenPath: TOKEN_PATH,

@@ -1,20 +1,29 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SocketServerTransport } from '@modelcontextprotocol/sdk/server/socket.js';
 import { tools } from './tools';
 import logger from '../utils/logger';
 import config from '../config/config';
 
 class GoogleCalendarMcpServer {
-  private server: McpServer;
+  private server: Server;
   private transport: SocketServerTransport;
   private isRunning = false;
 
   constructor() {
     // MCPサーバーの設定
-    this.server = new McpServer({
-      name: 'google-calendar-mcp',
-      version: '0.1.3',
-    });
+    this.server = new Server(
+      {
+        name: 'google-calendar-mcp',
+        version: '0.1.3',
+      },
+      {
+        capabilities: {
+          tools: {
+            // ツール機能を有効化
+          },
+        },
+      }
+    );
 
     // ソケットトランスポートの設定
     this.transport = new SocketServerTransport({
@@ -28,22 +37,24 @@ class GoogleCalendarMcpServer {
 
   private registerTools() {
     for (const tool of tools) {
-      this.server.addTool({
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        execute: async (params) => {
-          try {
-            logger.info(`Executing tool ${tool.name} with params: ${JSON.stringify(params)}`);
-            const result = await tool.handler(params);
-            return result;
-          } catch (error) {
-            logger.error(`Error executing tool ${tool.name}: ${error}`);
-            throw error;
-          }
-        },
+      this.server.setToolHandler(tool.name, async (params: any) => {
+        try {
+          logger.info(`Executing tool ${tool.name} with params: ${JSON.stringify(params)}`);
+          const result = await tool.handler(params);
+          return result;
+        } catch (error) {
+          logger.error(`Error executing tool ${tool.name}: ${error}`);
+          throw error;
+        }
       });
     }
+
+    // ツールのスキーマを登録
+    this.server.registerTools(tools.map(tool => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    })));
   }
 
   public async start(): Promise<void> {
@@ -53,12 +64,9 @@ class GoogleCalendarMcpServer {
 
     try {
       // サーバーとトランスポートの接続
-      await this.server.connect(this.transport);
+      logger.info('Starting server...');
       
-      logger.info('Initializing server...');
-      
-      // サーバーの初期化
-      await this.server.initialize();
+      await this.server.listen(this.transport);
       
       logger.info(`Server started and connected successfully`);
       this.isRunning = true;
@@ -76,7 +84,7 @@ class GoogleCalendarMcpServer {
     }
 
     try {
-      await this.server.disconnect();
+      await this.server.close();
       this.isRunning = false;
       logger.info('MCP Server stopped');
     } catch (error) {

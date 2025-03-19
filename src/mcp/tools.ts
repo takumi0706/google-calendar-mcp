@@ -6,10 +6,18 @@ import {
   deleteEventSchema,
 } from './schemas';
 import logger from '../utils/logger';
-import { Tool } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { JSONSchema } from '@modelcontextprotocol/sdk/common/jsonschema.js';
+
+// カスタムツール定義の型
+interface CustomTool {
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+  handler: (params: unknown) => Promise<any>;
+}
 
 // MCP Tool定義
-export const tools: Tool[] = [
+export const tools: CustomTool[] = [
   {
     name: 'getEvents',
     description: 'Google Calendarからイベントを取得します',

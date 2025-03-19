@@ -6,13 +6,17 @@ import {
   deleteEventSchema,
 } from './schemas';
 import logger from '../utils/logger';
-import { JSONSchema } from '@modelcontextprotocol/sdk/common/jsonschema.js';
+import { z } from 'zod';
 
 // カスタムツール定義の型
 interface CustomTool {
   name: string;
   description: string;
-  parameters: JSONSchema;
+  parameters: {
+    type: string;
+    properties: Record<string, any>;
+    required?: string[];
+  };
   handler: (params: unknown) => Promise<any>;
 }
 

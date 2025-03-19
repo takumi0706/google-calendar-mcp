@@ -31,19 +31,22 @@ class GoogleCalendarMcpServer {
 
     // エラーハンドリング
     // TODO: デバック用であるから後から消す
-    this.transport.onmessage = (message: any): void => {
+    this.transport.onmessage = (data: any): void => {
       try {
-        // 受信したメッセージ内容の状態を確認するため、前後に囲い文字を追加して出力
-        logger.info(`Received raw message: [${message}]`);
-        // オブジェクトの文字列化後の出力
+        // 受信したデータを文字列に変換して余計な文字を除去
+        const rawMessage = typeof data === 'string' ? data : JSON.stringify(data);
+        const trimmedMessage = rawMessage.trim();
+        logger.info(`Received raw message: [${rawMessage}]`);
+        logger.info(`Trimmed message: [${trimmedMessage}]`);
+
+        // JSONのパース処理
+        const message = JSON.parse(trimmedMessage);
         logger.info(`Message from client: ${JSON.stringify(message)}`);
+
+        // ここでmessageに基づく後続処理を実装
       } catch (err) {
         logger.error(`Error processing message: ${err}`);
       }
-    };
-
-    this.transport.onerror = (error: any): void => {
-      logger.error(`Transport error: ${error}`);
     };
 
     // ツールの登録

@@ -28,7 +28,11 @@ class GoogleCalendarMcpServer {
   private registerTools() {
     for (const tool of tools) {
       // ツールの登録と実行ハンドラーの設定
-      this.server.tool(tool.name, tool.description, tool.handler);
+      this.server.tool(
+        tool.name,
+        tool.parameters,
+        tool.handler
+      );
     }
   }
 

@@ -110,9 +110,17 @@ If you encounter any issues:
 
 ### Common Errors
 
-- **JSON Parsing Errors**: Make sure your MCP server is properly initialized with the latest SDK
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in version 0.2.6+.
 - **Authentication Errors**: Verify your Google OAuth credentials
-- **Connection Errors**: Check that the server is running on the expected port
+- **Connection Errors**: Make sure only one instance of the server is running
+- **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
+
+### Version 0.2.6 Fixes
+
+- Fixed JSON-RPC message handling that was causing parsing errors
+- Removed custom TCP socket server which was causing connection issues
+- Added proper error handling for transport errors
+- Improved logging of message exchanges between client and server
 
 ## Development
 

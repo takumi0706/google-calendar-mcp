@@ -30,21 +30,11 @@ class GoogleCalendarMcpServer {
     this.transport = new StdioServerTransport();
 
     // エラーハンドリング
-    // TODO: デバック用であるから後から消す
-    this.transport.onmessage = (data: any): void => {
-      logger.info('👹onmessage callback invoked👹'); // コールバックが呼ばれたか確認
+    this.transport.onmessage = (message): void => {
       try {
-        // 受信したデータを文字列に変換して余計な文字を除去
-        const rawMessage = typeof data === 'string' ? data : JSON.stringify(data);
-        const trimmedMessage = rawMessage.trim();
-        logger.info(`Received raw message: [${rawMessage}]`);
-        logger.info(`Trimmed message: [${trimmedMessage}]`);
-
-        // JSONのパース処理
-        const message = JSON.parse(trimmedMessage);
         logger.info(`Message from client: ${JSON.stringify(message)}`);
-
-        // ここでmessageに基づく後続処理を実装
+        // このメッセージは既にJSONとしてパースされているため、
+        // 追加のJSONパースは不要です
       } catch (err) {
         logger.error(`Error processing message: ${err}`);
       }

@@ -5,7 +5,7 @@ import config from '../config/config';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';
-import type { Message } from '@modelcontextprotocol/sdk/types.js';
+import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
 
 // ツールレスポンスの型
 type ToolResponse = {
@@ -29,7 +29,7 @@ class GoogleCalendarMcpServer {
     this.transport = new StdioServerTransport();
 
     // クライアントからのメッセージのロギング
-    this.transport.onmessage = (message: Message): void => {
+    this.transport.onmessage = async (message: JSONRPCMessage): Promise<void> => {
       try {
         // オブジェクトをJSONとして安全にログに記録
         logger.info(`Message from client: ${JSON.stringify(message)}`);
@@ -46,15 +46,16 @@ class GoogleCalendarMcpServer {
   }
 
   private setupMessageLogging(): void {
-    // 直接onSendMessageを設定できないため、トランスポートのイベントを使用
+    // 直接サーバーのメッセージをインターセプトする方法がないため
+    // トランスポートの機能を拡張
     const originalSend = this.transport.send.bind(this.transport);
-    this.transport.send = (message: Message): void => {
+    this.transport.send = async (message: JSONRPCMessage): Promise<void> => {
       try {
         logger.info(`Message from server: ${JSON.stringify(message)}`);
       } catch (err) {
         logger.error(`Error logging server message: ${err}`);
       }
-      originalSend(message);
+      return await originalSend(message);
     };
   }
 

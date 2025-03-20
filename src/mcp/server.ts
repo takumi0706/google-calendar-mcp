@@ -5,6 +5,7 @@ import config from '../config/config';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';
+import type { Message } from '@modelcontextprotocol/sdk/types.js';
 
 // ツールレスポンスの型
 type ToolResponse = {
@@ -21,14 +22,14 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.5',
+      version: '0.2.6',
     });
 
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
 
-    // エラーハンドリングとメッセージロギング
-    this.transport.onmessage = (message): void => {
+    // クライアントからのメッセージのロギング
+    this.transport.onmessage = (message: Message): void => {
       try {
         // オブジェクトをJSONとして安全にログに記録
         logger.info(`Message from client: ${JSON.stringify(message)}`);
@@ -37,17 +38,24 @@ class GoogleCalendarMcpServer {
       }
     };
 
-    // サーバーからのメッセージもログに記録
-    this.server.onSendMessage = (message): void => {
+    // メッセージ処理用の追加リスナー設定
+    this.setupMessageLogging();
+
+    // ツールの登録
+    this.registerTools();
+  }
+
+  private setupMessageLogging(): void {
+    // 直接onSendMessageを設定できないため、トランスポートのイベントを使用
+    const originalSend = this.transport.send.bind(this.transport);
+    this.transport.send = (message: Message): void => {
       try {
         logger.info(`Message from server: ${JSON.stringify(message)}`);
       } catch (err) {
         logger.error(`Error logging server message: ${err}`);
       }
+      originalSend(message);
     };
-
-    // ツールの登録
-    this.registerTools();
   }
 
   private registerTools() {
@@ -213,11 +221,11 @@ class GoogleCalendarMcpServer {
       await this.server.connect(this.transport);
       
       // エラーハンドリングを追加
-      this.transport.onerror = (error) => {
+      this.transport.onerror = (error: Error): void => {
         logger.error(`Transport error: ${error}`, { context: 'transport' });
       };
       
-      this.transport.onclose = () => {
+      this.transport.onclose = (): void => {
         logger.info('Transport closed');
         this.isRunning = false;
       };

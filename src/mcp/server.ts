@@ -2,7 +2,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import logger from '../utils/logger';
 import config from '../config/config';
-import * as net from 'net';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';
@@ -17,7 +16,6 @@ class GoogleCalendarMcpServer {
   private server: McpServer;
   private transport: StdioServerTransport;
   private isRunning = false;
-  private socketServer: net.Server | null = null;
 
   constructor() {
     // MCPサーバーの設定
@@ -29,14 +27,22 @@ class GoogleCalendarMcpServer {
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
 
-    // エラーハンドリング
+    // エラーハンドリングとメッセージロギング
     this.transport.onmessage = (message): void => {
       try {
+        // オブジェクトをJSONとして安全にログに記録
         logger.info(`Message from client: ${JSON.stringify(message)}`);
-        // このメッセージは既にJSONとしてパースされているため、
-        // 追加のJSONパースは不要です
       } catch (err) {
         logger.error(`Error processing message: ${err}`);
+      }
+    };
+
+    // サーバーからのメッセージもログに記録
+    this.server.onSendMessage = (message): void => {
+      try {
+        logger.info(`Message from server: ${JSON.stringify(message)}`);
+      } catch (err) {
+        logger.error(`Error logging server message: ${err}`);
       }
     };
 
@@ -203,21 +209,18 @@ class GoogleCalendarMcpServer {
       logger.info('Initializing server...');
       
       // サーバーとトランスポートの接続
+      // MCP SDKの仕様に従い、stdioトランスポートを使用
       await this.server.connect(this.transport);
       
-      // TCPリスナーを設定（Claude Desktopとの接続用）
-      this.socketServer = net.createServer((socket) => {
-        logger.info(`Client connected from ${socket.remoteAddress}:${socket.remotePort}`);
-        
-        socket.on('error', (err) => {
-          logger.error(`Socket error: ${err}`);
-        });
-      });
+      // エラーハンドリングを追加
+      this.transport.onerror = (error) => {
+        logger.error(`Transport error: ${error}`, { context: 'transport' });
+      };
       
-      // TCPサーバーを指定ポートでリッスン
-      this.socketServer.listen(config.server.port, config.server.host, () => {
-        logger.info(`TCP Server listening on ${config.server.host}:${config.server.port}`);
-      });
+      this.transport.onclose = () => {
+        logger.info('Transport closed');
+        this.isRunning = false;
+      };
       
       logger.info(`Server started and connected successfully`);
       this.isRunning = true;
@@ -233,10 +236,6 @@ class GoogleCalendarMcpServer {
     }
 
     try {
-      if (this.socketServer) {
-        this.socketServer.close();
-      }
-      
       // サーバーの切断
       await this.server.close();
       this.isRunning = false;

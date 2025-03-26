@@ -4,8 +4,8 @@ import logger from '../utils/logger';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';
-import { 
-  JSONRPCMessage, 
+import {
+  JSONRPCMessage,
   ListResourcesRequestSchema,
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
@@ -39,7 +39,7 @@ class GoogleCalendarMcpServer {
 
     // ツールの登録
     this.registerTools();
-    
+
     // リソースとプロンプトのリスト機能を実装
     this.implementResourcesAndPrompts();
   }
@@ -100,17 +100,20 @@ class GoogleCalendarMcpServer {
 
   // リソースとプロンプトのメソッド実装
   private implementResourcesAndPrompts() {
+    // 型アサーションを用いて setRequestHandler を使用する
+    const serverWithHandler = this.server as unknown as {
+      setRequestHandler: (schema: typeof ListResourcesRequestSchema | typeof ListPromptsRequestSchema, handler: (params: any) => Promise<any>) => void;
+    };
+
     // resources/list メソッドの実装
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    serverWithHandler.setRequestHandler(ListResourcesRequestSchema, async () => {
       logger.info('Handling resources/list request');
-      // 現在はリソースを提供していないので空の配列を返す
       return { resources: [] };
     });
 
     // prompts/list メソッドの実装
-    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    serverWithHandler.setRequestHandler(ListPromptsRequestSchema, async () => {
       logger.info('Handling prompts/list request');
-      // 現在はプロンプトを提供していないので空の配列を返す
       return { prompts: [] };
     });
   }

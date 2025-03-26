@@ -20,8 +20,10 @@ const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+    winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
+      const contextStr = context ? `[${context}] ` : '';
+      const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+      return `${timestamp} [google-calendar] [${level}] ${contextStr}${message}${metaStr}`;
     })
   ),
   transports: [
@@ -46,4 +48,14 @@ const logger = winston.createLogger({
   ],
 });
 
-export default logger;
+// debug メソッドの追加
+const loggerWithDebug = {
+  ...logger,
+  debug: (message: string, meta?: any) => {
+    if (process.env.LOG_LEVEL === 'debug') {
+      logger.info(`[DEBUG] ${message}`, meta);
+    }
+  }
+};
+
+export default loggerWithDebug;

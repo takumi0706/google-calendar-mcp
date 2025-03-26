@@ -22,21 +22,14 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.6',
+      version: '0.2.7',
     });
 
     // Stdioトランスポートの設定
     this.transport = new StdioServerTransport();
 
-    // クライアントからのメッセージのロギング
-    this.transport.onmessage = async (message: JSONRPCMessage): Promise<void> => {
-      try {
-        // オブジェクトをJSONとして安全にログに記録
-        logger.info(`Message from client: ${JSON.stringify(message)}`);
-      } catch (err) {
-        logger.error(`Error processing message: ${err}`);
-      }
-    };
+    // オリジナルメッセージ処理は setupMessageLogging() で上書きされる
+    this.transport.onmessage = async (message: JSONRPCMessage): Promise<void> => {};
 
     // メッセージ処理用の追加リスナー設定
     this.setupMessageLogging();
@@ -45,17 +38,49 @@ class GoogleCalendarMcpServer {
     this.registerTools();
   }
 
+  // メッセージ処理用のヘルパー関数を追加
+  private processJsonRpcMessage(message: string): any {
+    try {
+      // 余分な文字を取り除く
+      const trimmedMessage = message.trim();
+      
+      // 有効なJSONかどうかチェック
+      return JSON.parse(trimmedMessage);
+    } catch (error) {
+      logger.error(`Error parsing JSON-RPC message: ${error}`);
+      logger.debug(`Problematic message: "${message}"`);
+      throw error;
+    }
+  }
+
   private setupMessageLogging(): void {
     // 直接サーバーのメッセージをインターセプトする方法がないため
     // トランスポートの機能を拡張
     const originalSend = this.transport.send.bind(this.transport);
     this.transport.send = async (message: JSONRPCMessage): Promise<void> => {
       try {
-        logger.info(`Message from server: ${JSON.stringify(message)}`);
+        // 送信前に文字列に変換し、確実に改行で終わるようにする
+        const messageStr = JSON.stringify(message);
+        logger.info(`Message from server: ${messageStr}`);
       } catch (err) {
         logger.error(`Error logging server message: ${err}`);
       }
       return await originalSend(message);
+    };
+
+    // クライアントからのメッセージ処理を改善
+    const originalOnMessage = this.transport.onmessage;
+    this.transport.onmessage = async (message: any): Promise<void> => {
+      try {
+        // メッセージが文字列の場合は、適切にパース
+        if (typeof message === 'string') {
+          message = this.processJsonRpcMessage(message);
+        }
+        logger.info(`Message from client: ${JSON.stringify(message)}`);
+        return await originalOnMessage(message);
+      } catch (err) {
+        logger.error(`Error processing client message: ${err}`);
+      }
     };
   }
 

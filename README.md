@@ -1,5 +1,7 @@
 # Google Calendar MCP Server
 
+![Version](https://img.shields.io/badge/version-0.2.7-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop.
 
 ## Features
@@ -114,6 +116,13 @@ If you encounter any issues:
 - **Authentication Errors**: Verify your Google OAuth credentials
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
+
+### Version 0.2.7 Fixes
+
+- Fixed JSON-RPC message processing to handle malformed messages and avoid "Unexpected non-whitespace character after JSON" errors
+- Improved message processing between client and server with more robust parsing
+- Enhanced logging format with better context information
+- Added debug mode support for troubleshooting JSON-RPC messages
 
 ### Version 0.2.6 Fixes
 

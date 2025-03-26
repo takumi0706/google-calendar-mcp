@@ -100,20 +100,23 @@ class GoogleCalendarMcpServer {
 
   // リソースとプロンプトのメソッド実装
   private implementResourcesAndPrompts() {
-    // 型アサーションを用いて setRequestHandler を使用する
-    const serverWithHandler = this.server as unknown as {
-      setRequestHandler: (schema: typeof ListResourcesRequestSchema | typeof ListPromptsRequestSchema, handler: (params: any) => Promise<any>) => void;
-    };
+    // capabilities を登録
+    this.server.server.registerCapabilities({
+      resources: {},
+      prompts: {}
+    });
 
     // resources/list メソッドの実装
-    serverWithHandler.setRequestHandler(ListResourcesRequestSchema, async () => {
+    this.server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       logger.info('Handling resources/list request');
+      // 現在はリソースを提供していないので空の配列を返す
       return { resources: [] };
     });
 
     // prompts/list メソッドの実装
-    serverWithHandler.setRequestHandler(ListPromptsRequestSchema, async () => {
+    this.server.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       logger.info('Handling prompts/list request');
+      // 現在はプロンプトを提供していないので空の配列を返す
       return { prompts: [] };
     });
   }

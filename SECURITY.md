@@ -6,7 +6,7 @@ Currently, we are providing security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.3.x   | :x: 　　　　　　　　　|
+| 0.3.x   | :white_check_mark: |
 | 0.2.7   | :x: 　　　　　　　　　|
 | 0.2.6   | :x: 　　　　　　　　　|
 | < 0.2.6 | :x:                |

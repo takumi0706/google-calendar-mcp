@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import logger from '../utils/logger';
-import config from '../config/config';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';

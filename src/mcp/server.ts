@@ -22,7 +22,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.7',
+      version: '0.2.8',
     });
 
     // Stdioトランスポートの設定
@@ -41,11 +41,17 @@ class GoogleCalendarMcpServer {
   // メッセージ処理用のヘルパー関数を追加
   private processJsonRpcMessage(message: string): any {
     try {
-      // 余分な文字を取り除く
-      const trimmedMessage = message.trim();
+      // 特殊文字やBOMの除去
+      const cleanedMessage = message.replace(/^\uFEFF/, '').trim();
       
-      // 有効なJSONかどうかチェック
-      return JSON.parse(trimmedMessage);
+      // 複数JSONオブジェクトが連結されている可能性があるので最初の有効なJSONだけを解析
+      const match = cleanedMessage.match(/(\{.*\}|\[.*\])/s);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      
+      // 通常の解析も試す
+      return JSON.parse(cleanedMessage);
     } catch (error) {
       logger.error(`Error parsing JSON-RPC message: ${error}`);
       logger.debug(`Problematic message: "${message}"`);

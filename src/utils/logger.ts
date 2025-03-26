@@ -27,7 +27,10 @@ const logger = winston.createLogger({
     })
   ),
   transports: [
-    new winston.transports.Console(),
+    // stderr に出力するように設定
+    new winston.transports.Console({
+      stderrLevels: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+    }),
     // ディレクトリ作成が失敗してもコンソールだけは動作するようにtry-catchで囲む
     ...(() => {
       try {

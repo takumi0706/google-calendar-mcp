@@ -48,19 +48,23 @@ const logger = winston.createLogger({
   ],
 });
 
-// Winston型を拡張してdebugメソッドを追加
-interface LoggerWithDebug extends winston.Logger {
-  debug: (message: string, meta?: any) => void;
-}
-
-// debug メソッドの追加
-const loggerWithDebug: LoggerWithDebug = {
+// デバッグメソッドを追加したオリジナルロガー
+const customLogger = {
   ...logger,
+  // 既存のメソッドをそのまま保持
+  error: logger.error.bind(logger),
+  warn: logger.warn.bind(logger),
+  info: logger.info.bind(logger),
+  http: logger.http.bind(logger),
+  verbose: logger.verbose.bind(logger),
+  silly: logger.silly.bind(logger),
+  
+  // デバッグメソッドを追加
   debug: (message: string, meta?: any) => {
     if (process.env.LOG_LEVEL === 'debug') {
       logger.info(`[DEBUG] ${message}`, meta);
     }
   }
-} as LoggerWithDebug;
+};
 
-export default loggerWithDebug;
+export default customLogger;

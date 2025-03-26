@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import fs from 'fs/promises';
 import config from '../config/config';
 import logger from '../utils/logger';
 import { createServer } from 'http';
@@ -28,41 +27,19 @@ class GoogleAuth {
     });
   }
 
-  // トークンを取得または更新
+  // トークンを取得または更新（ファイル保存は行わず、メモリ上に保持）
   async getAuthenticatedClient(): Promise<OAuth2Client> {
-    try {
-      // トークンファイルが存在するか確認
-      const token = await this.loadTokenFromFile();
-      if (token) {
-        this.oauth2Client.setCredentials(token);
-        
-        // トークンの有効期限チェック
-        if (this.isTokenExpired(token)) {
-          logger.info('Token expired, refreshing...');
-          await this.refreshToken();
-        }
-        
-        return this.oauth2Client;
-      } else {
-        // 新規認証が必要
-        return await this.initiateAuthorization();
+    // すでに資格情報が設定されていればそのまま返す
+    if (this.oauth2Client.credentials && this.oauth2Client.credentials.access_token) {
+      // 有効期限切れチェックが必要な場合はここで実施
+      if (this.isTokenExpired(this.oauth2Client.credentials)) {
+        logger.info('Token expired, refreshing...');
+        await this.refreshToken();
       }
-    } catch (error) {
-      logger.error(`Error getting authenticated client: ${error}`);
-      // 認証をやり直し
-      return await this.initiateAuthorization();
+      return this.oauth2Client;
     }
-  }
-
-  // ファイルからトークンを読み込み
-  private async loadTokenFromFile() {
-    try {
-      const tokenFile = await fs.readFile(config.google.tokenPath, 'utf-8');
-      return JSON.parse(tokenFile);
-    } catch (err) {
-      logger.info('No token file found, authorization required');
-      return null;
-    }
+    // 新規認証
+    return await this.initiateAuthorization();
   }
 
   // トークンの有効期限チェック
@@ -71,12 +48,11 @@ class GoogleAuth {
     return token.expiry_date <= Date.now();
   }
 
-  // トークンの更新
+  // トークンの更新（ファイル保存は行わない）
   private async refreshToken(): Promise<void> {
     try {
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       this.oauth2Client.setCredentials(credentials);
-      await this.saveTokenToFile(credentials);
     } catch (error) {
       logger.error(`Failed to refresh token: ${error}`);
       throw error;
@@ -92,7 +68,6 @@ class GoogleAuth {
     this.authorizationPromise = new Promise((resolve, reject) => {
       logger.info(`Please authorize this app by visiting this URL: ${this.authUrl}`);
 
-      // ブラウザを自動で開く
       try {
         open(this.authUrl);
         logger.info('Opening browser for authorization...');
@@ -101,7 +76,6 @@ class GoogleAuth {
         logger.info(`Please open this URL manually: ${this.authUrl}`);
       }
 
-      // ローカルサーバーを起動してOAuth2コールバックを処理
       const server = createServer(async (req, res) => {
         try {
           const url = parse(req.url || '', true);
@@ -111,18 +85,14 @@ class GoogleAuth {
               throw new Error('No code parameter in callback URL');
             }
 
-            // コードからトークンを取得
+            // コードからトークン取得
             const { tokens } = await this.oauth2Client.getToken(code);
             this.oauth2Client.setCredentials(tokens);
 
-            // トークンをファイルに保存
-            await this.saveTokenToFile(tokens);
-
-            // レスポンスを返してブラウザを閉じるよう促す
+            // レスポンスを返す
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(`<html><body><h3>Authentication was successful. Please close this window and continue.</h3></body></html>`);
 
-            // サーバーを閉じてプロミスを解決
             server.close(() => {
               this.authorizationPromise = null;
               resolve(this.oauth2Client);
@@ -146,7 +116,6 @@ class GoogleAuth {
         logger.info(`Waiting for authorization on ${config.server.host}:${config.server.port}...`);
       });
 
-      // エラーハンドリング
       server.on('error', (error) => {
         logger.error(`Server error: ${error}`);
         this.authorizationPromise = null;
@@ -155,17 +124,6 @@ class GoogleAuth {
     });
 
     return this.authorizationPromise;
-  }
-
-  // トークンをファイルに保存
-  private async saveTokenToFile(token: any): Promise<void> {
-    try {
-      await fs.writeFile(config.google.tokenPath, JSON.stringify(token));
-      logger.info(`Token saved to ${config.google.tokenPath}`);
-    } catch (error) {
-      logger.error(`Error saving token: ${error}`);
-      throw error;
-    }
   }
 }
 

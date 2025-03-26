@@ -5,6 +5,7 @@ import config from '../config/config';
 import logger from '../utils/logger';
 import { createServer } from 'http';
 import { parse } from 'url';
+import open from 'open';
 
 class GoogleAuth {
   private oauth2Client: OAuth2Client;
@@ -90,6 +91,15 @@ class GoogleAuth {
 
     this.authorizationPromise = new Promise((resolve, reject) => {
       logger.info(`Please authorize this app by visiting this URL: ${this.authUrl}`);
+
+      // ブラウザを自動で開く
+      try {
+        open(this.authUrl);
+        logger.info('Opening browser for authorization...');
+      } catch (error) {
+        logger.warn(`Failed to open browser automatically: ${error}`);
+        logger.info(`Please open this URL manually: ${this.authUrl}`);
+      }
 
       // ローカルサーバーを起動してOAuth2コールバックを処理
       const server = createServer(async (req, res) => {

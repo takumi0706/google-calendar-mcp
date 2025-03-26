@@ -77,7 +77,9 @@ class GoogleCalendarMcpServer {
           message = this.processJsonRpcMessage(message);
         }
         logger.info(`Message from client: ${JSON.stringify(message)}`);
-        return await originalOnMessage(message);
+        if (originalOnMessage) {
+          return await originalOnMessage(message);
+        }
       } catch (err) {
         logger.error(`Error processing client message: ${err}`);
       }

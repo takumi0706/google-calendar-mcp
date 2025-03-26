@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.2.7-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.3-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop.
 
@@ -9,6 +9,8 @@ A Model Context Protocol (MCP) server implementation for Google Calendar integra
 - Google Calendar event management (get, create, update, delete)
 - OAuth2 authentication with Google Calendar API
 - MCP SDK integration for Claude Desktop
+- Automatic browser opening for authorization
+- In-memory token management (no file-based storage)
 - Simple setup and configuration
 
 ## Installation
@@ -51,26 +53,6 @@ Add the server to your `claude_desktop_config.json`:
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
         "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
       }
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/username/Desktop",
-        "/Users/username/Downloads",
-        "/Users/username/Documents"
-      ]
-    },
-    "brave-search": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
-      "env": {
-        "BRAVE_API_KEY": "your_brave_api_key"
-      }
     }
   }
 }
@@ -93,12 +75,13 @@ This server uses:
 - **Google APIs**: `googleapis` for Google Calendar API access
 - **TypeScript**: For type-safe code
 - **Zod**: For schema validation
+- **Open**: For automatic browser opening during auth
 
 ## Storage and Logging
 
 The server stores the following data:
 
-- **OAuth Token**: Stored in `token.json` in the current working directory
+- **OAuth Token**: Stored in memory only (no file-based storage in v0.3.3+)
 - **Logs**: Stored in `~/.google-calendar-mcp/logs/` in the user's home directory
 
 ## Troubleshooting
@@ -117,19 +100,41 @@ If you encounter any issues:
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
-### Version 0.2.7 Fixes
+## Version History
 
-- Fixed JSON-RPC message processing to handle malformed messages and avoid "Unexpected non-whitespace character after JSON" errors
+### Version 0.3.3 Changes
+- Removed file-based token storage and improved in-memory token management
+- Fixed various memory leaks and improved resource management
+- Enhanced stability and error handling
+
+### Version 0.3.2 Changes
+- Added automatic browser opening for Google Calendar authorization
+- Improved user experience during authentication flow
+
+### Version 0.3.1 Changes
+- Updated server version indicator
+- Fixed minor bugs in event handling
+
+### Version 0.2.7 Fixes
+- Fixed JSON-RPC message processing to handle malformed messages
 - Improved message processing between client and server with more robust parsing
 - Enhanced logging format with better context information
 - Added debug mode support for troubleshooting JSON-RPC messages
 
 ### Version 0.2.6 Fixes
-
 - Fixed JSON-RPC message handling that was causing parsing errors
 - Removed custom TCP socket server which was causing connection issues
 - Added proper error handling for transport errors
 - Improved logging of message exchanges between client and server
+
+### Version 0.2.0 Changes
+- Updated to use the latest MCP SDK API (v1.7.0+)
+- Migrated from `Server` class to the modern `McpServer` class
+- Improved type safety with properly typed tool handlers
+- Fixed update operations to handle partial event updates properly
+- Enhanced error handling with detailed error messages
+- Optimized performance when handling calendar operations
+- Simplified implementation with direct API calls
 
 ## Development
 
@@ -146,16 +151,6 @@ npm install
 # Run in development mode
 npm run dev
 ```
-
-## Changes in version 0.2.0
-
-- Updated to use the latest MCP SDK API (v1.7.0+)
-- Migrated from `Server` class to the modern `McpServer` class
-- Improved type safety with properly typed tool handlers
-- Fixed update operations to handle partial event updates properly
-- Enhanced error handling with detailed error messages
-- Optimized performance when handling calendar operations
-- Simplified implementation with direct API calls
 
 ## License
 

@@ -18,6 +18,7 @@ yarn-error.log*
 
 # IDE specific files
 .idea/
+.junie/
 .vscode/
 *.swp
 *.swo

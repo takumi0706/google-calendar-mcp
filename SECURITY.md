@@ -16,7 +16,7 @@ Currently, we are providing security updates for the following versions:
 We take the security of Google Calendar MCP seriously. If you believe you've found a security vulnerability, please follow these steps:
 
 1. **Do not disclose the vulnerability publicly**
-2. **Email us directly** at [takumi0706@example.com](mailto:takumi0706@example.com) with details about the vulnerability
+2. **Email us directly** at [takumi0706@example.com](mailto:ganndamu0706@gmail.com) with details about the vulnerability
 3. Include the following information:
    - Description of the vulnerability
    - Steps to reproduce

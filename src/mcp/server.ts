@@ -4,7 +4,11 @@ import logger from '../utils/logger';
 import { z } from 'zod';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarEvent } from '../calendar/types';
-import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
+import { 
+  JSONRPCMessage, 
+  ListResourcesRequestSchema,
+  ListPromptsRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
 
 // ツールレスポンスの型
 type ToolResponse = {
@@ -97,14 +101,14 @@ class GoogleCalendarMcpServer {
   // リソースとプロンプトのメソッド実装
   private implementResourcesAndPrompts() {
     // resources/list メソッドの実装
-    this.server.method('resources/list', async () => {
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       logger.info('Handling resources/list request');
       // 現在はリソースを提供していないので空の配列を返す
       return { resources: [] };
     });
 
     // prompts/list メソッドの実装
-    this.server.method('prompts/list', async () => {
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       logger.info('Handling prompts/list request');
       // 現在はプロンプトを提供していないので空の配列を返す
       return { prompts: [] };

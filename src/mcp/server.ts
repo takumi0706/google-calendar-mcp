@@ -21,7 +21,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.2.8',
+      version: '0.3.0',
     });
 
     // Stdioトランスポートの設定

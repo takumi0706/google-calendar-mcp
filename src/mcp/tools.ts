@@ -16,6 +16,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
  */
 export class ToolsManager {
   /**
+   * 登録されたツールを保持するプロパティ
+   */
+  public tools: Record<string, any> = {};
+
+  /**
    * MCPサーバーにツールを登録する
    * @param server MCPサーバーインスタンス
    */
@@ -23,15 +28,19 @@ export class ToolsManager {
     logger.info('Registering calendar tools with MCP server');
 
     // getEvents ツール
+    const getEventsSchema = {
+      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+      timeMin: z.string().optional().describe('取得開始日時（ISO 8601形式。例: 2025-03-01T00:00:00Z）'),
+      timeMax: z.string().optional().describe('取得終了日時（ISO 8601形式）'),
+      maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
+      orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
+    };
+
+    this.tools['getEvents'] = getEventsSchema;
+
     server.tool(
       'getEvents',
-      {
-        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-        timeMin: z.string().optional().describe('取得開始日時（ISO 8601形式。例: 2025-03-01T00:00:00Z）'),
-        timeMax: z.string().optional().describe('取得終了日時（ISO 8601形式）'),
-        maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
-        orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
-      },
+      getEventsSchema,
       async (args, _extra) => {
         try {
           logger.info(`Executing getEvents with params: ${JSON.stringify(args)}`);
@@ -51,30 +60,34 @@ export class ToolsManager {
     );
 
     // createEvent ツール
+    const createEventSchema = {
+      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+      event: z.object({
+        summary: z.string().min(1).describe('イベントの件名（必須）'),
+        description: z.string().optional().describe('イベントの説明'),
+        location: z.string().optional().describe('場所'),
+        start: z.object({
+          dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T09:00:00+09:00）'),
+          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+          timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
+        }),
+        end: z.object({
+          dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T10:00:00+09:00）'),
+          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+          timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
+        }),
+        attendees: z.array(z.object({
+          email: z.string().email(),
+          displayName: z.string().optional(),
+        })).optional().describe('参加者リスト'),
+      }),
+    };
+
+    this.tools['createEvent'] = createEventSchema;
+
     server.tool(
       'createEvent',
-      {
-        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-        event: z.object({
-          summary: z.string().min(1).describe('イベントの件名（必須）'),
-          description: z.string().optional().describe('イベントの説明'),
-          location: z.string().optional().describe('場所'),
-          start: z.object({
-            dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T09:00:00+09:00）'),
-            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-            timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
-          }),
-          end: z.object({
-            dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T10:00:00+09:00）'),
-            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-            timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
-          }),
-          attendees: z.array(z.object({
-            email: z.string().email(),
-            displayName: z.string().optional(),
-          })).optional().describe('参加者リスト'),
-        }),
-      },
+      createEventSchema,
       async (args, _extra) => {
         try {
           logger.info(`Executing createEvent with params: ${JSON.stringify(args)}`);
@@ -94,27 +107,31 @@ export class ToolsManager {
     );
 
     // updateEvent ツール
+    const updateEventSchema = {
+      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+      eventId: z.string().min(1).describe('更新するイベントのID（必須）'),
+      event: z.object({
+        summary: z.string().optional().describe('イベントの件名'),
+        description: z.string().optional().describe('イベントの説明'),
+        location: z.string().optional().describe('場所'),
+        start: z.object({
+          dateTime: z.string().optional().describe('ISO 8601形式の日時'),
+          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+          timeZone: z.string().optional().describe('タイムゾーン'),
+        }).optional(),
+        end: z.object({
+          dateTime: z.string().optional().describe('ISO 8601形式の日時'),
+          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
+          timeZone: z.string().optional().describe('タイムゾーン'),
+        }).optional(),
+      }),
+    };
+
+    this.tools['updateEvent'] = updateEventSchema;
+
     server.tool(
       'updateEvent',
-      {
-        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-        eventId: z.string().min(1).describe('更新するイベントのID（必須）'),
-        event: z.object({
-          summary: z.string().optional().describe('イベントの件名'),
-          description: z.string().optional().describe('イベントの説明'),
-          location: z.string().optional().describe('場所'),
-          start: z.object({
-            dateTime: z.string().optional().describe('ISO 8601形式の日時'),
-            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-            timeZone: z.string().optional().describe('タイムゾーン'),
-          }).optional(),
-          end: z.object({
-            dateTime: z.string().optional().describe('ISO 8601形式の日時'),
-            date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-            timeZone: z.string().optional().describe('タイムゾーン'),
-          }).optional(),
-        }),
-      },
+      updateEventSchema,
       async (args, _extra) => {
         try {
           logger.info(`Executing updateEvent with params: ${JSON.stringify(args)}`);
@@ -150,12 +167,16 @@ export class ToolsManager {
     );
 
     // deleteEvent ツール
+    const deleteEventSchema = {
+      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+      eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
+    };
+
+    this.tools['deleteEvent'] = deleteEventSchema;
+
     server.tool(
       'deleteEvent',
-      {
-        calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-        eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
-      },
+      deleteEventSchema,
       async (args, _extra) => {
         try {
           logger.info(`Executing deleteEvent with params: ${JSON.stringify(args)}`);

@@ -5,59 +5,59 @@
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 
-Model Context Protocol (MCP) サーバーの実装で、Google Calendarとのインテグレーションを提供します。このサーバーを使用することで、Claude DesktopからGoogle Calendarの予定管理が可能になります。
+A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 セキュリティと品質の改善点 (v0.4.0)
+## 🆕 Security and Quality Improvements (v0.4.0)
 
-### セキュリティ強化
-- **トークン暗号化**: AES-256-GCM暗号化によるトークンの安全な保存
-- **OAuth認証強化**: CSRF保護とPKCE実装による認証フローの改善
-- **セキュリティヘッダー**: Helmet.jsを使用したHTTPセキュリティヘッダーの適用
-- **レートリミット**: APIエンドポイントへのアクセス制限による保護
-- **入力バリデーション**: Zodによる厳格なデータ検証システム
+### Security Enhancements
+- **Token Encryption**: Secure token storage with AES-256-GCM encryption
+- **OAuth Flow Improvements**: CSRF protection and PKCE implementation
+- **Security Headers**: HTTP security headers applied using Helmet.js
+- **Rate Limiting**: API endpoint protection against abuse
+- **Input Validation**: Strict data validation with Zod schema
 
-### 品質向上
-- **テストカバレッジ向上**: 単体テストと統合テストの拡充
-- **エラーハンドリング改善**: 統一されたエラーフォーマットと詳細なログ記録
-- **CI/CD強化**: GitHub Actionsによる自動ビルド、テスト、セキュリティスキャン
-- **ドキュメント拡充**: 詳細なAPIリファレンスとセキュリティガイドライン
-- **コード品質**: 厳格なTypeScript型定義と一貫したコーディングスタイル
+### Quality Improvements
+- **Test Coverage**: Enhanced unit and integration tests
+- **Error Handling**: Unified error format and detailed logging
+- **CI/CD Pipeline**: Automated build, test, and security scanning with GitHub Actions
+- **Documentation**: Detailed API reference and security guidelines
+- **Code Quality**: Strict TypeScript type definitions and consistent coding style
 
-## 機能
+## Features
 
-- Google Calendarイベント管理（取得、作成、更新、削除）
-- OAuth2認証による安全なGoogle Calendar API連携
-- MCP SDKとClaudeの統合
-- 認証のための自動ブラウザ起動
-- メモリ内トークン管理（ファイルベースのストレージなし）
-- シンプルなセットアップと設定
+- Google Calendar event management (get, create, update, delete)
+- OAuth2 authentication with Google Calendar API
+- MCP SDK integration for Claude Desktop
+- Automatic browser opening for authorization
+- In-memory token management (no file-based storage)
+- Simple setup and configuration
 
-## インストール
+## Installation
 
 ```bash
 npx @takumi0706/google-calendar-mcp
 ```
 
-## 使用方法
+## Usage
 
-### 前提条件
+### Prerequisites
 
-1. Google Cloudプロジェクトを作成し、Google Calendar APIを有効化
-2. Google Cloud Consoleで OAuth2 認証情報を設定
-3. 環境変数を設定：
+1. Create a Google Cloud Project and enable the Google Calendar API
+2. Configure OAuth2 credentials in the Google Cloud Console
+3. Set up environment variables:
 
 ```bash
-# .envファイルに環境変数を設定
-GOOGLE_CLIENT_ID=あなたのクライアントID
-GOOGLE_CLIENT_SECRET=あなたのクライアントシークレット
+# Create a .env file with your Google OAuth credentials
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
-# オプション: トークン暗号化キー（指定しない場合は自動生成）
-TOKEN_ENCRYPTION_KEY=32バイトの16進数キー
+# Optional: Token encryption key (auto-generated if not provided)
+TOKEN_ENCRYPTION_KEY=32-byte-hex-key
 ```
 
-### Claude Desktop の設定
+### Claude Desktop Configuration
 
-`claude_desktop_config.json` にサーバーを追加：
+Add the server to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -70,8 +70,8 @@ TOKEN_ENCRYPTION_KEY=32バイトの16進数キー
         "@takumi0706/google-calendar-mcp"
       ],
       "env": {
-        "GOOGLE_CLIENT_ID": "あなたのクライアントID",
-        "GOOGLE_CLIENT_SECRET": "あなたのクライアントシークレット",
+        "GOOGLE_CLIENT_ID": "your_client_id",
+        "GOOGLE_CLIENT_SECRET": "your_client_secret",
         "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
       }
     }
@@ -81,145 +81,145 @@ TOKEN_ENCRYPTION_KEY=32バイトの16進数キー
 
 ## API
 
-このMCPサーバーは、以下のGoogle Calendar機能を提供します：
+This MCP server provides the following functions for Google Calendar:
 
-- `getEvents`: ユーザーのカレンダーからイベントを取得
-- `createEvent`: 新しいカレンダーイベントを作成
-- `updateEvent`: 既存のカレンダーイベントを更新
-- `deleteEvent`: カレンダーイベントを削除
+- `getEvents`: Retrieve events from the user's calendar
+- `createEvent`: Create a new calendar event
+- `updateEvent`: Update an existing calendar event
+- `deleteEvent`: Delete a calendar event
 
-## 実装詳細
+## Implementation Details
 
-このサーバーは以下を使用しています：
+This server uses:
 
-- **MCP SDK**: Claude Desktop統合のための `@modelcontextprotocol/sdk`
-- **Google APIs**: Google Calendar APIアクセスのための `googleapis`
-- **TypeScript**: 型安全なコード
-- **Zod**: スキーマ検証
-- **Helmet.js**: セキュリティヘッダー
-- **AES-256-GCM**: トークン暗号化
-- **Jest**: ユニットテストとカバレッジ
-- **GitHub Actions**: CI/CD
+- **MCP SDK**: `@modelcontextprotocol/sdk` for Claude Desktop integration
+- **Google APIs**: `googleapis` for Google Calendar API access
+- **TypeScript**: For type-safe code
+- **Zod**: For schema validation
+- **Helmet.js**: For security headers
+- **AES-256-GCM**: For token encryption
+- **Jest**: For unit testing and coverage
+- **GitHub Actions**: For CI/CD
 
-## ストレージとログ
+## Storage and Logging
 
-サーバーは以下のデータを保存します：
+The server stores the following data:
 
-- **OAuthトークン**: メモリ内のみに保存（v0.3.3+以降はファイルベースのストレージなし）
-- **ログ**: ユーザーのホームディレクトリの `~/.google-calendar-mcp/logs/` に保存
+- **OAuth Token**: Stored in memory only (no file-based storage in v0.3.3+)
+- **Logs**: Stored in `~/.google-calendar-mcp/logs/` in the user's home directory
 
-## セキュリティ対策
+## Security Measures
 
-v0.4.0で導入されたセキュリティ機能：
+Security features introduced in v0.4.0:
 
-1. **トークン暗号化**：
-   - AES-256-GCM暗号化によるトークンの保護
-   - 各トークンに一意の初期化ベクトル(IV)を使用
-   - 環境変数またはランダムに生成されたキーによる暗号化
+1. **Token Encryption**:
+   - Protection of tokens with AES-256-GCM encryption
+   - Unique initialization vector (IV) for each token
+   - Encryption key from environment variable or auto-generated
 
-2. **OAuth認証強化**：
-   - CSRF攻撃からの保護のための一意のstate値
-   - PKCEによる認証コード傍受の防止
-   - 厳格な認証フロー検証
+2. **OAuth Authentication Enhancements**:
+   - Unique state values for CSRF attack protection
+   - PKCE to prevent authorization code interception
+   - Strict authentication flow validation
 
-3. **Webセキュリティ**：
+3. **Web Security**:
    - Content Security Policy (CSP)
-   - XSS保護
-   - HTTPSのみの接続推奨
-   - レートリミッティング
+   - XSS protection
+   - HTTPS connection recommended
+   - Rate limiting
 
-詳細は [SECURITY.md](SECURITY.md) をご参照ください。
+For more details, see [SECURITY.md](SECURITY.md).
 
-## トラブルシューティング
+## Troubleshooting
 
-問題が発生した場合：
+If you encounter any issues:
 
-1. ホームディレクトリの `~/.google-calendar-mcp/logs/` にあるログを確認
-2. Google OAuth認証情報が正しく設定されていることを確認
-3. Google Calendar APIへのアクセス権限が十分にあることを確認
-4. Claude Desktop設定が正しいことを確認
+1. Check the logs in your home directory at `~/.google-calendar-mcp/logs/`
+2. Make sure your Google OAuth credentials are correctly configured
+3. Ensure you have sufficient permissions for Google Calendar API access
+4. Verify your Claude Desktop configuration is correct
 
-### よくあるエラー
+### Common Errors
 
-- **JSON解析エラー**: `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)` のようなエラーは、JSON-RPCメッセージが不正な形式であることが原因です。このバグはバージョン0.2.6+で修正されました。
-- **認証エラー**: Google OAuth認証情報の確認が必要です
-- **接続エラー**: サーバーが一つだけ実行されていることを確認してください
-- **切断の問題**: サーバーがMCPメッセージを適切に処理していることを確認してください
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in version 0.2.6+.
+- **Authentication Errors**: Verify your Google OAuth credentials
+- **Connection Errors**: Make sure only one instance of the server is running
+- **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
-## バージョン履歴
+## Version History
 
-### バージョン0.4.0の変更点
-- トークン暗号化システムを実装（AES-256-GCM）
-- CSRF保護とPKCEを含む強化されたOAuth認証フロー
-- Helmet.jsを使用したセキュリティヘッダーの追加
-- レートリミットの実装によるDDoS保護
-- 強化された入力検証とエラーハンドリング
-- テストカバレッジの向上
-- GitHub ActionsによるCI/CD自動化
-- セキュリティドキュメントの拡充
+### Version 0.4.0 Changes
+- Implemented token encryption system (AES-256-GCM)
+- Enhanced OAuth authentication flow with CSRF protection and PKCE
+- Added security headers using Helmet.js
+- Implemented rate limiting for DDoS protection
+- Enhanced input validation and error handling
+- Improved test coverage
+- Automated CI/CD with GitHub Actions
+- Enhanced security documentation
 
-### バージョン0.3.3の変更点
-- ファイルベースのトークンストレージを削除し、メモリ内トークン管理を改善
-- メモリリークの修正とリソース管理の向上
-- 安定性とエラー処理の強化
+### Version 0.3.3 Changes
+- Removed file-based token storage and improved in-memory token management
+- Fixed various memory leaks and improved resource management
+- Enhanced stability and error handling
 
-### バージョン0.3.2の変更点
-- Google Calendar認証のための自動ブラウザ起動を追加
-- 認証フロー中のユーザーエクスペリエンスを向上
+### Version 0.3.2 Changes
+- Added automatic browser opening for Google Calendar authorization
+- Improved user experience during authentication flow
 
-### バージョン0.3.1の変更点
-- サーバーバージョンインジケータを更新
-- イベント処理の細かなバグを修正
+### Version 0.3.1 Changes
+- Updated server version indicator
+- Fixed minor bugs in event handling
 
-### バージョン0.2.7の修正
-- 不正な形式のメッセージを処理するためのJSON-RPCメッセージ処理を修正
-- クライアントとサーバー間のメッセージ処理を改善
-- コンテキスト情報を含むログ形式の強化
-- JSON-RPCメッセージのトラブルシューティングのためのデバッグモードサポートを追加
+### Version 0.2.7 Fixes
+- Fixed JSON-RPC message processing to handle malformed messages
+- Improved message processing between client and server with more robust parsing
+- Enhanced logging format with better context information
+- Added debug mode support for troubleshooting JSON-RPC messages
 
-### バージョン0.2.6の修正
-- 解析エラーを引き起こしていたJSON-RPCメッセージ処理を修正
-- 接続問題を引き起こしていたカスタムTCPソケットサーバーを削除
-- トランスポートエラーの適切なエラー処理を追加
-- クライアントとサーバー間のメッセージ交換のロギングを改善
+### Version 0.2.6 Fixes
+- Fixed JSON-RPC message handling that was causing parsing errors
+- Removed custom TCP socket server which was causing connection issues
+- Added proper error handling for transport errors
+- Improved logging of message exchanges between client and server
 
-### バージョン0.2.0の変更点
-- 最新のMCP SDK API（v1.7.0+）を使用するように更新
-- 古い`Server`クラスから最新の`McpServer`クラスに移行
-- 適切に型付けされたツールハンドラによる型安全性の向上
-- 部分的なイベント更新を適切に処理するように更新操作を修正
-- 詳細なエラーメッセージによるエラー処理の強化
-- カレンダー操作を処理する際のパフォーマンスの最適化
-- 直接APIコールによる実装の簡素化
+### Version 0.2.0 Changes
+- Updated to use the latest MCP SDK API (v1.7.0+)
+- Migrated from `Server` class to the modern `McpServer` class
+- Improved type safety with properly typed tool handlers
+- Fixed update operations to handle partial event updates properly
+- Enhanced error handling with detailed error messages
+- Optimized performance when handling calendar operations
+- Simplified implementation with direct API calls
 
-## 開発
+## Development
 
-このプロジェクトに貢献するには：
+To contribute to this project:
 
 ```bash
-# リポジトリをクローン
+# Clone the repository
 git clone https://github.com/takumi0706/google-calendar-mcp.git
 cd google-calendar-mcp
 
-# 依存関係をインストール
+# Install dependencies
 npm install
 
-# 開発モードで実行
+# Run in development mode
 npm run dev
 ```
 
-## テスト
+## Testing
 
-テストを実行するには：
+To run the tests:
 
 ```bash
-# すべてのテストを実行
+# Run all tests
 npm test
 
-# カバレッジレポート付きでテストを実行
+# Run tests with coverage report
 npm test -- --coverage
 ```
 
-## ライセンス
+## License
 
 MIT

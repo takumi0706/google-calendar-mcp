@@ -43,7 +43,7 @@ class GoogleCalendarMcpServer {
       const cleanedMessage = message.replace(/^\uFEFF/, '').trim();
       
       // 複数JSONオブジェクトが連結されている可能性があるので最初の有効なJSONだけを解析
-      const match = cleanedMessage.match(/(\{.*\}|\[.*\])/s);
+      const match = cleanedMessage.match(/(\{.*|\[.*)/s);
       if (match) {
         return JSON.parse(match[0]);
       }

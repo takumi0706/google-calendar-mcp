@@ -1,18 +1,18 @@
 import calendarApi from '../calendar/calendar-api';
 import {
-  getEventsSchema,
-  createEventSchema,
-  updateEventSchema,
-  deleteEventSchema,
+  getEventsParamsSchema,
+  createEventParamsSchema,
+  updateEventParamsSchema,
+  deleteEventParamsSchema,
 } from './schemas';
 import logger from '../utils/logger';
 import { z } from 'zod';
 
 // カスタムデータ型の定義
-type GetEventsParams = z.infer<typeof getEventsSchema>;
-type CreateEventParams = z.infer<typeof createEventSchema>;
-type UpdateEventParams = z.infer<typeof updateEventSchema>;
-type DeleteEventParams = z.infer<typeof deleteEventSchema>;
+type GetEventsParams = z.infer<typeof getEventsParamsSchema>;
+type CreateEventParams = z.infer<typeof createEventParamsSchema>;
+type UpdateEventParams = z.infer<typeof updateEventParamsSchema>;
+type DeleteEventParams = z.infer<typeof deleteEventParamsSchema>;
 
 // ツールレスポンスの型
 type ToolResponse = {
@@ -34,7 +34,7 @@ export const tools = [
     },
     handler: async (params: GetEventsParams): Promise<ToolResponse> => {
       try {
-        const validatedParams = getEventsSchema.parse(params);
+        const validatedParams = getEventsParamsSchema.parse(params);
         logger.info(`Getting events with params: ${JSON.stringify(validatedParams)}`);
         const result = await calendarApi.getEvents(validatedParams);
         return {
@@ -80,7 +80,7 @@ export const tools = [
     },
     handler: async (params: CreateEventParams): Promise<ToolResponse> => {
       try {
-        const validatedParams = createEventSchema.parse(params);
+        const validatedParams = createEventParamsSchema.parse(params);
         logger.info(`Creating event: ${validatedParams.event.summary}`);
         const result = await calendarApi.createEvent(validatedParams);
         return {
@@ -119,7 +119,7 @@ export const tools = [
     },
     handler: async (params: UpdateEventParams): Promise<ToolResponse> => {
       try {
-        const validatedParams = updateEventSchema.parse(params);
+        const validatedParams = updateEventParamsSchema.parse(params);
         logger.info(`Updating event: ${validatedParams.eventId}`);
         const result = await calendarApi.updateEvent(validatedParams);
         return {
@@ -143,7 +143,7 @@ export const tools = [
     },
     handler: async (params: DeleteEventParams): Promise<ToolResponse> => {
       try {
-        const validatedParams = deleteEventSchema.parse(params);
+        const validatedParams = deleteEventParamsSchema.parse(params);
         logger.info(`Deleting event: ${validatedParams.eventId}`);
         const result = await calendarApi.deleteEvent(validatedParams);
         return {

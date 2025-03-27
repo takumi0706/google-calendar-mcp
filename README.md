@@ -5,6 +5,11 @@
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 
+<a href="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp/badge" />
+</a>
+
+
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
 ## 🆕 Security and Quality Improvements (v0.4.0)

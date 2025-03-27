@@ -17,7 +17,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.4.1',
+      version: '0.4.2',
     });
 
     // Stdioトランスポートの設定
@@ -29,10 +29,10 @@ class GoogleCalendarMcpServer {
     // メッセージ処理用の追加リスナー設定
     this.setupMessageLogging();
 
-    // ツールの登録
+    // ツールの登録（先に実行して tools プロパティを設定）
     this.registerTools();
 
-    // リソースとプロンプトのリスト機能を実装
+    // リソースとプロンプトのリスト機能を実装（ツール登録後に実行）
     this.implementResourcesAndPrompts();
   }
 
@@ -41,13 +41,13 @@ class GoogleCalendarMcpServer {
     try {
       // 特殊文字やBOMの除去
       const cleanedMessage = message.replace(/^\uFEFF/, '').trim();
-      
+
       // 複数JSONオブジェクトが連結されている可能性があるので最初の有効なJSONだけを解析
       const match = cleanedMessage.match(/(\{.*|\[.*)/s);
       if (match) {
         return JSON.parse(match[0]);
       }
-      
+
       // 通常の解析も試す
       return JSON.parse(cleanedMessage);
     } catch (error) {
@@ -92,10 +92,11 @@ class GoogleCalendarMcpServer {
 
   // リソースとプロンプトのメソッド実装
   private implementResourcesAndPrompts() {
-    // capabilities を登録
+    // capabilities を登録（ツールも含める）
     this.server.server.registerCapabilities({
       resources: {},
-      prompts: {}
+      prompts: {},
+      tools: toolsManager.tools // ツールを明示的に含める
     });
 
     // resources/list メソッドの実装
@@ -125,21 +126,21 @@ class GoogleCalendarMcpServer {
 
     try {
       logger.info('Initializing server...');
-      
+
       // サーバーとトランスポートの接続
       // MCP SDKの仕様に従い、stdioトランスポートを使用
       await this.server.connect(this.transport);
-      
+
       // エラーハンドリングを追加
       this.transport.onerror = (error: Error): void => {
         logger.error(`Transport error: ${error}`, { context: 'transport' });
       };
-      
+
       this.transport.onclose = (): void => {
         logger.info('Transport closed');
         this.isRunning = false;
       };
-      
+
       logger.info(`Server started and connected successfully`);
       this.isRunning = true;
     } catch (error) {

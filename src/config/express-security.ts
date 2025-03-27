@@ -2,7 +2,7 @@
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Express, Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 /**
  * Expressアプリケーションにセキュリティミドルウェアを設定

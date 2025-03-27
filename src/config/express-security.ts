@@ -52,13 +52,13 @@ export function setupSecurityMiddleware(app: Express): void {
   app.use(
     helmet.contentSecurityPolicy({
       directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        connectSrc: ["'self'", 'https://www.googleapis.com'],
-        imgSrc: ["'self'", 'data:'],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
+        defaultSrc: ['\'self\''],
+        scriptSrc: ['\'self\''],
+        connectSrc: ['\'self\'', 'https://www.googleapis.com'],
+        imgSrc: ['\'self\'', 'data:'],
+        styleSrc: ['\'self\'', '\'unsafe-inline\''],
+        fontSrc: ['\'self\''],
+        objectSrc: ['\'none\''],
         upgradeInsecureRequests: []
       }
     })

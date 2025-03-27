@@ -1,5 +1,6 @@
 // src/mcp/schemas.ts
 import { z } from 'zod';
+import { EventReminders } from '../calendar/types';
 
 /**
  * 日時の検証スキーマ
@@ -24,6 +25,19 @@ const attendeeSchema = z.object({
 });
 
 /**
+ * リマインダースキーマ
+ */
+const reminderSchema = z.object({
+  useDefault: z.boolean(), // undefined を許容しない
+  overrides: z.array(
+    z.object({
+      method: z.enum(['email', 'popup']),
+      minutes: z.number().int().positive()
+    })
+  ).optional()
+});
+
+/**
  * イベントスキーマ - Google Calendarイベントの作成・更新に使用
  */
 export const eventSchema = z.object({
@@ -33,22 +47,22 @@ export const eventSchema = z.object({
   start: dateTimeSchema,
   end: dateTimeSchema,
   attendees: z.array(attendeeSchema).optional(),
-  reminders: z.object({
-    useDefault: z.boolean().optional(),
-    overrides: z.array(
-      z.object({
-        method: z.enum(['email', 'popup']),
-        minutes: z.number().int().positive()
-      })
-    ).optional()
-  }).optional(),
-  // その他のGoogle Calendarフィールドも必要に応じて追加
+  reminders: reminderSchema.optional(), // リマインダースキーマを使用
 });
 
 /**
- * イベント更新スキーマ - eventSchemaの部分的な更新を許可
+ * イベント更新スキーマ - すべてのフィールドを任意に
+ * ただし、createdEventが必要になるため、summaryは必須
  */
-export const eventUpdateSchema = eventSchema.partial();
+export const eventUpdateSchema = z.object({
+  summary: z.string().min(1), // 必須
+  description: z.string().max(8000).optional(),
+  location: z.string().max(1000).optional(),
+  start: dateTimeSchema.optional(),
+  end: dateTimeSchema.optional(),
+  attendees: z.array(attendeeSchema).optional(),
+  reminders: reminderSchema.optional(),
+});
 
 /**
  * getEvents関数パラメータスキーマ

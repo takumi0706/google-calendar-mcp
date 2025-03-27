@@ -1,6 +1,5 @@
 // src/mcp/schemas.ts
 import { z } from 'zod';
-import { EventReminders } from '../calendar/types';
 
 /**
  * 日時の検証スキーマ

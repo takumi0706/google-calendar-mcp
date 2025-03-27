@@ -13,6 +13,7 @@ class TokenManager {
   private encryptionKey: Buffer;
   private tokens: Map<string, string> = new Map();
   private tokenExpirations: Map<string, number> = new Map();
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // 環境変数から暗号化キーを取得するか、ランダムに生成する
@@ -25,7 +26,7 @@ class TokenManager {
     }
 
     // 定期的に期限切れトークンをクリーンアップ
-    setInterval(this.cleanupExpiredTokens.bind(this), 60 * 60 * 1000); // 1時間ごと
+    this.cleanupInterval = setInterval(this.cleanupExpiredTokens.bind(this), 60 * 60 * 1000); // 1時間ごと
   }
 
   /**
@@ -145,6 +146,20 @@ class TokenManager {
     if (expiredCount > 0) {
       if (typeof logger.info === 'function') {
         logger.info(`Cleaned up ${expiredCount} expired tokens`);
+      }
+    }
+  }
+
+  /**
+   * クリーンアップタイマーを停止し、リソースを解放する
+   * テスト環境やアプリケーション終了時に呼び出すべき
+   */
+  public stopCleanupTimer(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      if (typeof logger.debug === 'function') {
+        logger.debug('TokenManager cleanup timer stopped');
       }
     }
   }

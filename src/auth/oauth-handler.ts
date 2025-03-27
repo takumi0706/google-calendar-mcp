@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 import { tokenManager } from './token-manager';
 import logger from '../utils/logger';
 import { AppError, ErrorCode } from '../utils/error-handler';
+import { CodeChallengeMethod } from 'google-auth-library/build/src/auth/oauth2client';
 
 /**
  * OAuthHandler - セキュアなOAuth認証フロー管理クラス
@@ -58,7 +59,7 @@ export class OAuthHandler {
       state,
       // PKCE拡張の実装
       // GoogleのOAuth2クライアントにはanyを使用して型エラーを回避
-      code_challenge_method: 'S256' as any,
+      code_challenge_method: CodeChallengeMethod.S256,
       code_challenge: codeChallenge
     });
   }

@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -12,11 +12,15 @@
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 Version 0.5.0 Improvements
+## 🆕 Version 0.5.1 Improvements
 
 ### Feature Enhancements
 - **Color Support**: Added ability to set and update event colors using colorId parameter
 - **Improved Event Management**: Enhanced event creation and update capabilities
+
+### Bug Fixes
+- **Resource Management**: Fixed TokenManager cleanup timer to properly release resources when tests complete
+- **Memory Leaks**: Improved handling of interval timers to prevent potential memory leaks
 
 ### Dependency Updates
 - **MCP SDK**: Updated from 1.7.0 to 1.8.0 for better Claude Desktop integration
@@ -163,6 +167,11 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.5.1 Changes
+- Fixed TokenManager cleanup timer to properly release resources when tests complete
+- Improved handling of interval timers to prevent potential memory leaks
+- Enhanced resource management for better application stability
 
 ### Version 0.5.0 Changes
 - Added color support for calendar events with colorId parameter

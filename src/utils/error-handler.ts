@@ -1,6 +1,6 @@
 // src/utils/error-handler.ts
 import { Request, Response, NextFunction } from 'express';
-import { logger } from './logger';
+import logger from './logger';
 
 /**
  * アプリケーションで使用するエラーコード

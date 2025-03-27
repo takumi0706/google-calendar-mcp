@@ -1,6 +1,6 @@
 // src/auth/token-manager.ts
 import crypto from 'crypto';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 /**
  * TokenManager - セキュアなトークン管理クラス
@@ -41,7 +41,8 @@ class TokenManager {
       let encrypted = cipher.update(token, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       
-      const authTag = cipher.getAuthTag();
+      // crypto.Cipher.prototype.getAuthTag は @types/node に定義されていないが、実際のNodeJSには存在する
+      const authTag = (cipher as any).getAuthTag();
       
       // 初期化ベクトル、認証タグ、暗号文を連結して保存
       const tokenData = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
@@ -52,7 +53,8 @@ class TokenManager {
       this.tokenExpirations.set(userId, expiryTime);
       
       logger.debug(`Token stored for user: ${userId}, expires: ${new Date(expiryTime).toISOString()}`);
-    } catch (error) {
+    } catch (err: unknown) {
+      const error = err as Error;
       logger.error('Failed to encrypt and store token', { userId, error: error.message });
       throw new Error('Token encryption failed');
     }
@@ -86,13 +88,16 @@ class TokenManager {
       const authTag = Buffer.from(authTagHex, 'hex');
       
       const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
-      decipher.setAuthTag(authTag);
+      
+      // crypto.Decipher.prototype.setAuthTag は @types/node に定義されていないが、実際のNodeJSには存在する
+      (decipher as any).setAuthTag(authTag);
       
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error) {
+    } catch (err: unknown) {
+      const error = err as Error;
       logger.error('Failed to decrypt token', { userId, error: error.message });
       return null;
     }

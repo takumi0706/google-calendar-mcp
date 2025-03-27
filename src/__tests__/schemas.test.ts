@@ -3,8 +3,7 @@ import {
   getEventsParamsSchema,
   createEventParamsSchema,
   updateEventParamsSchema,
-  deleteEventParamsSchema,
-  eventSchema
+  deleteEventParamsSchema
 } from '../mcp/schemas';
 
 // テスト環境を設定

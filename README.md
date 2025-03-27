@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -12,7 +12,18 @@
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 Security and Quality Improvements (v0.4.0)
+## 🆕 Version 0.5.0 Improvements
+
+### Feature Enhancements
+- **Color Support**: Added ability to set and update event colors using colorId parameter
+- **Improved Event Management**: Enhanced event creation and update capabilities
+
+### Dependency Updates
+- **MCP SDK**: Updated from 1.7.0 to 1.8.0 for better Claude Desktop integration
+- **Google APIs**: Updated googleapis from 133.0.0 to 148.0.0 for latest Calendar API features
+- **Logging**: Updated winston from 3.11.0 to 3.17.0 for enhanced logging capabilities
+- **Validation**: Updated zod from 3.22.4 to 3.24.2 for improved schema validation
+- **Stability**: Improved overall stability and compatibility with latest dependencies
 
 ### Security Enhancements
 - **Token Encryption**: Secure token storage with AES-256-GCM encryption
@@ -153,6 +164,15 @@ If you encounter any issues:
 
 ## Version History
 
+### Version 0.5.0 Changes
+- Added color support for calendar events with colorId parameter
+- Enhanced event creation and update capabilities
+- Updated @modelcontextprotocol/sdk from 1.7.0 to 1.8.0
+- Updated googleapis from 133.0.0 to 148.0.0
+- Updated winston from 3.11.0 to 3.17.0
+- Updated zod from 3.22.4 to 3.24.2
+- Improved stability and compatibility with latest dependencies
+
 ### Version 0.4.2 Changes
 - Improved tools registration to properly expose tool details to clients
 - Enhanced server capabilities registration with explicit tool definitions
@@ -202,7 +222,7 @@ If you encounter any issues:
 - Improved logging of message exchanges between client and server
 
 ### Version 0.2.0 Changes
-- Updated to use the latest MCP SDK API (v1.7.0+)
+- Updated to use the latest MCP SDK API (v1.8.0+)
 - Migrated from `Server` class to the modern `McpServer` class
 - Improved type safety with properly typed tool handlers
 - Fixed update operations to handle partial event updates properly

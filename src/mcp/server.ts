@@ -10,12 +10,6 @@ import {
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
-// ツールレスポンスの型
-type ToolResponse = {
-  content: { type: 'text'; text: string }[];
-  isError?: boolean;
-};
-
 class GoogleCalendarMcpServer {
   private server: McpServer;
   private transport: StdioServerTransport;
@@ -32,7 +26,7 @@ class GoogleCalendarMcpServer {
     this.transport = new StdioServerTransport();
 
     // オリジナルメッセージ処理は setupMessageLogging() で上書きされる
-    this.transport.onmessage = async (message: JSONRPCMessage): Promise<void> => {};
+    this.transport.onmessage = async (_message: JSONRPCMessage): Promise<void> => {};
 
     // メッセージ処理用の追加リスナー設定
     this.setupMessageLogging();
@@ -132,7 +126,7 @@ class GoogleCalendarMcpServer {
         maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
         orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
       },
-      async (args, extra) => {
+      async (args, _extra) => {
         try {
           logger.info(`Executing getEvents with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.getEvents(args);
@@ -174,7 +168,7 @@ class GoogleCalendarMcpServer {
           })).optional().describe('参加者リスト'),
         }),
       },
-      async (args, extra) => {
+      async (args, _extra) => {
         try {
           logger.info(`Executing createEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.createEvent(args);
@@ -213,7 +207,7 @@ class GoogleCalendarMcpServer {
           }).optional(),
         }),
       },
-      async (args, extra) => {
+      async (args, _extra) => {
         try {
           logger.info(`Executing updateEvent with params: ${JSON.stringify(args)}`);
           
@@ -253,7 +247,7 @@ class GoogleCalendarMcpServer {
         calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
         eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
       },
-      async (args, extra) => {
+      async (args, _extra) => {
         try {
           logger.info(`Executing deleteEvent with params: ${JSON.stringify(args)}`);
           const result = await calendarApi.deleteEvent(args);

@@ -7,7 +7,7 @@ import {
 } from './schemas';
 import logger from '../utils/logger';
 import { z } from 'zod';
-import { CalendarEvent, CreateEventParams, DeleteEventParams, EventReminders, GetEventsParams, UpdateEventParams } from '../calendar/types';
+import { CalendarEvent, CreateEventParams, DeleteEventParams, GetEventsParams, UpdateEventParams } from '../calendar/types';
 
 // ツールレスポンスの型
 type ToolResponse = {

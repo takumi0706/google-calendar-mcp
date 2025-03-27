@@ -6,7 +6,7 @@
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 
 <a href="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp/badge" />
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp/badge"  alt=""/>
 </a>
 
 

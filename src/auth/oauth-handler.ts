@@ -3,8 +3,11 @@ import crypto from 'crypto';
 import { Express, Request, Response } from 'express';
 import { google } from 'googleapis';
 import { tokenManager } from './token-manager';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import { AppError, ErrorCode } from '../utils/error-handler';
+
+// CodeChallengeMethod型の定義
+type CodeChallengeMethod = 'S256' | 'plain';
 
 /**
  * OAuthHandler - セキュアなOAuth認証フロー管理クラス
@@ -48,7 +51,7 @@ export class OAuthHandler {
     const expiry = Date.now() + 10 * 60 * 1000;
     this.stateMap.set(state, { expiry, redirectUri, codeVerifier });
     
-    logger.debug('Generated auth URL with PKCE', { state, redirectUri });
+    logger.info('Generated auth URL with PKCE', { state, redirectUri });
     
     // OAuth認証URLを生成
     const oauth2Client = this.getOAuthClient();
@@ -57,7 +60,7 @@ export class OAuthHandler {
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
       // PKCE拡張の実装
-      code_challenge_method: 'S256',
+      code_challenge_method: 'S256' as CodeChallengeMethod,
       code_challenge: codeChallenge
     });
   }
@@ -133,7 +136,8 @@ export class OAuthHandler {
       
       // リダイレクト
       res.redirect(stateData.redirectUri || '/auth-success');
-    } catch (error) {
+    } catch (err: unknown) {
+      const error = err as Error;
       logger.error('OAuth token exchange failed', { error: error.message, stack: error.stack });
       res.status(500).send('トークン交換に失敗しました。');
     }

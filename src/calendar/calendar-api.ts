@@ -3,7 +3,6 @@ import googleAuth from '../auth/google-auth';
 import logger from '../utils/logger';
 import {
   CalendarApiResponse,
-  CalendarEvent,
   CreateEventParams,
   DeleteEventParams,
   GetEventsParams,

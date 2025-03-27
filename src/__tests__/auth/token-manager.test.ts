@@ -27,6 +27,11 @@ describe('TokenManager', () => {
     jest.useRealTimers();
   });
 
+  // すべてのテスト完了後にクリーンアップタイマーを停止
+  afterAll(() => {
+    tokenManager.stopCleanupTimer();
+  });
+
   test('should store and retrieve tokens', () => {
     const userId = 'test-user';
     const token = 'test-refresh-token';

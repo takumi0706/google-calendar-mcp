@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -152,6 +152,13 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.4.1 Changes
+- Refactored code architecture for better maintainability
+- Implemented ToolsManager class to encapsulate tool definitions
+- Improved code organization by moving functionality from server.ts to tools.ts
+- Removed unused imports and type definitions
+- Enhanced code quality and readability
 
 ### Version 0.4.0 Changes
 - Implemented token encryption system (AES-256-GCM)

@@ -57,8 +57,8 @@ export class OAuthHandler {
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
       // PKCE拡張の実装
-      // GoogleのOAuth2クライアントが期待する型に合わせる
-      code_challenge_method: 'S256', // 型キャストを削除
+      // GoogleのOAuth2クライアントにはanyを使用して型エラーを回避
+      code_challenge_method: 'S256' as any,
       code_challenge: codeChallenge
     });
   }

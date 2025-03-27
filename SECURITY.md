@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-現在、以下のバージョンのセキュリティアップデートを提供しています：
+We currently provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -13,95 +13,95 @@
 
 ## Reporting a Vulnerability
 
-Google Calendar MCPのセキュリティを重視しています。セキュリティ脆弱性を発見された場合は、以下の手順に従ってください：
+We take the security of Google Calendar MCP seriously. If you believe you've found a security vulnerability, please follow these steps:
 
-1. **脆弱性を公開しないでください**
-2. **直接メールでご連絡ください**: [ganndamu0706@gmail.com](mailto:ganndamu0706@gmail.com)
-3. 以下の情報を含めてください：
-   - 脆弱性の詳細な説明
-   - 再現手順
-   - 潜在的な影響
-   - 緩和策の提案（ある場合）
+1. **Do not disclose the vulnerability publicly**
+2. **Email us directly** at [ganndamu0706@gmail.com](mailto:ganndamu0706@gmail.com) with details about the vulnerability
+3. Include the following information:
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact
+   - Suggestions for mitigation (if any)
 
 ## What to Expect
 
-- 脆弱性報告を受領してから48時間以内に確認の返信をします
-- 7日以内に詳細な回答を提供し、次のステップを示します
-- 問題の理解と対応について協力して作業します
-- 進捗状況をお知らせします
+- We will acknowledge receipt of your vulnerability report within 48 hours
+- We will provide a more detailed response within 7 days, indicating next steps
+- We will work with you to understand and address the issue
+- We will keep you informed about our progress
 
 ## Security Mechanisms
 
-Google Calendar MCPはOAuthトークンやカレンダーデータなど、センシティブな情報を扱います。以下のセキュリティ対策を実装しています：
+The Google Calendar MCP handles OAuth tokens and calendar data, which may contain sensitive information. We've implemented the following security measures:
 
-### 0.4.x バージョンで追加されたセキュリティ機能
+### Security Features Added in Version 0.4.x
 
-1. **強化されたトークン管理**:
-   - AES-256-GCM暗号化によるトークンの保護
-   - 適切なトークン有効期限管理
-   - メモリ内ストレージのみ（永続的なファイルストレージなし）
+1. **Enhanced Token Management**:
+   - AES-256-GCM encryption for protecting tokens
+   - Proper token expiration management
+   - In-memory storage only (no persistent file storage)
 
-2. **強化されたOAuth認証フロー**:
-   - CSRF攻撃防止のためのstateパラメータ実装
-   - PKCE (Proof Key for Code Exchange) の実装による認証の強化
-   - 認証リクエストの厳格な検証
+2. **Enhanced OAuth Authentication Flow**:
+   - Implementation of state parameter for CSRF attack prevention
+   - PKCE (Proof Key for Code Exchange) implementation for authentication strengthening
+   - Strict validation of authentication requests
 
-3. **セキュリティヘッダーとミドルウェア**:
-   - Helmet.jsによるセキュアなHTTPヘッダー設定
-   - Content Security Policy (CSP) の実装
-   - レートリミッティングによるブルートフォース攻撃の防止
-   - XSS保護
+3. **Security Headers and Middleware**:
+   - Secure HTTP headers setup using Helmet.js
+   - Content Security Policy (CSP) implementation
+   - Rate limiting to prevent brute force attacks
+   - XSS protection
 
-4. **入力検証**:
-   - Zodによる厳格なスキーマ検証
-   - 日付、時間、メールアドレスなどの厳密な形式チェック
-   - 最大長の制限とサニタイズ処理
+4. **Input Validation**:
+   - Strict schema validation using Zod
+   - Rigorous format checking for dates, times, email addresses, etc.
+   - Length limitations and sanitization processing
 
-### 既存のセキュリティ機能
+### Existing Security Features
 
-- ローカルのみのサーバー運用
-- OAuth認証情報の安全な取り扱い
-- 定期的なセキュリティアップデート
+- Local-only server operation
+- Secure handling of OAuth credentials
+- Regular security updates
 
 ## Best Practices for Users
 
-Google Calendar MCPを安全に使用するためのベストプラクティス：
+To ensure secure usage of Google Calendar MCP:
 
-1. 環境変数は安全に保管し、公開リポジトリにさらさないでください
-2. 常に最新バージョンのパッケージを使用してください
-3. Google Cloud Consoleで不審なアクティビティを定期的に確認してください
-4. OAuth認証スコープは必要最小限に制限してください
-5. プロジェクトに応じて適切なレートリミットを設定してください
+1. Keep your environment variables secure and do not expose them in public repositories
+2. Always use the latest version of the package
+3. Regularly review your Google Cloud Console for any suspicious activities
+4. Limit the OAuth scopes to only what's necessary for your use case
+5. Set appropriate rate limits for your project
 
-## セキュリティ対策の詳細
+## Details of Security Measures
 
-### 1. トークン暗号化
+### 1. Token Encryption
 
-リフレッシュトークンはAES-256-GCM暗号化を使用して保護されています：
-- 各トークンに一意の初期化ベクター(IV)を使用
-- 認証タグによる完全性の検証
-- 環境変数またはランダムに生成された暗号化キーの使用
+Refresh tokens are protected using AES-256-GCM encryption:
+- Unique initialization vector (IV) for each token
+- Integrity verification with authentication tag
+- Use of encryption key from environment variable or randomly generated
 
-### 2. OAuth 2.0認証フロー
+### 2. OAuth 2.0 Authentication Flow
 
-OAuth 2.0のベストプラクティスを実装：
-- CSRF攻撃からの保護に一意のstateパラメータを使用
-- PKCE拡張を使用してコード傍受攻撃から保護
-- 認証コードの交換時に厳格な検証
-- 有効期限のある認証セッション
+Implementation of OAuth 2.0 best practices:
+- Use of unique state parameter for protection against CSRF attacks
+- PKCE extension to protect against code interception attacks
+- Strict validation during authentication code exchange
+- Authentication sessions with expiration
 
-### 3. レート制限と保護
+### 3. Rate Limiting and Protection
 
-サービス拒否攻撃からの保護：
-- APIエンドポイントへのレート制限
-- OAuth認証エンドポイントへの特別なレート制限
-- 一時的なブロックと段階的バックオフ
+Protection against denial of service attacks:
+- Rate limiting for API endpoints
+- Special rate limiting for OAuth authentication endpoints
+- Temporary blocking and gradual back-off
 
 ## Security Updates
 
-セキュリティアップデートは以下のチャネルで告知されます：
-- GitHubリポジトリのリリース
-- npmパッケージのアップデート
-- リリースノートのドキュメント
+Security updates will be announced through:
+- GitHub repository releases
+- npm package updates
+- Release notes documentation
 
-Google Calendar MCPとそのユーザーの安全を守るためのご協力に感謝いたします！
+Thank you for helping keep Google Calendar MCP and its users safe!

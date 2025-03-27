@@ -19,9 +19,11 @@ class TokenManager {
     const keyString = process.env.TOKEN_ENCRYPTION_KEY || 
       crypto.randomBytes(32).toString('hex');
     this.encryptionKey = Buffer.from(keyString, 'hex');
-    
-    logger.info('TokenManager initialized with secure encryption');
-    
+
+    if (typeof logger.info === 'function') {
+      logger.info('TokenManager initialized with secure encryption');
+    }
+
     // 定期的に期限切れトークンをクリーンアップ
     setInterval(this.cleanupExpiredTokens.bind(this), 60 * 60 * 1000); // 1時間ごと
   }
@@ -37,25 +39,29 @@ class TokenManager {
     try {
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
-      
+
       let encrypted = cipher.update(token, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       // crypto.Cipher.prototype.getAuthTag は @types/node に定義されていないが、実際のNodeJSには存在する
       const authTag = (cipher as any).getAuthTag();
-      
+
       // 初期化ベクトル、認証タグ、暗号文を連結して保存
       const tokenData = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
       this.tokens.set(userId, tokenData);
-      
+
       // 有効期限を設定
       const expiryTime = Date.now() + expiresIn;
       this.tokenExpirations.set(userId, expiryTime);
-      
-      logger.debug(`Token stored for user: ${userId}, expires: ${new Date(expiryTime).toISOString()}`);
+
+      if (typeof logger.debug === 'function') {
+        logger.debug(`Token stored for user: ${userId}, expires: ${new Date(expiryTime).toISOString()}`);
+      }
     } catch (err: unknown) {
       const error = err as Error;
-      logger.error('Failed to encrypt and store token', { userId, error: error.message });
+      if (typeof logger.error === 'function') {
+        logger.error('Failed to encrypt and store token', { userId, error: error.message });
+      }
       throw new Error('Token encryption failed');
     }
   }
@@ -69,36 +75,42 @@ class TokenManager {
   public getToken(userId: string): string | null {
     const tokenData = this.tokens.get(userId);
     if (!tokenData) {
-      logger.debug(`No token found for user: ${userId}`);
+      if (typeof logger.debug === 'function') {
+        logger.debug(`No token found for user: ${userId}`);
+      }
       return null;
     }
-    
+
     // トークンの有効期限をチェック
     const expiry = this.tokenExpirations.get(userId);
     if (expiry && expiry < Date.now()) {
-      logger.debug(`Token expired for user: ${userId}`);
+      if (typeof logger.debug === 'function') {
+        logger.debug(`Token expired for user: ${userId}`);
+      }
       this.removeToken(userId);
       return null;
     }
-    
+
     try {
       const [ivHex, authTagHex, encrypted] = tokenData.split(':');
-      
+
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
-      
+
       const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
-      
+
       // crypto.Decipher.prototype.setAuthTag は @types/node に定義されていないが、実際のNodeJSには存在する
       (decipher as any).setAuthTag(authTag);
-      
+
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (err: unknown) {
       const error = err as Error;
-      logger.error('Failed to decrypt token', { userId, error: error.message });
+      if (typeof logger.error === 'function') {
+        logger.error('Failed to decrypt token', { userId, error: error.message });
+      }
       return null;
     }
   }
@@ -111,7 +123,9 @@ class TokenManager {
   public removeToken(userId: string): void {
     this.tokens.delete(userId);
     this.tokenExpirations.delete(userId);
-    logger.debug(`Token removed for user: ${userId}`);
+    if (typeof logger.debug === 'function') {
+      logger.debug(`Token removed for user: ${userId}`);
+    }
   }
 
   /**
@@ -120,16 +134,18 @@ class TokenManager {
   private cleanupExpiredTokens(): void {
     const now = Date.now();
     let expiredCount = 0;
-    
+
     for (const [userId, expiry] of this.tokenExpirations.entries()) {
       if (expiry < now) {
         this.removeToken(userId);
         expiredCount++;
       }
     }
-    
+
     if (expiredCount > 0) {
-      logger.info(`Cleaned up ${expiredCount} expired tokens`);
+      if (typeof logger.info === 'function') {
+        logger.info(`Cleaned up ${expiredCount} expired tokens`);
+      }
     }
   }
 }

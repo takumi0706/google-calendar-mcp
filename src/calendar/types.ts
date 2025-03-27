@@ -8,6 +8,7 @@ export interface CalendarEvent {
   end: EventDateTime;
   attendees?: EventAttendee[];
   reminders?: EventReminders;
+  colorId?: string;
 }
 
 export interface EventDateTime {

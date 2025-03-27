@@ -47,6 +47,7 @@ export const eventSchema = z.object({
   end: dateTimeSchema,
   attendees: z.array(attendeeSchema).optional(),
   reminders: reminderSchema.optional(), // リマインダースキーマを使用
+  colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
 });
 
 /**
@@ -61,6 +62,7 @@ export const eventUpdateSchema = z.object({
   end: dateTimeSchema.optional(),
   attendees: z.array(attendeeSchema).optional(),
   reminders: reminderSchema.optional(),
+  colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
 });
 
 /**
@@ -101,35 +103,3 @@ export const deleteEventParamsSchema = z.object({
   eventId: z.string().min(1, { message: 'イベントIDは必須です' })
 });
 
-/**
- * スキーマ検証関数 - Zodスキーマを使用してデータを検証
- * @param schema Zodスキーマ
- * @param data 検証するデータ
- * @returns 検証済みデータ
- * @throws ZodError 検証エラー
- */
-export function validateWithSchema<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  return schema.parse(data);
-}
-
-/**
- * 安全なスキーマ検証関数 - エラーをthrowせず、結果オブジェクトを返す
- * @param schema Zodスキーマ
- * @param data 検証するデータ
- * @returns 検証結果オブジェクト
- */
-export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown): { 
-  success: boolean; 
-  data?: T; 
-  error?: z.ZodError;
-} {
-  try {
-    const validData = schema.parse(data);
-    return { success: true, data: validData };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error };
-    }
-    throw error;
-  }
-}

@@ -80,6 +80,7 @@ export class ToolsManager {
           email: z.string().email(),
           displayName: z.string().optional(),
         })).optional().describe('参加者リスト'),
+        colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
       }),
     };
 
@@ -124,6 +125,7 @@ export class ToolsManager {
           date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
           timeZone: z.string().optional().describe('タイムゾーン'),
         }).optional(),
+        colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
       }),
     };
 

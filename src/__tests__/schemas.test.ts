@@ -1,9 +1,10 @@
 // jest型定義は自動的に利用されるため、明示的なインポートは不要
 import {
-  getEventsSchema,
-  createEventSchema,
-  updateEventSchema,
-  deleteEventSchema,
+  getEventsParamsSchema,
+  createEventParamsSchema,
+  updateEventParamsSchema,
+  deleteEventParamsSchema,
+  eventSchema
 } from '../mcp/schemas';
 
 // テスト環境を設定
@@ -12,7 +13,7 @@ beforeAll(() => {
 });
 
 describe('Schemas', () => {
-  describe('getEventsSchema', () => {
+  describe('getEventsParamsSchema', () => {
     it('should validate valid params', () => {
       const validParams = {
         calendarId: 'primary',
@@ -22,15 +23,15 @@ describe('Schemas', () => {
         orderBy: 'startTime' as const,
       };
 
-      expect(() => getEventsSchema.parse(validParams)).not.toThrow();
+      expect(() => getEventsParamsSchema.parse(validParams)).not.toThrow();
     });
 
     it('should allow empty params', () => {
-      expect(() => getEventsSchema.parse({})).not.toThrow();
+      expect(() => getEventsParamsSchema.parse({})).not.toThrow();
     });
   });
 
-  describe('createEventSchema', () => {
+  describe('createEventParamsSchema', () => {
     it('should validate valid params', () => {
       const validParams = {
         calendarId: 'primary',
@@ -46,11 +47,11 @@ describe('Schemas', () => {
         },
       };
 
-      expect(() => createEventSchema.parse(validParams)).not.toThrow();
+      expect(() => createEventParamsSchema.parse(validParams)).not.toThrow();
     });
 
     it('should require event', () => {
-      expect(() => createEventSchema.parse({})).toThrow();
+      expect(() => createEventParamsSchema.parse({})).toThrow();
     });
 
     it('should require summary in event', () => {
@@ -61,11 +62,11 @@ describe('Schemas', () => {
         },
       };
 
-      expect(() => createEventSchema.parse(invalidParams)).toThrow();
+      expect(() => createEventParamsSchema.parse(invalidParams)).toThrow();
     });
   });
 
-  describe('updateEventSchema', () => {
+  describe('updateEventParamsSchema', () => {
     it('should validate valid params', () => {
       const validParams = {
         eventId: '123456',
@@ -76,7 +77,7 @@ describe('Schemas', () => {
         },
       };
 
-      expect(() => updateEventSchema.parse(validParams)).not.toThrow();
+      expect(() => updateEventParamsSchema.parse(validParams)).not.toThrow();
     });
 
     it('should require eventId', () => {
@@ -88,21 +89,21 @@ describe('Schemas', () => {
         },
       };
 
-      expect(() => updateEventSchema.parse(invalidParams)).toThrow();
+      expect(() => updateEventParamsSchema.parse(invalidParams)).toThrow();
     });
   });
 
-  describe('deleteEventSchema', () => {
+  describe('deleteEventParamsSchema', () => {
     it('should validate valid params', () => {
       const validParams = {
         eventId: '123456',
       };
 
-      expect(() => deleteEventSchema.parse(validParams)).not.toThrow();
+      expect(() => deleteEventParamsSchema.parse(validParams)).not.toThrow();
     });
 
     it('should require eventId', () => {
-      expect(() => deleteEventSchema.parse({})).toThrow();
+      expect(() => deleteEventParamsSchema.parse({})).toThrow();
     });
   });
 });

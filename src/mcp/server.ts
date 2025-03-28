@@ -69,11 +69,13 @@ class GoogleCalendarMcpServer {
     this.stdioTransport.send = async (message: JSONRPCMessage): Promise<void> => {
       try {
         // ログにのみ記録し、標準出力には書き込まない
-        const messageStr = JSON.stringify(message);
-        logger.debug(`[STDIO] Message from server: ${messageStr}`);
+        // メッセージをクローンして、ロギング用に使用する
+        const messageCopy = JSON.parse(JSON.stringify(message));
+        logger.debug(`[STDIO] Message from server: ${JSON.stringify(messageCopy)}`);
       } catch (err) {
         logger.error(`[STDIO] Error logging server message: ${err}`);
       }
+      // オリジナルのメッセージを変更せずに送信
       return await originalSend(message);
     };
 
@@ -82,12 +84,17 @@ class GoogleCalendarMcpServer {
     this.stdioTransport.onmessage = async (message: any): Promise<void> => {
       try {
         // メッセージが文字列の場合は、適切にパース
+        let processedMessage = message;
         if (typeof message === 'string') {
-          message = this.processJsonRpcMessage(message);
+          processedMessage = this.processJsonRpcMessage(message);
         }
-        logger.debug(`[STDIO] Message from client: ${JSON.stringify(message)}`);
+
+        // ロギング用にメッセージをクローン
+        const messageCopy = JSON.parse(JSON.stringify(processedMessage));
+        logger.debug(`[STDIO] Message from client: ${JSON.stringify(messageCopy)}`);
+
         if (originalOnMessage) {
-          return await originalOnMessage(message);
+          return await originalOnMessage(processedMessage);
         }
       } catch (err) {
         logger.error(`[STDIO] Error processing client message: ${err}`);
@@ -100,11 +107,13 @@ class GoogleCalendarMcpServer {
     const originalHttpSend = this.httpTransport.send.bind(this.httpTransport);
     this.httpTransport.send = async (message: JSONRPCMessage): Promise<void> => {
       try {
-        const messageStr = JSON.stringify(message);
-        logger.debug(`[HTTP] Message from server: ${messageStr}`);
+        // メッセージをクローンして、ロギング用に使用する
+        const messageCopy = JSON.parse(JSON.stringify(message));
+        logger.debug(`[HTTP] Message from server: ${JSON.stringify(messageCopy)}`);
       } catch (err) {
         logger.error(`[HTTP] Error logging server message: ${err}`);
       }
+      // オリジナルのメッセージを変更せずに送信
       return await originalHttpSend(message);
     };
 
@@ -112,7 +121,10 @@ class GoogleCalendarMcpServer {
     const originalHttpOnMessage = this.httpTransport.onmessage;
     this.httpTransport.onmessage = async (message: any): Promise<void> => {
       try {
-        logger.debug(`[HTTP] Message from client: ${JSON.stringify(message)}`);
+        // ロギング用にメッセージをクローン
+        const messageCopy = JSON.parse(JSON.stringify(message));
+        logger.debug(`[HTTP] Message from client: ${JSON.stringify(messageCopy)}`);
+
         if (originalHttpOnMessage) {
           return await originalHttpOnMessage(message);
         }

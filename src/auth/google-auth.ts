@@ -35,7 +35,7 @@ class GoogleAuth {
     this.authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: config.google.scopes,
-      prompt: 'consent',
+      prompt: 'select_account',
       code_challenge_method: CodeChallengeMethod.S256,
       code_challenge: codeChallenge,
       state: this.state

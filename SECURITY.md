@@ -4,15 +4,15 @@
 
 We currently provide security updates for the following versions:
 
-| Version | Supported          |
-| ------- |--------------------|
-| 0.6.7+  | :white_check_mark: |
-| 0.6.0-0.6.6 | :x:                |
-| 0.5.x   | :white_check_mark: |
-| 0.4.x   | :x:                |
-| 0.3.x   | :x:                |
-| 0.2.7   | :x:                |
-| < 0.2.7 | :x:                |
+| Version     | Supported          |
+|-------------|--------------------|
+| 0.6.9       | :white_check_mark: |
+| 0.6.0-0.6.8 | :x:                |
+| 0.5.x       | :white_check_mark: |
+| 0.4.x       | :x:                |
+| 0.3.x       | :x:                |
+| 0.2.7       | :x:                |
+| < 0.2.7     | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -51,6 +51,12 @@ The Google Calendar MCP handles OAuth tokens and calendar data, which may contai
    - Improved logging to prevent interference with JSON-RPC messages
    - Enhanced message handling in both STDIO and HTTP transports
    - Improved error handling for malformed JSON messages
+
+3. **OAuth Authentication Improvements (v0.6.9)**:
+   - Fixed OAuth authentication prompt issue that caused repeated authentication requests
+   - Improved authentication flow to prevent multiple browser windows from opening
+   - Enhanced token refresh mechanism to properly handle expired tokens
+   - Strengthened security by preventing unnecessary re-authentication attempts
 
 ### Security Features Added in Version 0.4.x
 

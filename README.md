@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -9,64 +9,84 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@takumi0706/google-calendar-mcp/badge"  alt="image"/>
 </a>
 
+## Project Overview
 
-A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
+Google Calendar MCP Server is an MCP (Model Context Protocol) server implementation that enables integration between Google Calendar and Claude Desktop. This project enables Claude to interact with the user's Google Calendar, providing the ability to display, create, update, and delete calendar events through natural language interaction.
 
-## 🆕 Version 0.6.2 Improvements
+### Core Features
 
-This version includes important security enhancements to prevent XSS vulnerabilities and improvements to HTML sanitization.
+- **Google Calendar integration**: Provides a bridge between Claude Desktop and the Google Calendar API
+- **MCP implementation**: Follows the Model Context Protocol specification for AI assistant tool integration
+- **OAuth2 authentication**: Handles the Google API authentication flow securely
+- **Event management**: Supports comprehensive calendar event operations (get, create, update, delete)
+- **Color support**: Ability to set and update event colors using colorId parameter
+- **Multi-transport support**: Simultaneous support for both STDIO and HTTP transports
 
-### Feature Enhancements
-- **Color Support**: Added ability to set and update event colors using colorId parameter
-- **Improved Event Management**: Enhanced event creation and update capabilities
-- **HTTP/JSON Transport**: Added HTTP/JSON transport layer for improved connectivity options
-- **JSON-RPC Batch Processing**: Support for processing multiple requests in a single batch
-- **Multi-Transport Support**: Simultaneous support for both STDIO and HTTP transports
+## Technical Architecture
 
-### Bug Fixes
-- **Resource Management**: Fixed TokenManager cleanup timer to properly release resources when tests complete
-- **Memory Leaks**: Improved handling of interval timers to prevent potential memory leaks
+This project uses:
 
-### Dependency Updates
-- **MCP SDK**: Using 1.8.0 for Claude Desktop integration
-- **Google APIs**: Using googleapis 148.0.0 for latest Calendar API features
-- **Logging**: Using winston 3.11.0 for stable logging capabilities
-- **Validation**: Using zod 3.22.4 for reliable schema validation
-- **Stability**: Improved overall stability with compatible dependency versions
+- **TypeScript**: For type-safe code development
+- **MCP SDK**: Uses `@modelcontextprotocol/sdk` for integration with Claude Desktop
+- **Google API**: Uses `googleapis` for Google Calendar API access
+- **Zod**: Implements schema validation for request/response data
+- **Environment-based configuration**: Uses dotenv for configuration management
+- **Express**: For HTTP server implementation
+- **Helmet.js**: For security headers
+- **AES-256-GCM**: For token encryption
+- **Jest**: For unit testing and coverage
+- **GitHub Actions**: For CI/CD
 
-### Security Enhancements
-- **XSS Protection**: Implemented HTML sanitization to prevent cross-site scripting vulnerabilities
-- **Token Encryption**: Secure token storage with AES-256-GCM encryption
-- **OAuth 2.1 Authentication**: Implemented OAuth 2.1 authentication at the transport layer
-- **Explicit PKCE Implementation**: Enhanced security with explicit code_verifier and code_challenge generation
-- **State Parameter Validation**: Improved CSRF protection with explicit state parameter validation
-- **Security Headers**: HTTP security headers applied using Helmet.js
-- **Rate Limiting**: API endpoint protection against abuse
-- **Input Validation**: Strict data validation with Zod schema
+## Main Components
 
-### Quality Improvements
-- **Test Coverage**: Enhanced unit and integration tests
-- **Error Handling**: Unified error format and detailed logging
-- **CI/CD Pipeline**: Automated build, test, and security scanning with GitHub Actions
-- **Documentation**: Detailed API reference and security guidelines
-- **Code Quality**: Strict TypeScript type definitions and consistent coding style
+1. **MCP Server**: Core server implementation that handles communication with Claude Desktop
+2. **Google Calendar Tools**: Calendar operations (retrieval, creation, update, deletion)
+3. **Authentication Handler**: Management of OAuth2 flow with Google API
+4. **Schema Validation**: Ensuring data integrity in all operations
+5. **HTTP/JSON Transport**: Additional transport layer for improved connectivity options
+6. **Token Manager**: Secure handling of authentication tokens
 
-## Features
+## Development Guidelines
 
-- Google Calendar event management (get, create, update, delete)
-- OAuth2 authentication with Google Calendar API
-- MCP SDK integration for Claude Desktop
-- Automatic browser opening for authorization
-- In-memory token management (no file-based storage)
-- Simple setup and configuration
+When adding new functions, modifying code, or fixing bugs, please semantically increase the version for each change.
+Also, please make sure that your coding is clear and follows all the necessary coding rules, such as OOP.
+Each time you make a change, please install, build, run lint, and test your code before submitting it.
 
-## Installation
+### Code Structure
+
+- **src/**: Source code directory
+  - **auth/**: Authentication handling
+  - **config/**: Configuration settings
+  - **mcp/**: MCP server implementation
+  - **tools/**: Google Calendar tool implementations
+  - **utils/**: Utility functions and helpers
+
+### Best Practices
+
+- Proper typing according to TypeScript best practices
+- Maintaining comprehensive error handling
+- Ensure proper authentication flow
+- Keep dependencies up to date
+- Write clear documentation for all functions
+- Implement security best practices
+- Follow the OAuth 2.1 authentication standards
+- Use schema validation for all input/output data
+
+### Testing
+
+- Implement unit tests for core functionality
+- Thoroughly test authentication flow
+- Verify calendar manipulation against Google API
+- Run tests with coverage reports
+- Ensure security tests are included
+
+## Deployment
+
+This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
 npx @takumi0706/google-calendar-mcp
 ```
-
-## Usage
 
 ### Prerequisites
 
@@ -107,65 +127,24 @@ Add the server to your `claude_desktop_config.json`:
 }
 ```
 
-## API
+## Security Considerations
 
-This MCP server provides the following functions for Google Calendar:
-
-- `getEvents`: Retrieve events from the user's calendar
-- `createEvent`: Create a new calendar event
-- `updateEvent`: Update an existing calendar event
-- `deleteEvent`: Delete a calendar event
-
-## Implementation Details
-
-This server uses:
-
-- **MCP SDK**: `@modelcontextprotocol/sdk` v1.8.0+ for Claude Desktop integration
-- **Multiple Transports**: STDIO and HTTP/JSON transports for flexible connectivity
-- **JSON-RPC Batch Processing**: Support for processing multiple requests efficiently
-- **OAuth 2.1**: Enhanced authentication with PKCE and state parameter validation
-- **Google APIs**: `googleapis` for Google Calendar API access
-- **TypeScript**: For type-safe code
-- **Zod**: For schema validation
-- **Helmet.js**: For security headers
-- **AES-256-GCM**: For token encryption
-- **Express**: For HTTP server implementation
-- **Jest**: For unit testing and coverage
-- **GitHub Actions**: For CI/CD
-
-## Storage and Logging
-
-The server stores the following data:
-
-- **OAuth Token**: Stored in memory only (no file-based storage in v0.3.3+)
-- **Logs**: Stored in `~/.google-calendar-mcp/logs/` in the user's home directory
-
-## Security Measures
-
-Security features by version:
-
-1. **Token Encryption** (v0.4.0):
-   - Protection of tokens with AES-256-GCM encryption
-   - Unique initialization vector (IV) for each token
-   - Encryption key from environment variable or auto-generated
-
-2. **OAuth 2.1 Authentication Enhancements** (v0.6.0):
-   - Explicit PKCE implementation with code_verifier and code_challenge generation
-   - Cryptographically secure state parameter for CSRF attack protection
-   - State parameter validation during OAuth redirects
-   - Transport layer authentication for HTTP/JSON connections
-   - Strict authentication flow validation
-
-3. **Web Security**:
-   - Content Security Policy (CSP)
-   - XSS protection
-   - HTTPS connection recommended
-   - Rate limiting for HTTP endpoints
-   - Session-based authentication for HTTP/JSON transport
-   - Secure HTTP headers with Helmet.js
-   - JSON validation for all incoming messages
+- **OAuth tokens** are stored in memory only (not stored in a file-based storage)
+- **Sensitive credentials** must be provided as environment variables
+- **Token encryption** using AES-256-GCM for secure storage
+- **PKCE implementation** with explicit code_verifier and code_challenge generation
+- **State parameter validation** for CSRF protection
+- **Security headers** applied using Helmet.js
+- **Rate limiting** for API endpoint protection
+- **Input validation** with Zod schema
 
 For more details, see [SECURITY.md](SECURITY.md).
+
+## Maintenance
+
+- Regular updates to maintain compatibility with the Google Calendar API
+- Version updates are documented in README.md
+- Logs are stored in the user's home directory `~/.google-calendar-mcp/logs/`
 
 ## Troubleshooting
 
@@ -184,6 +163,12 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.3 Changes
+- Fixed JSON-RPC message processing to handle malformed messages more robustly
+- Improved regex pattern for JSON object extraction
+- Added fallback mechanism for JSON parsing
+- Updated version number in server.ts to match package.json
 
 ### Version 0.6.2 Changes
 - Implemented HTML sanitization to prevent cross-site scripting (XSS) vulnerabilities

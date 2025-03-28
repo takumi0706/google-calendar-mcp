@@ -29,7 +29,7 @@ export class HttpJsonServerTransport {
   public onerror?: (error: Error) => void;
   public onclose?: () => void;
 
-  constructor(port: number = 3000, host: string = 'localhost') {
+  constructor(port: number = config.server.port, host: string = config.server.host) {
     this.port = port;
     this.host = host;
     this.sessionId = randomUUID();

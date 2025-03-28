@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -12,9 +12,9 @@
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 Version 0.6.1 Improvements
+## 🆕 Version 0.6.2 Improvements
 
-This version includes fixes for logger configuration and dependency updates to improve overall stability and compatibility.
+This version includes important security enhancements to prevent XSS vulnerabilities and improvements to HTML sanitization.
 
 ### Feature Enhancements
 - **Color Support**: Added ability to set and update event colors using colorId parameter
@@ -35,6 +35,7 @@ This version includes fixes for logger configuration and dependency updates to i
 - **Stability**: Improved overall stability with compatible dependency versions
 
 ### Security Enhancements
+- **XSS Protection**: Implemented HTML sanitization to prevent cross-site scripting vulnerabilities
 - **Token Encryption**: Secure token storage with AES-256-GCM encryption
 - **OAuth 2.1 Authentication**: Implemented OAuth 2.1 authentication at the transport layer
 - **Explicit PKCE Implementation**: Enhanced security with explicit code_verifier and code_challenge generation
@@ -183,6 +184,13 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.2 Changes
+- Implemented HTML sanitization to prevent cross-site scripting (XSS) vulnerabilities
+- Added escapeHtml utility function to safely handle user-controlled data in HTML responses
+- Fixed potential XSS vulnerabilities in OAuth error handling
+- Added comprehensive test suite for HTML sanitization functionality
+- Improved overall security posture against injection attacks
 
 ### Version 0.6.1 Changes
 - Fixed logger configuration to ensure info logs go to stdout instead of stderr

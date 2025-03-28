@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import open from 'open';
 import * as crypto from 'crypto';
+import { escapeHtml } from '../utils/html-sanitizer';
 import { CodeChallengeMethod } from 'google-auth-library/build/src/auth/oauth2client';
 
 class GoogleAuth {
@@ -157,7 +158,7 @@ class GoogleAuth {
         } catch (error) {
           logger.error(`Error in authorization callback: ${error}`);
           res.writeHead(500, { 'Content-Type': 'text/html' });
-          res.end(`<html lang="en"><body><h3>Authentication error: ${error}</h3></body></html>`);
+          res.end(`<html lang="en"><body><h3>Authentication error: ${escapeHtml(error)}</h3></body></html>`);
           server.close(() => {
             this.authorizationPromise = null;
             reject(error);

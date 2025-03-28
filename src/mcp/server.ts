@@ -20,7 +20,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.6.0',
+      version: '0.6.3',
     });
 
     // Stdioトランスポートの設定
@@ -53,9 +53,35 @@ class GoogleCalendarMcpServer {
       const cleanedMessage = message.replace(/^\uFEFF/, '').trim();
 
       // 複数JSONオブジェクトが連結されている可能性があるので最初の有効なJSONだけを解析
-      const match = cleanedMessage.match(/(\{.*|\[.*)/s);
+      // 正規表現を改善して、JSONオブジェクトまたは配列の開始から終了までを正確に抽出
+      const match = cleanedMessage.match(/(\{.*\}|\[.*\])/s);
       if (match) {
         return JSON.parse(match[0]);
+      }
+
+      // JSONの開始位置を見つける
+      const jsonStartIndex = cleanedMessage.indexOf('{');
+      const arrayStartIndex = cleanedMessage.indexOf('[');
+
+      // 両方見つかった場合は、より早く出現する方を使用
+      let startIndex = -1;
+      if (jsonStartIndex >= 0 && arrayStartIndex >= 0) {
+        startIndex = Math.min(jsonStartIndex, arrayStartIndex);
+      } else if (jsonStartIndex >= 0) {
+        startIndex = jsonStartIndex;
+      } else if (arrayStartIndex >= 0) {
+        startIndex = arrayStartIndex;
+      }
+
+      // 開始位置が見つかった場合、その位置から解析を試みる
+      if (startIndex >= 0) {
+        const jsonSubstring = cleanedMessage.substring(startIndex);
+        try {
+          return JSON.parse(jsonSubstring);
+        } catch (e) {
+          // 失敗した場合は、次の方法を試す
+          logger.debug(`Failed to parse JSON substring: ${e}`);
+        }
       }
 
       // 通常の解析も試す

@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
+import config from '../config/config';
 
 /**
  * HTTP/JSON transport for MCP server
@@ -54,6 +55,13 @@ export class HttpJsonServerTransport {
 
     // Setup routes
     this.setupRoutes();
+
+    // Add OAuth callback route
+    this.app.get('/oauth2callback', (req: Request, res: Response) => {
+      logger.debug('Received OAuth callback, redirecting to auth server');
+      const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      res.redirect(`http://${config.auth.host}:${config.auth.port}/oauth2callback${queryString}`);
+    });
 
     // Use router
     this.app.use('/mcp', this.router);

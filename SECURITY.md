@@ -6,7 +6,8 @@ We currently provide security updates for the following versions:
 
 | Version     | Supported          |
 |-------------|--------------------|
-| 0.6.9       | :white_check_mark: |
+| 0.7.0       | :white_check_mark: |
+| 0.6.9       | :x:                |
 | 0.6.0-0.6.8 | :x:                |
 | 0.5.x       | :white_check_mark: |
 | 0.4.x       | :x:                |
@@ -36,6 +37,15 @@ We take the security of Google Calendar MCP seriously. If you believe you've fou
 ## Security Mechanisms
 
 The Google Calendar MCP handles OAuth tokens and calendar data, which may contain sensitive information. We've implemented the following security measures:
+
+### Security Features Added in Version 0.7.x
+
+1. **OAuth Callback Handling Improvements (v0.7.0)**:
+   - Fixed OAuth callback handling issue that caused "Cannot GET /oauth2callback" errors
+   - Added automatic redirection from MCP server to OAuth server for callback handling
+   - Improved compatibility with different OAuth redirect URI configurations
+   - Enhanced error handling for OAuth authentication flow
+   - Strengthened security by ensuring proper handling of authentication callbacks
 
 ### Security Features Added in Version 0.6.x
 

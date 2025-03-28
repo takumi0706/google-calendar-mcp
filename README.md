@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 0.6.9 has fixed OAuth authentication prompt issues. Version 0.6.8 fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
+> Version 0.7.0 has fixed the OAuth callback handling issue. Version 0.6.9 fixed OAuth authentication prompt issues. Version 0.6.8 fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
 
-![Version](https://img.shields.io/badge/version-0.6.9-blue.svg)
+![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -138,7 +138,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@0.6.9
+npx @takumi0706/google-calendar-mcp@0.7.0
 ```
 
 ### Prerequisites
@@ -215,6 +215,13 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.7.0 Changes
+- Fixed OAuth callback handling issue that caused "Cannot GET /oauth2callback" errors
+- Added automatic redirection from MCP server to OAuth server for callback handling
+- Improved compatibility with different OAuth redirect URI configurations
+- Enhanced error handling for OAuth authentication flow
+- Updated documentation to reflect the OAuth callback handling fix
 
 ### Version 0.6.9 Changes
 - Fixed OAuth authentication prompt issue that caused repeated authentication requests

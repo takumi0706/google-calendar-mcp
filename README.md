@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.3-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.4-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -157,12 +157,20 @@ If you encounter any issues:
 
 ### Common Errors
 
-- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in version 0.2.6+.
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in versions 0.2.6+, 0.6.3, and further improved in 0.6.4.
 - **Authentication Errors**: Verify your Google OAuth credentials
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.4 Changes
+- Further improved JSON-RPC message processing to handle malformed messages more robustly
+- Enhanced regex pattern for JSON object and array extraction with non-greedy matching
+- Added balanced bracket matching algorithm to find the correct end of JSON objects and arrays
+- Fixed ESLint warnings in the regex patterns
+- Improved error logging for better diagnostics
+- Updated version number in package.json and server.ts
 
 ### Version 0.6.3 Changes
 - Fixed JSON-RPC message processing to handle malformed messages more robustly

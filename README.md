@@ -46,6 +46,56 @@ This project uses:
 5. **HTTP/JSON Transport**: Additional transport layer for improved connectivity options
 6. **Token Manager**: Secure handling of authentication tokens
 
+## Available Tools
+
+This MCP server provides the following tools for interacting with Google Calendar:
+
+### 1. getEvents
+
+Retrieves calendar events with various filtering options.
+
+**Parameters:**
+- `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
+- `timeMin` (optional): Start time for event retrieval (ISO 8601 format, e.g., "2025-03-01T00:00:00Z")
+- `timeMax` (optional): End time for event retrieval (ISO 8601 format)
+- `maxResults` (optional): Maximum number of events to retrieve (default: 10)
+- `orderBy` (optional): Sort order ("startTime" or "updated")
+
+### 2. createEvent
+
+Creates a new calendar event.
+
+**Parameters:**
+- `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
+- `event`: Event details object containing:
+  - `summary` (required): Event title
+  - `description` (optional): Event description
+  - `location` (optional): Event location
+  - `start`: Start time object with:
+    - `dateTime` (optional): ISO 8601 format (e.g., "2025-03-15T09:00:00+09:00")
+    - `date` (optional): YYYY-MM-DD format for all-day events
+    - `timeZone` (optional): Time zone (e.g., "Asia/Tokyo")
+  - `end`: End time object (same format as start)
+  - `attendees` (optional): Array of attendees with email and optional displayName
+  - `colorId` (optional): Event color ID (1-11)
+
+### 3. updateEvent
+
+Updates an existing calendar event.
+
+**Parameters:**
+- `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
+- `eventId` (required): ID of the event to update
+- `event`: Event details object containing fields to update (same structure as createEvent, all fields optional)
+
+### 4. deleteEvent
+
+Deletes a calendar event.
+
+**Parameters:**
+- `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
+- `eventId` (required): ID of the event to delete
+
 ## Development Guidelines
 
 When adding new functions, modifying code, or fixing bugs, please semantically increase the version for each change.

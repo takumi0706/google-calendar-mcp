@@ -6,7 +6,8 @@ We currently provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- |--------------------|
-| 0.6.x   | :x:                |
+| 0.6.7+  | :white_check_mark: |
+| 0.6.0-0.6.6 | :x:                |
 | 0.5.x   | :white_check_mark: |
 | 0.4.x   | :x:                |
 | 0.3.x   | :x:                |
@@ -44,6 +45,12 @@ The Google Calendar MCP handles OAuth tokens and calendar data, which may contai
    - Comprehensive test suite for HTML sanitization functionality
    - Fixing of potential XSS vulnerabilities in OAuth error handling
    - Improved overall security posture against injection attacks
+
+2. **JSON Parsing Bug Fix (v0.6.7)**:
+   - Fixed critical JSON parsing bug that caused errors when using the MCP Inspector
+   - Improved logging to prevent interference with JSON-RPC messages
+   - Enhanced message handling in both STDIO and HTTP transports
+   - Improved error handling for malformed JSON messages
 
 ### Security Features Added in Version 0.4.x
 

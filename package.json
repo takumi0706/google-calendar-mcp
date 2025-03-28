@@ -1,6 +1,6 @@
 {
   "name": "@takumi0706/google-calendar-mcp",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Google Calendar MCP server for Claude Desktop integration with enhanced security",
   "main": "dist/index.js",
   "bin": {
@@ -23,7 +23,7 @@
     "format": "prettier --write 'src/**/*.ts'",
     "prepare": "npm run build || true",
     "prepublishOnly": "npm test && npm run lint",
-    "version": "npm run format && git add -A src",
+    "version": "npm run format && git add -A src && npm install",
     "postversion": "git push && git push --tags",
     "security": "npm audit"
   },

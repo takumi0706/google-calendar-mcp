@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
-> **⚠️ IMPORTANT NOTICE ⚠️**  
-> Version 0.6.x currently contains critical bugs making it unusable. Please use version 0.5.x instead, which is the currently supported version. We are working to resolve these issues in future releases.
+> **🔔 VERSION UPDATE NOTICE 🔔**  
+> Version 0.6.7 has fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
 
-![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.7-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -101,9 +101,9 @@ Deletes a calendar event.
 
 ## Development Guidelines
 
-When adding new functions, modifying code, or fixing bugs, please semantically increase the version for each change.
+When adding new functions, modifying code, or fixing bugs, please semantically increase the version for each change using `npm version` command.
 Also, please make sure that your coding is clear and follows all the necessary coding rules, such as OOP.
-Each time you make a change, please install, build, run lint, and test your code before submitting it.
+The version script will automatically run `npm install` when the version is updated, but you should still build, run lint, and test your code before submitting it.
 
 ### Code Structure
 
@@ -138,7 +138,7 @@ Each time you make a change, please install, build, run lint, and test your code
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@0.5.1
+npx @takumi0706/google-calendar-mcp@0.6.7
 ```
 
 ### Prerequisites
@@ -209,12 +209,20 @@ If you encounter any issues:
 
 ### Common Errors
 
-- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. While attempts were made to fix these issues in v0.6.x, critical bugs still remain. Please use v0.5.1 which is currently the most stable version.
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This issue has been fixed in version 0.6.7 and later. If you're still experiencing these errors, please update to the latest version.
 - **Authentication Errors**: Verify your Google OAuth credentials
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.7 Changes
+- Fixed critical JSON parsing bug that caused errors when using the MCP Inspector
+- Improved logging to prevent interference with JSON-RPC messages
+- Enhanced message handling in both STDIO and HTTP transports
+- Improved error handling for malformed JSON messages
+- Added automated npm install process when updating the version using npm version command
+- Updated documentation to reflect the JSON parsing bug fix and automated npm install process
 
 ### Version 0.6.6 Changes
 - Added dedicated JSON-RPC message parsing utility in utils/json-parser.ts

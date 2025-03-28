@@ -25,7 +25,7 @@ export class ToolsManager {
    * @param server MCPサーバーインスタンス
    */
   public registerTools(server: McpServer): void {
-    logger.info('Registering calendar tools with MCP server');
+    logger.debug('Registering calendar tools with MCP server');
 
     // getEvents ツール
     const getEventsSchema = {
@@ -43,7 +43,7 @@ export class ToolsManager {
       getEventsSchema,
       async (args, _extra) => {
         try {
-          logger.info(`Executing getEvents with params: ${JSON.stringify(args)}`);
+          logger.debug(`Executing getEvents with params: ${JSON.stringify(args)}`);
           const validatedParams = getEventsParamsSchema.parse(args);
           const result = await calendarApi.getEvents(validatedParams);
           return {
@@ -91,7 +91,7 @@ export class ToolsManager {
       createEventSchema,
       async (args, _extra) => {
         try {
-          logger.info(`Executing createEvent with params: ${JSON.stringify(args)}`);
+          logger.debug(`Executing createEvent with params: ${JSON.stringify(args)}`);
           const validatedParams = createEventParamsSchema.parse(args);
           const result = await calendarApi.createEvent(validatedParams);
           return {
@@ -136,7 +136,7 @@ export class ToolsManager {
       updateEventSchema,
       async (args, _extra) => {
         try {
-          logger.info(`Executing updateEvent with params: ${JSON.stringify(args)}`);
+          logger.debug(`Executing updateEvent with params: ${JSON.stringify(args)}`);
 
           // 既存のイベントを取得して、更新データとマージ
           // 必須フィールドを確保
@@ -181,7 +181,7 @@ export class ToolsManager {
       deleteEventSchema,
       async (args, _extra) => {
         try {
-          logger.info(`Executing deleteEvent with params: ${JSON.stringify(args)}`);
+          logger.debug(`Executing deleteEvent with params: ${JSON.stringify(args)}`);
           const validatedParams = deleteEventParamsSchema.parse(args);
           const result = await calendarApi.deleteEvent(validatedParams);
           return {

@@ -6,13 +6,13 @@ import googleAuth from './auth/google-auth';
 
 // プロセス終了時の処理
 process.on('SIGINT', async () => {
-  logger.info('Received SIGINT. Graceful shutdown...');
+  logger.debug('Received SIGINT. Graceful shutdown...');
   await mcpServer.stop();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  logger.info('Received SIGTERM. Graceful shutdown...');
+  logger.debug('Received SIGTERM. Graceful shutdown...');
   await mcpServer.stop();
   process.exit(0);
 });
@@ -26,12 +26,12 @@ process.on('uncaughtException', (error: Error) => {
 async function main() {
   try {
     // サーバーを起動する前に認証を初期化
-    logger.info('Initializing Google Calendar authentication...');
+    logger.debug('Initializing Google Calendar authentication...');
     await googleAuth.getAuthenticatedClient();
 
     await mcpServer.start();
-    logger.info('Google Calendar MCP Server is running');
-    logger.info('このサーバーはGoogle Calendarへのアクセスを提供します');
+    logger.debug('Google Calendar MCP Server is running');
+    logger.debug('このサーバーはGoogle Calendarへのアクセスを提供します');
   } catch (error) {
     logger.error(`Failed to start server: ${error}`);
     process.exit(1);

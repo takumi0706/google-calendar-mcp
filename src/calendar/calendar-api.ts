@@ -1,5 +1,5 @@
 import { calendar_v3, google } from 'googleapis';
-import googleAuth from '../auth/google-auth';
+import oauthAuth from '../auth/oauth-auth';
 import logger from '../utils/logger';
 import {
   CalendarApiResponse,
@@ -19,7 +19,7 @@ class GoogleCalendarApi {
     }
 
     try {
-      const auth = await googleAuth.getAuthenticatedClient();
+      const auth = await oauthAuth.getAuthenticatedClient();
       this.calendar = google.calendar({ version: 'v3', auth });
       return this.calendar;
     } catch (error) {
@@ -33,7 +33,7 @@ class GoogleCalendarApi {
     try {
       const calendar = await this.initCalendarClient();
       const calendarId = params.calendarId || 'primary';
-      
+
       const response = await calendar.events.list({
         calendarId,
         timeMin: params.timeMin || new Date().toISOString(),

@@ -2,7 +2,7 @@
 
 import mcpServer from './mcp/server';
 import logger from './utils/logger';
-import googleAuth from './auth/google-auth';
+import oauthAuth from './auth/oauth-auth';
 
 // プロセス終了時の処理
 process.on('SIGINT', async () => {
@@ -27,7 +27,7 @@ async function main() {
   try {
     // サーバーを起動する前に認証を初期化
     logger.debug('Initializing Google Calendar authentication...');
-    await googleAuth.getAuthenticatedClient();
+    await oauthAuth.getAuthenticatedClient();
 
     await mcpServer.start();
     logger.debug('Google Calendar MCP Server is running');

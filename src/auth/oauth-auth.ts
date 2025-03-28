@@ -66,11 +66,36 @@ class OAuthAuth {
   // トークンの更新
   private async refreshToken(): Promise<void> {
     try {
+      // リフレッシュトークンがない場合は新規認証フローを開始
+      if (!this.oauth2Client.credentials.refresh_token) {
+        logger.warn('No refresh token available, initiating new authorization flow');
+        // 既存の認証情報をクリア
+        this.oauth2Client.credentials = {};
+        // 直接initiateAuthorizationを呼び出して無限ループを回避
+        await this.initiateAuthorization();
+        return;
+      }
+
+      // リフレッシュトークンがある場合は通常の更新処理
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       this.oauth2Client.setCredentials(credentials);
+
+      // 更新されたアクセストークンをトークンマネージャーにも保存
+      if (credentials.access_token) {
+        const userId = 'default-user';
+        const expiresIn = credentials.expiry_date ? credentials.expiry_date - Date.now() : 3600 * 1000;
+        tokenManager.storeToken(`${userId}_access`, credentials.access_token, expiresIn);
+        logger.info('Successfully refreshed and stored access token');
+      }
     } catch (error) {
       logger.error(`Failed to refresh token: ${error}`);
-      throw error;
+
+      // エラーが発生した場合も新規認証フローを開始
+      logger.warn('Token refresh failed, initiating new authorization flow');
+      // 既存の認証情報をクリア
+      this.oauth2Client.credentials = {};
+      // 直接initiateAuthorizationを呼び出して無限ループを回避
+      await this.initiateAuthorization();
     }
   }
 
@@ -109,12 +134,23 @@ class OAuthAuth {
             const refreshToken = tokenManager.getToken(userId);
             const accessToken = tokenManager.getToken(`${userId}_access`);
 
-            if (refreshToken && accessToken) {
-              // トークンが取得できたらOAuth2クライアントに設定
-              this.oauth2Client.setCredentials({
-                refresh_token: refreshToken,
+            // アクセストークンがあれば認証成功とみなす
+            // リフレッシュトークンは存在する場合のみ設定
+            if (accessToken) {
+              const credentials: any = {
                 access_token: accessToken
-              });
+              };
+
+              // リフレッシュトークンが存在する場合は追加
+              if (refreshToken) {
+                credentials.refresh_token = refreshToken;
+                logger.info('Using stored refresh token for authentication');
+              } else {
+                logger.warn('No refresh token available, proceeding with access token only');
+              }
+
+              // トークンが取得できたらOAuth2クライアントに設定
+              this.oauth2Client.setCredentials(credentials);
 
               clearInterval(intervalId);
               this.authorizationPromise = null;

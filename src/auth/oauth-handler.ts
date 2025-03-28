@@ -58,6 +58,8 @@ export class OAuthHandler {
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
+      // 常に同意画面を表示し、新しいリフレッシュトークンを取得するよう強制
+      prompt: 'consent',
       // PKCE拡張の実装
       // GoogleのOAuth2クライアントにはanyを使用して型エラーを回避
       code_challenge_method: CodeChallengeMethod.S256,

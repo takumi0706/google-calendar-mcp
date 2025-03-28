@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -12,11 +12,16 @@
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 Version 0.5.1 Improvements
+## 🆕 Version 0.6.0 Improvements
+
+This version includes a version upgrade to maintain compatibility with the latest dependencies and improve overall stability.
 
 ### Feature Enhancements
 - **Color Support**: Added ability to set and update event colors using colorId parameter
 - **Improved Event Management**: Enhanced event creation and update capabilities
+- **HTTP/JSON Transport**: Added HTTP/JSON transport layer for improved connectivity options
+- **JSON-RPC Batch Processing**: Support for processing multiple requests in a single batch
+- **Multi-Transport Support**: Simultaneous support for both STDIO and HTTP transports
 
 ### Bug Fixes
 - **Resource Management**: Fixed TokenManager cleanup timer to properly release resources when tests complete
@@ -31,7 +36,9 @@ A Model Context Protocol (MCP) server implementation for Google Calendar integra
 
 ### Security Enhancements
 - **Token Encryption**: Secure token storage with AES-256-GCM encryption
-- **OAuth Flow Improvements**: CSRF protection and PKCE implementation
+- **OAuth 2.1 Authentication**: Implemented OAuth 2.1 authentication at the transport layer
+- **Explicit PKCE Implementation**: Enhanced security with explicit code_verifier and code_challenge generation
+- **State Parameter Validation**: Improved CSRF protection with explicit state parameter validation
 - **Security Headers**: HTTP security headers applied using Helmet.js
 - **Rate Limiting**: API endpoint protection against abuse
 - **Input Validation**: Strict data validation with Zod schema
@@ -112,12 +119,16 @@ This MCP server provides the following functions for Google Calendar:
 
 This server uses:
 
-- **MCP SDK**: `@modelcontextprotocol/sdk` for Claude Desktop integration
+- **MCP SDK**: `@modelcontextprotocol/sdk` v1.8.0+ for Claude Desktop integration
+- **Multiple Transports**: STDIO and HTTP/JSON transports for flexible connectivity
+- **JSON-RPC Batch Processing**: Support for processing multiple requests efficiently
+- **OAuth 2.1**: Enhanced authentication with PKCE and state parameter validation
 - **Google APIs**: `googleapis` for Google Calendar API access
 - **TypeScript**: For type-safe code
 - **Zod**: For schema validation
 - **Helmet.js**: For security headers
 - **AES-256-GCM**: For token encryption
+- **Express**: For HTTP server implementation
 - **Jest**: For unit testing and coverage
 - **GitHub Actions**: For CI/CD
 
@@ -130,23 +141,28 @@ The server stores the following data:
 
 ## Security Measures
 
-Security features introduced in v0.4.0:
+Security features by version:
 
-1. **Token Encryption**:
+1. **Token Encryption** (v0.4.0):
    - Protection of tokens with AES-256-GCM encryption
    - Unique initialization vector (IV) for each token
    - Encryption key from environment variable or auto-generated
 
-2. **OAuth Authentication Enhancements**:
-   - Unique state values for CSRF attack protection
-   - PKCE to prevent authorization code interception
+2. **OAuth 2.1 Authentication Enhancements** (v0.6.0):
+   - Explicit PKCE implementation with code_verifier and code_challenge generation
+   - Cryptographically secure state parameter for CSRF attack protection
+   - State parameter validation during OAuth redirects
+   - Transport layer authentication for HTTP/JSON connections
    - Strict authentication flow validation
 
 3. **Web Security**:
    - Content Security Policy (CSP)
    - XSS protection
    - HTTPS connection recommended
-   - Rate limiting
+   - Rate limiting for HTTP endpoints
+   - Session-based authentication for HTTP/JSON transport
+   - Secure HTTP headers with Helmet.js
+   - JSON validation for all incoming messages
 
 For more details, see [SECURITY.md](SECURITY.md).
 
@@ -168,10 +184,23 @@ If you encounter any issues:
 
 ## Version History
 
-### Version 0.5.1 Changes
+### Version 0.6.0 Changes
+- Version upgrade to maintain compatibility with the latest dependencies
+- Implemented OAuth 2.1 authentication at the transport layer
+- Added HTTP/JSON transport layer for improved connectivity options
+- Added support for JSON-RPC batch processing for multiple requests
+- Enhanced PKCE implementation with explicit code_verifier and code_challenge generation
+- Improved CSRF protection with explicit state parameter validation
+- Added multi-transport support (STDIO and HTTP simultaneously)
 - Fixed TokenManager cleanup timer to properly release resources when tests complete
 - Improved handling of interval timers to prevent potential memory leaks
 - Enhanced resource management for better application stability
+- Improved overall stability and performance
+- Enhanced code quality and maintainability
+
+### Version 0.5.1 Changes
+- Minor bug fixes and stability improvements
+- Documentation updates
 
 ### Version 0.5.0 Changes
 - Added color support for calendar events with colorId parameter
@@ -197,7 +226,7 @@ If you encounter any issues:
 
 ### Version 0.4.0 Changes
 - Implemented token encryption system (AES-256-GCM)
-- Enhanced OAuth authentication flow with CSRF protection and PKCE
+- Added basic OAuth authentication flow enhancements
 - Added security headers using Helmet.js
 - Implemented rate limiting for DDoS protection
 - Enhanced input validation and error handling

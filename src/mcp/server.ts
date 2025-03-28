@@ -7,24 +7,34 @@ import {
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import toolsManager from './tools';
+import { HttpJsonServerTransport } from './http-transport';
+import config from '../config/config';
 
 class GoogleCalendarMcpServer {
   private server: McpServer;
-  private transport: StdioServerTransport;
+  private stdioTransport: StdioServerTransport;
+  private httpTransport: HttpJsonServerTransport;
   private isRunning = false;
 
   constructor() {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.5.0',
+      version: '0.6.0',
     });
 
     // Stdioトランスポートの設定
-    this.transport = new StdioServerTransport();
+    this.stdioTransport = new StdioServerTransport();
+
+    // HTTP/JSONトランスポートの設定
+    this.httpTransport = new HttpJsonServerTransport(
+      config.server.port || 3000,
+      config.server.host || 'localhost'
+    );
 
     // オリジナルメッセージ処理は setupMessageLogging() で上書きされる
-    this.transport.onmessage = async (_message: JSONRPCMessage): Promise<void> => {};
+    this.stdioTransport.onmessage = async (_message: JSONRPCMessage): Promise<void> => {};
+    this.httpTransport.onmessage = async (_message: JSONRPCMessage): Promise<void> => {};
 
     // メッセージ処理用の追加リスナー設定
     this.setupMessageLogging();
@@ -58,34 +68,69 @@ class GoogleCalendarMcpServer {
   }
 
   private setupMessageLogging(): void {
+    // StdioTransportのメッセージロギング設定
+    this.setupStdioMessageLogging();
+
+    // HttpTransportのメッセージロギング設定
+    this.setupHttpMessageLogging();
+  }
+
+  private setupStdioMessageLogging(): void {
     // 直接サーバーのメッセージをインターセプトする方法がないため
     // トランスポートの機能を拡張
-    const originalSend = this.transport.send.bind(this.transport);
-    this.transport.send = async (message: JSONRPCMessage): Promise<void> => {
+    const originalSend = this.stdioTransport.send.bind(this.stdioTransport);
+    this.stdioTransport.send = async (message: JSONRPCMessage): Promise<void> => {
       try {
         // 送信前に文字列に変換し、確実に改行で終わるようにする
         const messageStr = JSON.stringify(message);
-        logger.info(`Message from server: ${messageStr}`);
+        logger.info(`[STDIO] Message from server: ${messageStr}`);
       } catch (err) {
-        logger.error(`Error logging server message: ${err}`);
+        logger.error(`[STDIO] Error logging server message: ${err}`);
       }
       return await originalSend(message);
     };
 
     // クライアントからのメッセージ処理を改善
-    const originalOnMessage = this.transport.onmessage;
-    this.transport.onmessage = async (message: any): Promise<void> => {
+    const originalOnMessage = this.stdioTransport.onmessage;
+    this.stdioTransport.onmessage = async (message: any): Promise<void> => {
       try {
         // メッセージが文字列の場合は、適切にパース
         if (typeof message === 'string') {
           message = this.processJsonRpcMessage(message);
         }
-        logger.info(`Message from client: ${JSON.stringify(message)}`);
+        logger.info(`[STDIO] Message from client: ${JSON.stringify(message)}`);
         if (originalOnMessage) {
           return await originalOnMessage(message);
         }
       } catch (err) {
-        logger.error(`Error processing client message: ${err}`);
+        logger.error(`[STDIO] Error processing client message: ${err}`);
+      }
+    };
+  }
+
+  private setupHttpMessageLogging(): void {
+    // HTTP/JSONトランスポートのメッセージロギング設定
+    const originalHttpSend = this.httpTransport.send.bind(this.httpTransport);
+    this.httpTransport.send = async (message: JSONRPCMessage): Promise<void> => {
+      try {
+        const messageStr = JSON.stringify(message);
+        logger.info(`[HTTP] Message from server: ${messageStr}`);
+      } catch (err) {
+        logger.error(`[HTTP] Error logging server message: ${err}`);
+      }
+      return await originalHttpSend(message);
+    };
+
+    // クライアントからのHTTPメッセージ処理
+    const originalHttpOnMessage = this.httpTransport.onmessage;
+    this.httpTransport.onmessage = async (message: any): Promise<void> => {
+      try {
+        logger.info(`[HTTP] Message from client: ${JSON.stringify(message)}`);
+        if (originalHttpOnMessage) {
+          return await originalHttpOnMessage(message);
+        }
+      } catch (err) {
+        logger.error(`[HTTP] Error processing client message: ${err}`);
       }
     };
   }
@@ -127,21 +172,37 @@ class GoogleCalendarMcpServer {
     try {
       logger.info('Initializing server...');
 
-      // サーバーとトランスポートの接続
-      // MCP SDKの仕様に従い、stdioトランスポートを使用
-      await this.server.connect(this.transport);
+      // Start HTTP/JSON transport
+      await this.httpTransport.start();
+      logger.info(`HTTP/JSON transport started at ${this.httpTransport.getBaseUrl()}`);
 
-      // エラーハンドリングを追加
-      this.transport.onerror = (error: Error): void => {
-        logger.error(`Transport error: ${error}`, { context: 'transport' });
+      // Setup error handling for HTTP transport
+      this.httpTransport.onerror = (error: Error): void => {
+        logger.error(`HTTP transport error: ${error}`, { context: 'http-transport' });
       };
 
-      this.transport.onclose = (): void => {
-        logger.info('Transport closed');
-        this.isRunning = false;
+      this.httpTransport.onclose = (): void => {
+        logger.info('HTTP transport closed');
       };
 
-      logger.info(`Server started and connected successfully`);
+      // Connect server to STDIO transport
+      await this.server.connect(this.stdioTransport);
+      logger.info('STDIO transport connected');
+
+      // Setup error handling for STDIO transport
+      this.stdioTransport.onerror = (error: Error): void => {
+        logger.error(`STDIO transport error: ${error}`, { context: 'stdio-transport' });
+      };
+
+      this.stdioTransport.onclose = (): void => {
+        logger.info('STDIO transport closed');
+        // Only set isRunning to false if both transports are closed
+        if (!this.httpTransport) {
+          this.isRunning = false;
+        }
+      };
+
+      logger.info(`Server started and connected successfully with multiple transports`);
       this.isRunning = true;
     } catch (error) {
       logger.error(`Failed to start server: ${error}`);
@@ -155,8 +216,14 @@ class GoogleCalendarMcpServer {
     }
 
     try {
-      // サーバーの切断
+      // Close HTTP transport
+      await this.httpTransport.close();
+      logger.info('HTTP transport stopped');
+
+      // Close STDIO transport via server
       await this.server.close();
+      logger.info('STDIO transport stopped');
+
       this.isRunning = false;
       logger.info('MCP Server stopped');
     } catch (error) {

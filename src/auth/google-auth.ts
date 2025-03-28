@@ -5,11 +5,15 @@ import logger from '../utils/logger';
 import { createServer } from 'http';
 import { parse } from 'url';
 import open from 'open';
+import * as crypto from 'crypto';
+import { CodeChallengeMethod } from 'google-auth-library/build/src/auth/oauth2client';
 
 class GoogleAuth {
   private oauth2Client: OAuth2Client;
   private authUrl: string;
   private authorizationPromise: Promise<OAuth2Client> | null = null;
+  private codeVerifier: string | null = null;
+  private state: string | null = null;
 
   constructor() {
     // OAuth2クライアントの初期化
@@ -19,12 +23,47 @@ class GoogleAuth {
       config.google.redirectUri
     );
 
-    // 認証URLの生成
+    // PKCE用のcode_verifierとstate parameterを生成
+    this.codeVerifier = this.generateCodeVerifier();
+    this.state = this.generateState();
+
+    // code_challengeの生成
+    const codeChallenge = this.generateCodeChallenge(this.codeVerifier);
+
+    // 認証URLの生成（PKCEとstate parameterを含む）
     this.authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: config.google.scopes,
       prompt: 'consent',
+      code_challenge_method: CodeChallengeMethod.S256,
+      code_challenge: codeChallenge,
+      state: this.state
     });
+  }
+
+  // PKCE用のcode_verifierを生成
+  private generateCodeVerifier(): string {
+    return crypto.randomBytes(32)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  // code_verifierからcode_challengeを生成
+  private generateCodeChallenge(verifier: string): string {
+    const hash = crypto.createHash('sha256')
+      .update(verifier)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+    return hash;
+  }
+
+  // CSRF対策用のstate parameterを生成
+  private generateState(): string {
+    return crypto.randomBytes(16).toString('hex');
   }
 
   // トークンを取得または更新（ファイル保存は行わず、メモリ上に保持）
@@ -80,18 +119,32 @@ class GoogleAuth {
         try {
           const url = parse(req.url || '', true);
           if (url.pathname === '/oauth2callback') {
+            // 認証コードの取得
             const code = url.query.code as string;
             if (!code) {
               throw new Error('No code parameter in callback URL');
             }
 
-            // コードからトークン取得
-            const { tokens } = await this.oauth2Client.getToken(code);
+            // state パラメータの検証（CSRF対策）
+            const returnedState = url.query.state as string;
+            if (!returnedState || returnedState !== this.state) {
+              throw new Error('Invalid state parameter - possible CSRF attack');
+            }
+
+            // PKCE を使用してコードからトークン取得
+            const { tokens } = await this.oauth2Client.getToken({
+              code: code,
+              codeVerifier: this.codeVerifier || undefined
+            });
             this.oauth2Client.setCredentials(tokens);
+
+            // 認証成功後、セキュリティのためにcode_verifierとstateをクリア
+            this.codeVerifier = null;
+            this.state = null;
 
             // レスポンスを返す
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(`<html><body><h3>Authentication was successful. Please close this window and continue.</h3></body></html>`);
+            res.end(`<html lang="en"><body><h3>Authentication was successful. Please close this window and continue.</h3></body></html>`);
 
             server.close(() => {
               this.authorizationPromise = null;
@@ -104,7 +157,7 @@ class GoogleAuth {
         } catch (error) {
           logger.error(`Error in authorization callback: ${error}`);
           res.writeHead(500, { 'Content-Type': 'text/html' });
-          res.end(`<html><body><h3>Authentication error: ${error}</h3></body></html>`);
+          res.end(`<html lang="en"><body><h3>Authentication error: ${error}</h3></body></html>`);
           server.close(() => {
             this.authorizationPromise = null;
             reject(error);

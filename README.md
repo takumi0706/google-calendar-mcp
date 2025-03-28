@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.4-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.6-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -207,12 +207,26 @@ If you encounter any issues:
 
 ### Common Errors
 
-- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in versions 0.2.6+, 0.6.3, and further improved in 0.6.4.
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in versions 0.2.6+, 0.6.3, improved in 0.6.4, and completely resolved in 0.6.5 with a more robust JSON parsing implementation.
 - **Authentication Errors**: Verify your Google OAuth credentials
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.6 Changes
+- Added dedicated JSON-RPC message parsing utility in utils/json-parser.ts
+- Created comprehensive test suite for JSON parsing to prevent regression
+- Implemented 10 test cases covering various malformed JSON scenarios
+- Refactored server.ts to use the common JSON parsing utility
+- Improved code maintainability and testability
+
+### Version 0.6.5 Changes
+- Completely redesigned JSON-RPC message processing to resolve parsing errors
+- Simplified and improved the algorithm for extracting valid JSON from messages
+- Fixed the "Unexpected non-whitespace character after JSON at position 4" error
+- Enhanced error handling with more descriptive error messages
+- Improved logging for better diagnostics and troubleshooting
 
 ### Version 0.6.4 Changes
 - Further improved JSON-RPC message processing to handle malformed messages more robustly

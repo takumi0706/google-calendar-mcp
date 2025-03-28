@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
 import logger from '../utils/logger';
-import path from 'path';
 
 // .envファイルの読み込み
 config();
@@ -15,9 +14,6 @@ if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
   logger.info('Please set these variables in your .env file or environment');
 }
 
-// トークンパスの設定
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-
 // スコープの設定
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
@@ -28,12 +24,15 @@ export default {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
-    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/oauth2callback',
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${parseInt(process.env.AUTH_PORT || '4153', 10)}/oauth2callback`,
     scopes: SCOPES,
-    tokenPath: TOKEN_PATH,
   },
   server: {
     port: parseInt(process.env.PORT || '3000', 10),
     host: process.env.HOST || 'localhost',
+  },
+  auth: {
+    port: parseInt(process.env.AUTH_PORT || '4153', 10),
+    host: process.env.AUTH_HOST || 'localhost',
   },
 };

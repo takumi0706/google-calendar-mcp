@@ -166,8 +166,8 @@ class GoogleAuth {
         }
       });
 
-      server.listen(config.server.port, config.server.host, () => {
-        logger.info(`Waiting for authorization on ${config.server.host}:${config.server.port}...`);
+      server.listen(config.auth.port, config.auth.host, () => {
+        logger.info(`Waiting for authorization on ${config.auth.host}:${config.auth.port}...`);
       });
 
       server.on('error', (error) => {

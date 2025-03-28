@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 0.6.7 has fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
+> Version 0.6.8 has fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
 
-![Version](https://img.shields.io/badge/version-0.6.7-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.8-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -167,7 +167,7 @@ Add the server to your `claude_desktop_config.json`:
       "command": "npx",
       "args": [
         "-y",
-        "@takumi0706/google-calendar-mcp@0.5.1"
+        "@takumi0706/google-calendar-mcp"
       ],
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",

@@ -10,6 +10,7 @@ import toolsManager from './tools';
 import { HttpJsonServerTransport } from './http-transport';
 import config from '../config/config';
 import { processJsonRpcMessage } from '../utils/json-parser';
+import { version } from '../../package.json';
 
 class GoogleCalendarMcpServer {
   private server: McpServer;
@@ -21,7 +22,7 @@ class GoogleCalendarMcpServer {
     // MCPサーバーの設定
     this.server = new McpServer({ 
       name: 'google-calendar-mcp',
-      version: '0.6.7',
+      version: version,
     });
 
     // Stdioトランスポートの設定

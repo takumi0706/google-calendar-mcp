@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 0.7.0 has fixed the OAuth callback handling issue. Version 0.6.9 fixed OAuth authentication prompt issues. Version 0.6.8 fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
+> Version 0.8.0 has improved the OAuth authentication flow to handle refresh token issues. Version 0.7.0 fixed the OAuth callback handling issue. Version 0.6.9 fixed OAuth authentication prompt issues. Version 0.6.8 fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
 
-![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -138,7 +138,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@0.7.0
+npx @takumi0706/google-calendar-mcp@0.8.0
 ```
 
 ### Prerequisites
@@ -215,6 +215,14 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.8.0 Changes
+- Enhanced OAuth authentication flow to handle refresh token issues
+- Added `prompt: 'consent'` parameter to force Google to show the consent screen and provide a new refresh token
+- Modified authentication flow to work with just an access token if a refresh token is not available
+- Improved token refresh logic to handle cases where there's no refresh token or if the refresh token is invalid
+- Updated token storage to save refreshed access tokens for better token management
+- Fixed potential infinite loop in token refresh logic
 
 ### Version 0.7.0 Changes
 - Fixed OAuth callback handling issue that caused "Cannot GET /oauth2callback" errors

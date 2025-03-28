@@ -6,7 +6,8 @@ We currently provide security updates for the following versions:
 
 | Version     | Supported          |
 |-------------|--------------------|
-| 0.7.0       | :white_check_mark: |
+| 0.8.0       | :white_check_mark: |
+| 0.7.0       | :x:                |
 | 0.6.9       | :x:                |
 | 0.6.0-0.6.8 | :x:                |
 | 0.5.x       | :white_check_mark: |
@@ -37,6 +38,17 @@ We take the security of Google Calendar MCP seriously. If you believe you've fou
 ## Security Mechanisms
 
 The Google Calendar MCP handles OAuth tokens and calendar data, which may contain sensitive information. We've implemented the following security measures:
+
+### Security Features Added in Version 0.8.x
+
+1. **Enhanced OAuth Authentication Flow (v0.8.0)**:
+   - Improved handling of refresh token issues for more robust authentication
+   - Added `prompt: 'consent'` parameter to force Google to show the consent screen and provide a new refresh token
+   - Modified authentication flow to work with just an access token if a refresh token is not available
+   - Improved token refresh logic to handle cases where there's no refresh token or if the refresh token is invalid
+   - Updated token storage to save refreshed access tokens for better token management
+   - Fixed potential infinite loop in token refresh logic
+   - Enhanced overall security and reliability of the OAuth authentication process
 
 ### Security Features Added in Version 0.7.x
 

@@ -27,9 +27,9 @@ const logger = winston.createLogger({
     })
   ),
   transports: [
-    // stderr に出力するように設定
+    // エラーとワーニングのみ stderr に出力し、他は stdout に出力するように設定
     new winston.transports.Console({
-      stderrLevels: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+      stderrLevels: ['error', 'warn'],
     }),
     // ディレクトリ作成が失敗してもコンソールだけは動作するようにtry-catchで囲む
     ...(() => {
@@ -61,7 +61,7 @@ const customLogger = {
   http: logger.http.bind(logger),
   verbose: logger.verbose.bind(logger),
   silly: logger.silly.bind(logger),
-  
+
   // デバッグメソッドを追加
   debug: (message: string, meta?: any) => {
     if (process.env.LOG_LEVEL === 'debug') {

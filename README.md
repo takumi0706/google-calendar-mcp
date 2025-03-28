@@ -1,6 +1,6 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -12,9 +12,9 @@
 
 A Model Context Protocol (MCP) server implementation for Google Calendar integration with Claude Desktop. This server enables you to manage Google Calendar events using Claude through the MCP integration.
 
-## 🆕 Version 0.6.0 Improvements
+## 🆕 Version 0.6.1 Improvements
 
-This version includes a version upgrade to maintain compatibility with the latest dependencies and improve overall stability.
+This version includes fixes for logger configuration and dependency updates to improve overall stability and compatibility.
 
 ### Feature Enhancements
 - **Color Support**: Added ability to set and update event colors using colorId parameter
@@ -28,11 +28,11 @@ This version includes a version upgrade to maintain compatibility with the lates
 - **Memory Leaks**: Improved handling of interval timers to prevent potential memory leaks
 
 ### Dependency Updates
-- **MCP SDK**: Updated from 1.7.0 to 1.8.0 for better Claude Desktop integration
-- **Google APIs**: Updated googleapis from 133.0.0 to 148.0.0 for latest Calendar API features
-- **Logging**: Updated winston from 3.11.0 to 3.17.0 for enhanced logging capabilities
-- **Validation**: Updated zod from 3.22.4 to 3.24.2 for improved schema validation
-- **Stability**: Improved overall stability and compatibility with latest dependencies
+- **MCP SDK**: Using 1.8.0 for Claude Desktop integration
+- **Google APIs**: Using googleapis 148.0.0 for latest Calendar API features
+- **Logging**: Using winston 3.11.0 for stable logging capabilities
+- **Validation**: Using zod 3.22.4 for reliable schema validation
+- **Stability**: Improved overall stability with compatible dependency versions
 
 ### Security Enhancements
 - **Token Encryption**: Secure token storage with AES-256-GCM encryption
@@ -183,6 +183,13 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 0.6.1 Changes
+- Fixed logger configuration to ensure info logs go to stdout instead of stderr
+- Updated dependencies to resolve outdated package warnings
+- Removed unnecessary @types/helmet dependency
+- Fixed eslint version to be compatible with @typescript-eslint packages
+- Improved overall stability and compatibility
 
 ### Version 0.6.0 Changes
 - Version upgrade to maintain compatibility with the latest dependencies

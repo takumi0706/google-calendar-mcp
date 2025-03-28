@@ -1,6 +1,9 @@
 # Google Calendar MCP Server
 
-![Version](https://img.shields.io/badge/version-0.6.6-blue.svg)
+> **⚠️ IMPORTANT NOTICE ⚠️**  
+> Version 0.6.x currently contains critical bugs making it unusable. Please use version 0.5.x instead, which is the currently supported version. We are working to resolve these issues in future releases.
+
+![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -135,7 +138,7 @@ Each time you make a change, please install, build, run lint, and test your code
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp
+npx @takumi0706/google-calendar-mcp@0.5.1
 ```
 
 ### Prerequisites
@@ -159,13 +162,12 @@ Add the server to your `claude_desktop_config.json`:
 
 ```json
 {
-  "globalShortcut": "Shift+Alt+Space",
   "mcpServers": {
     "google-calendar": {
       "command": "npx",
       "args": [
         "-y",
-        "@takumi0706/google-calendar-mcp"
+        "@takumi0706/google-calendar-mcp@0.5.1"
       ],
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",
@@ -207,7 +209,7 @@ If you encounter any issues:
 
 ### Common Errors
 
-- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This has been fixed in versions 0.2.6+, 0.6.3, improved in 0.6.4, and completely resolved in 0.6.5 with a more robust JSON parsing implementation.
+- **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. While attempts were made to fix these issues in v0.6.x, critical bugs still remain. Please use v0.5.1 which is currently the most stable version.
 - **Authentication Errors**: Verify your Google OAuth credentials
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets

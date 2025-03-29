@@ -1,20 +1,20 @@
 import { config } from 'dotenv';
 import logger from '../utils/logger';
 
-// .envファイルの読み込み
+// Load .env file
 config();
 
-// 必須環境変数のチェック
+// Check required environment variables
 const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
-// 開発/テスト環境以外でのみ警告を表示
+// Only show warnings in non-development/test environments
 if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
   logger.warn(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
   logger.info('Please set these variables in your .env file or environment');
 }
 
-// スコープの設定
+// Set scopes
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',

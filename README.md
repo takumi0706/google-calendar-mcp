@@ -23,7 +23,7 @@ Google Calendar MCP Server is an MCP (Model Context Protocol) server implementat
 - **OAuth2 authentication**: Handles the Google API authentication flow securely
 - **Event management**: Supports comprehensive calendar event operations (get, create, update, delete)
 - **Color support**: Ability to set and update event colors using colorId parameter
-- **Multi-transport support**: Simultaneous support for both STDIO and HTTP transports
+- **STDIO transport**: Uses standard input/output for communication with Claude Desktop
 
 ## Technical Architecture
 
@@ -34,7 +34,6 @@ This project uses:
 - **Google API**: Uses `googleapis` for Google Calendar API access
 - **Zod**: Implements schema validation for request/response data
 - **Environment-based configuration**: Uses dotenv for configuration management
-- **Express**: For HTTP server implementation
 - **Helmet.js**: For security headers
 - **AES-256-GCM**: For token encryption
 - **Jest**: For unit testing and coverage
@@ -46,8 +45,7 @@ This project uses:
 2. **Google Calendar Tools**: Calendar operations (retrieval, creation, update, deletion)
 3. **Authentication Handler**: Management of OAuth2 flow with Google API
 4. **Schema Validation**: Ensuring data integrity in all operations
-5. **HTTP/JSON Transport**: Additional transport layer for improved connectivity options
-6. **Token Manager**: Secure handling of authentication tokens
+5. **Token Manager**: Secure handling of authentication tokens
 
 ## Available Tools
 
@@ -246,7 +244,7 @@ If you encounter any issues:
 ### Version 0.6.7 Changes
 - Fixed critical JSON parsing bug that caused errors when using the MCP Inspector
 - Improved logging to prevent interference with JSON-RPC messages
-- Enhanced message handling in both STDIO and HTTP transports
+- Enhanced message handling in STDIO transport
 - Improved error handling for malformed JSON messages
 - Added automated npm install process when updating the version using npm version command
 - Updated documentation to reflect the JSON parsing bug fix and automated npm install process
@@ -296,11 +294,9 @@ If you encounter any issues:
 ### Version 0.6.0 Changes
 - Version upgrade to maintain compatibility with the latest dependencies
 - Implemented OAuth 2.1 authentication at the transport layer
-- Added HTTP/JSON transport layer for improved connectivity options
 - Added support for JSON-RPC batch processing for multiple requests
 - Enhanced PKCE implementation with explicit code_verifier and code_challenge generation
 - Improved CSRF protection with explicit state parameter validation
-- Added multi-transport support (STDIO and HTTP simultaneously)
 - Fixed TokenManager cleanup timer to properly release resources when tests complete
 - Improved handling of interval timers to prevent potential memory leaks
 - Enhanced resource management for better application stability

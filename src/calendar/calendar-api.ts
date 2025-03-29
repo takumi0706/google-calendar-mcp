@@ -7,6 +7,7 @@ import {
   DeleteEventParams,
   GetEventsParams,
   UpdateEventParams,
+  GetCalendarParams,
 } from './types';
 
 class GoogleCalendarApi {
@@ -131,6 +132,31 @@ class GoogleCalendarApi {
       return {
         success: false,
         content: `イベントの削除に失敗しました: ${error}`,
+      };
+    }
+  }
+
+  // カレンダーリソースの取得
+  async getCalendar(params: GetCalendarParams): Promise<CalendarApiResponse> {
+    try {
+      const calendar = await this.initCalendarClient();
+      const calendarId = params.calendarId;
+
+      const response = await calendar.calendars.get({
+        calendarId,
+      });
+
+      const calendarResource = response.data;
+      return {
+        success: true,
+        content: `カレンダー「${calendarResource.summary}」を取得しました。`,
+        data: calendarResource,
+      };
+    } catch (error) {
+      logger.error(`Error getting calendar: ${error}`);
+      return {
+        success: false,
+        content: `カレンダーの取得に失敗しました: ${error}`,
       };
     }
   }

@@ -103,3 +103,19 @@ export const deleteEventParamsSchema = z.object({
   eventId: z.string().min(1, { message: 'イベントIDは必須です' })
 });
 
+/**
+ * getCalendar関数パラメータスキーマ
+ */
+export const getCalendarParamsSchema = z.object({
+  calendarId: z.string().min(1, { message: 'カレンダーIDは必須です' })
+});
+
+/**
+ * resources/read リクエストスキーマ
+ */
+export const readResourceRequestSchema = z.object({
+  method: z.literal('resources/read'),
+  params: z.object({
+    uri: z.string().min(1, { message: 'URIは必須です' })
+  })
+});

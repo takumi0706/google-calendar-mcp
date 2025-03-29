@@ -68,3 +68,17 @@ export interface DeleteEventParams {
   calendarId?: string;
   eventId: string;
 }
+
+// カレンダーリソースの型定義
+export interface CalendarResource {
+  id: string;
+  summary: string;
+  description?: string;
+  timeZone?: string;
+  accessRole?: string;
+}
+
+// カレンダー取得のパラメータ型
+export interface GetCalendarParams {
+  calendarId: string;
+}

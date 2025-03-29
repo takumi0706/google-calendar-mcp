@@ -1,72 +1,47 @@
-import winston from 'winston';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+// Simple console-based logger that outputs to stderr to avoid interfering with JSON-RPC
+// This ensures that all logs go to stderr and don't interfere with stdout which is used for JSON-RPC
 
-// ユーザーのホームディレクトリ内にログディレクトリを作成
-const LOG_DIR = path.join(os.homedir(), '.google-calendar-mcp', 'logs');
-
-// ディレクトリが存在しなければ再帰的に作成
-try {
-  if (!fs.existsSync(LOG_DIR)) {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
-  }
-} catch (err) {
-  console.error(`ログディレクトリの作成に失敗しました: ${err}`);
-}
-
-// ロガーの設定
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
-      const contextStr = context ? `[${context}] ` : '';
-      const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-      return `${timestamp} [google-calendar] [${level}] ${contextStr}${message}${metaStr}`;
-    })
-  ),
-  transports: [
-    // エラーとワーニングのみ stderr に出力し、他は stdout に出力するように設定
-    new winston.transports.Console({
-      stderrLevels: ['error', 'warn'],
-    }),
-    // ディレクトリ作成が失敗してもコンソールだけは動作するようにtry-catchで囲む
-    ...(() => {
-      try {
-        return [
-          new winston.transports.File({ 
-            filename: path.join(LOG_DIR, 'error.log'), 
-            level: 'error' 
-          }),
-          new winston.transports.File({ 
-            filename: path.join(LOG_DIR, 'combined.log') 
-          })
-        ];
-      } catch (err) {
-        console.error(`ログファイルの設定に失敗しました: ${err}`);
-        return [];
-      }
-    })()
-  ],
-});
-
-// デバッグメソッドを追加したオリジナルロガー
 const customLogger = {
-  ...logger,
-  // 既存のメソッドをそのまま保持
-  error: logger.error.bind(logger),
-  warn: logger.warn.bind(logger),
-  info: logger.info.bind(logger),
-  http: logger.http.bind(logger),
-  verbose: logger.verbose.bind(logger),
-  silly: logger.silly.bind(logger),
+  // Error logs - these are always shown
+  error: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[ERROR] ${message}${metaStr}`);
+  },
 
-  // デバッグメソッドを追加
+  // Warning logs - these are important for troubleshooting
+  warn: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[WARN] ${message}${metaStr}`);
+  },
+
+  // Info logs - output to stderr to avoid interfering with JSON-RPC
+  info: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[INFO] ${message}${metaStr}`);
+  },
+
+  // HTTP logs - output to stderr to avoid interfering with JSON-RPC
+  http: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[HTTP] ${message}${metaStr}`);
+  },
+
+  // Verbose logs - output to stderr to avoid interfering with JSON-RPC
+  verbose: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[VERBOSE] ${message}${metaStr}`);
+  },
+
+  // Silly logs - output to stderr to avoid interfering with JSON-RPC
+  silly: (message: string, meta?: any) => {
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[SILLY] ${message}${metaStr}`);
+  },
+
+  // Debug logs - output to stderr to avoid interfering with JSON-RPC
   debug: (message: string, meta?: any) => {
-    if (process.env.LOG_LEVEL === 'debug') {
-      logger.info(`[DEBUG] ${message}`, meta);
-    }
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    console.error(`[DEBUG] ${message}${metaStr}`);
   }
 };
 

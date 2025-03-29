@@ -9,119 +9,118 @@ import { CodeChallengeMethod } from 'google-auth-library/build/src/auth/oauth2cl
 import { escapeHtml } from '../utils/html-sanitizer';
 
 /**
- * OAuthHandler - セキュアなOAuth認証フロー管理クラス
+ * OAuthHandler - Secure OAuth authentication flow management class
  * 
- * CSRF対策としてstateパラメータを使用し、
- * PKCE (Proof Key for Code Exchange)を実装して認証を強化
+ * Uses state parameter for CSRF protection and
+ * implements PKCE (Proof Key for Code Exchange) to enhance authentication
  */
 export class OAuthHandler {
   private stateMap: Map<string, { expiry: number, redirectUri: string, codeVerifier: string }> = new Map();
 
   constructor(private app: Express) {
     this.setupRoutes();
-    // 定期的に期限切れのstate値をクリーンアップ
-    setInterval(this.cleanupExpiredStates.bind(this), 30 * 60 * 1000); // 30分ごと
+    // Periodically clean up expired state values
+    setInterval(this.cleanupExpiredStates.bind(this), 30 * 60 * 1000); // every 30 minutes
   }
 
   /**
-   * OAuth関連のルートを設定
+   * Set up OAuth-related routes
    */
   private setupRoutes() {
-    // OAuth リダイレクトエンドポイント
+    // OAuth redirect endpoint
     this.app.get('/oauth2callback', this.handleOAuthCallback.bind(this));
   }
 
   /**
-   * 認証URLを生成
+   * Generate authentication URL
    * 
-   * @param userId ユーザーID
-   * @param redirectUri 認証成功後のリダイレクトURI
-   * @returns 認証URL
+   * @param userId User ID
+   * @param redirectUri Redirect URI after successful authentication
+   * @returns Authentication URL
    */
   public generateAuthUrl(userId: string, redirectUri: string): string {
-    // CSRF対策のためのランダムなstate値
+    // Random state value for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
 
-    // PKCE用のcode_verifier生成
+    // Generate code_verifier for PKCE
     const codeVerifier = this.generateCodeVerifier();
     const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
-    // 10分後に期限切れになるよう設定
+    // Set to expire after 10 minutes
     const expiry = Date.now() + 10 * 60 * 1000;
     this.stateMap.set(state, { expiry, redirectUri, codeVerifier });
 
     logger.info('Generated auth URL with PKCE', { state, redirectUri });
 
-    // OAuth認証URLを生成
+    // Generate OAuth authentication URL
     const oauth2Client = this.getOAuthClient();
     return oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
-      // 常に同意画面を表示し、新しいリフレッシュトークンを取得するよう強制
+      // Always display consent screen to force obtaining a new refresh token
       prompt: 'consent',
-      // PKCE拡張の実装
-      // GoogleのOAuth2クライアントにはanyを使用して型エラーを回避
+      // Implementation of PKCE extension
       code_challenge_method: CodeChallengeMethod.S256,
       code_challenge: codeChallenge
     });
   }
 
   /**
-   * OAuth認証コールバックハンドラ
+   * OAuth authentication callback handler
    */
   private async handleOAuthCallback(req: Request, res: Response) {
     const { code, state, error } = req.query;
 
-    // エラーチェック
+    // Error check
     if (error) {
       logger.error('OAuth error', { error });
-      return res.status(400).send(`認証エラー: ${escapeHtml(error)}`);
+      return res.status(400).send(`Authentication error: ${escapeHtml(error)}`);
     }
 
-    // stateパラメータチェック
+    // State parameter check
     if (!state || typeof state !== 'string') {
       logger.error('Missing state parameter');
-      return res.status(400).send('不正なリクエスト: stateパラメータがありません');
+      return res.status(400).send('Invalid request: state parameter is missing');
     }
 
-    // stateの検証
+    // Validate state
     const stateData = this.stateMap.get(state);
     if (!stateData) {
       logger.error('Invalid state parameter', { state });
-      return res.status(400).send('認証に失敗しました: 無効なstateパラメータです');
+      return res.status(400).send('Authentication failed: Invalid state parameter');
     }
 
-    // 期限切れチェック
+    // Expiration check
     if (stateData.expiry < Date.now()) {
       logger.error('Expired state parameter', { state, expiry: stateData.expiry });
       this.stateMap.delete(state);
-      return res.status(400).send('認証に失敗しました: 認証フローの期限が切れました');
+      return res.status(400).send('Authentication failed: Authentication flow has expired');
     }
 
-    // codeパラメータチェック
+    // Code parameter check
     if (!code || typeof code !== 'string') {
       logger.error('Missing code parameter');
-      return res.status(400).send('不正なリクエスト: codeパラメータがありません');
+      return res.status(400).send('Invalid request: code parameter is missing');
     }
 
     try {
       const oauth2Client = this.getOAuthClient();
 
-      // PKCEのcode_verifierを使用して認証コードをトークンと交換
+      // Exchange authorization code for token using PKCE code_verifier
       const { tokens } = await oauth2Client.getToken({
         code,
         codeVerifier: stateData.codeVerifier
       });
 
-      // stateを使い終わったら削除
+      // Delete state after it's been used
       this.stateMap.delete(state);
 
-      // ユーザーIDを特定（実際の実装ではユーザー認証が必要）
-      // 現時点ではシンプルな実装として'default-user'を使用
+      // Identify user ID (actual implementation would require user authentication)
+      // Using 'default-user' as a simple implementation for now
       const userId = 'default-user';
 
-      // トークンを暗号化して保存
+      // Encrypt and store token
       if (tokens.refresh_token) {
         tokenManager.storeToken(userId, tokens.refresh_token);
         logger.info('Successfully obtained and stored refresh token', { userId });
@@ -129,25 +128,25 @@ export class OAuthHandler {
         logger.warn('No refresh token in the response', { userId });
       }
 
-      // アクセストークンは必要に応じて短期間だけ保存
+      // Store access token for a short period as needed
       if (tokens.access_token) {
         const expiresIn = tokens.expiry_date ? tokens.expiry_date - Date.now() : 3600 * 1000;
         tokenManager.storeToken(`${userId}_access`, tokens.access_token, expiresIn);
         logger.debug('Stored access token', { userId, expiresIn });
       }
 
-      // リダイレクト
+      // Redirect
       res.redirect(stateData.redirectUri || '/auth-success');
     } catch (err: unknown) {
       const error = err as Error;
       logger.error('OAuth token exchange failed', { error: error.message, stack: error.stack });
-      res.status(500).send('トークン交換に失敗しました。');
+      res.status(500).send('Token exchange failed.');
     }
   }
 
   /**
-   * PKCE用のcode_verifierを生成
-   * @returns ランダムなcode_verifier文字列
+   * Generate code_verifier for PKCE
+   * @returns Random code_verifier string
    */
   private generateCodeVerifier(): string {
     return crypto.randomBytes(32)
@@ -158,9 +157,9 @@ export class OAuthHandler {
   }
 
   /**
-   * PKCE用のcode_challengeを生成
+   * Generate code_challenge for PKCE
    * @param codeVerifier code_verifier
-   * @returns SHA-256ハッシュされたcode_challenge
+   * @returns SHA-256 hashed code_challenge
    */
   private generateCodeChallenge(codeVerifier: string): string {
     return crypto.createHash('sha256')
@@ -172,7 +171,7 @@ export class OAuthHandler {
   }
 
   /**
-   * 期限切れのstate値をクリーンアップ
+   * Clean up expired state values
    */
   private cleanupExpiredStates(): void {
     const now = Date.now();
@@ -191,7 +190,7 @@ export class OAuthHandler {
   }
 
   /**
-   * OAuth2クライアントを取得
+   * Get OAuth2 client
    */
   private getOAuthClient() {
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -201,7 +200,7 @@ export class OAuthHandler {
     if (!clientId || !clientSecret || !redirectUri) {
       throw new AppError(
         ErrorCode.CONFIGURATION_ERROR,
-        'Google OAuth設定が不足しています',
+        'Google OAuth configuration is missing',
         500,
         { missingVars: [
           !clientId ? 'GOOGLE_CLIENT_ID' : null,

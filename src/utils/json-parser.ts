@@ -18,6 +18,25 @@ export function processJsonRpcMessage(message: string): any {
     // Remove special characters like BOM and trim whitespace
     const cleanedMessage = message.replace(/^\uFEFF/, '').trim();
 
+    // Log the message for debugging
+    logger.debug(`Processing message: ${cleanedMessage.substring(0, 50)}...`);
+
+    // Fix for "Unexpected non-whitespace character after JSON at position 4"
+    // This happens when there are extra characters after a valid JSON object
+    // Try to find a valid JSON object or array at the beginning of the string
+    const jsonMatch = cleanedMessage.match(/^(\{.*\}|\[.*\])(?:\s*|$)/s);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        // If we can parse this directly, return it
+        const parsed = JSON.parse(jsonMatch[1]);
+        logger.debug(`Successfully parsed JSON directly: ${jsonMatch[1].substring(0, 50)}...`);
+        return parsed;
+      } catch (e) {
+        // If direct parsing fails, continue with the original algorithm
+        logger.debug(`Direct parsing failed, continuing with original algorithm: ${e}`);
+      }
+    }
+
     // Find the start of the JSON object or array (whichever comes first)
     const jsonStartIndex = Math.min(
       cleanedMessage.indexOf('{') >= 0 ? cleanedMessage.indexOf('{') : Number.MAX_SAFE_INTEGER,

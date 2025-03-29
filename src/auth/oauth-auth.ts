@@ -9,10 +9,10 @@ import { tokenManager } from './token-manager';
 import open from 'open';
 
 /**
- * OAuthAuth - OAuthHandlerを使用したGoogle認証クラス
+ * OAuthAuth - Google authentication class using OAuthHandler
  * 
- * OAuthHandlerを使用してGoogle OAuth認証を処理し、
- * GoogleAuthと同様のインターフェースを提供します。
+ * Processes Google OAuth authentication using OAuthHandler,
+ * providing an interface similar to GoogleAuth.
  */
 class OAuthAuth {
   private oauth2Client: OAuth2Client;
@@ -22,30 +22,47 @@ class OAuthAuth {
   private authorizationPromise: Promise<OAuth2Client> | null = null;
 
   constructor() {
-    // OAuth2クライアントの初期化
+    // Initialize OAuth2 client
     this.oauth2Client = new google.auth.OAuth2(
       config.google.clientId,
       config.google.clientSecret,
       config.google.redirectUri
     );
 
-    // Expressアプリケーションの初期化
+    // Initialize Express application
     this.expressApp = express();
 
-    // OAuthHandlerの初期化
+    // Initialize OAuthHandler
     this.oauthHandler = new OAuthHandler(this.expressApp as Express);
 
-    // Expressサーバーの起動
-    this.server = this.expressApp.listen(config.auth.port, config.auth.host, () => {
-      logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
-    });
+    // Start Express server (catch error if port is already in use)
+    try {
+      this.server = this.expressApp.listen(config.auth.port, config.auth.host, () => {
+        logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
+      });
+
+      // Add error handling
+      this.server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          logger.warn(`Port ${config.auth.port} is already in use, assuming OAuth server is already running`);
+          // Set server object to null to indicate that we're using an existing server
+          this.server = null;
+        } else {
+          logger.error(`OAuth server error: ${err}`);
+        }
+      });
+    } catch (err) {
+      logger.warn(`Could not start OAuth server: ${err}`);
+      // Set server object to null
+      this.server = null;
+    }
   }
 
-  // トークンを取得または更新
+  // Get or refresh token
   async getAuthenticatedClient(): Promise<OAuth2Client> {
-    // すでに資格情報が設定されていればそのまま返す
+    // If credentials are already set, return them
     if (this.oauth2Client.credentials && this.oauth2Client.credentials.access_token) {
-      // 有効期限切れチェック
+      // Check if token is expired
       if (this.isTokenExpired(this.oauth2Client.credentials)) {
         logger.info('Token expired, refreshing...');
         await this.refreshToken();
@@ -53,34 +70,34 @@ class OAuthAuth {
       return this.oauth2Client;
     }
 
-    // 新規認証
+    // New authentication
     return await this.initiateAuthorization();
   }
 
-  // トークンの有効期限チェック
+  // Check token expiration
   private isTokenExpired(token: any): boolean {
     if (!token.expiry_date) return true;
     return token.expiry_date <= Date.now();
   }
 
-  // トークンの更新
+  // Refresh token
   private async refreshToken(): Promise<void> {
     try {
-      // リフレッシュトークンがない場合は新規認証フローを開始
+      // If there's no refresh token, start a new authentication flow
       if (!this.oauth2Client.credentials.refresh_token) {
         logger.warn('No refresh token available, initiating new authorization flow');
-        // 既存の認証情報をクリア
+        // Clear existing credentials
         this.oauth2Client.credentials = {};
-        // 直接initiateAuthorizationを呼び出して無限ループを回避
+        // Call initiateAuthorization directly to avoid infinite loop
         await this.initiateAuthorization();
         return;
       }
 
-      // リフレッシュトークンがある場合は通常の更新処理
+      // If there's a refresh token, perform normal refresh
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       this.oauth2Client.setCredentials(credentials);
 
-      // 更新されたアクセストークンをトークンマネージャーにも保存
+      // Also store the refreshed access token in the token manager
       if (credentials.access_token) {
         const userId = 'default-user';
         const expiresIn = credentials.expiry_date ? credentials.expiry_date - Date.now() : 3600 * 1000;
@@ -90,16 +107,16 @@ class OAuthAuth {
     } catch (error) {
       logger.error(`Failed to refresh token: ${error}`);
 
-      // エラーが発生した場合も新規認証フローを開始
+      // If an error occurs, start a new authentication flow
       logger.warn('Token refresh failed, initiating new authorization flow');
-      // 既存の認証情報をクリア
+      // Clear existing credentials
       this.oauth2Client.credentials = {};
-      // 直接initiateAuthorizationを呼び出して無限ループを回避
+      // Call initiateAuthorization directly to avoid infinite loop
       await this.initiateAuthorization();
     }
   }
 
-  // 認証フローの開始
+  // Start authentication flow
   private initiateAuthorization(): Promise<OAuth2Client> {
     if (this.authorizationPromise) {
       return this.authorizationPromise;

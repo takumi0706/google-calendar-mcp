@@ -71,7 +71,7 @@ The Google Calendar MCP handles OAuth tokens and calendar data, which may contai
 2. **JSON Parsing Bug Fix (v0.6.7)**:
    - Fixed critical JSON parsing bug that caused errors when using the MCP Inspector
    - Improved logging to prevent interference with JSON-RPC messages
-   - Enhanced message handling in both STDIO and HTTP transports
+   - Enhanced message handling in STDIO transport
    - Improved error handling for malformed JSON messages
 
 3. **OAuth Authentication Improvements (v0.6.9)**:

@@ -4,7 +4,7 @@ import mcpServer from './mcp/server';
 import logger from './utils/logger';
 import oauthAuth from './auth/oauth-auth';
 
-// プロセス終了時の処理
+// Process termination handling
 process.on('SIGINT', async () => {
   logger.debug('Received SIGINT. Graceful shutdown...');
   await mcpServer.stop();
@@ -22,16 +22,13 @@ process.on('uncaughtException', (error: Error) => {
   process.exit(1);
 });
 
-// サーバー起動
+// Server startup
 async function main() {
   try {
-    // サーバーを起動する前に認証を初期化
-    logger.debug('Initializing Google Calendar authentication...');
+    // Initialize authentication before starting the server
+    // Always assume we're running under MCP inspector
     await oauthAuth.getAuthenticatedClient();
-
     await mcpServer.start();
-    logger.debug('Google Calendar MCP Server is running');
-    logger.debug('このサーバーはGoogle Calendarへのアクセスを提供します');
   } catch (error) {
     logger.error(`Failed to start server: ${error}`);
     process.exit(1);

@@ -2,10 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 // This test verifies that the logger is correctly configured to send
-// info logs to stdout and error/warn logs to stderr
+// all logs to stderr to avoid interfering with JSON-RPC
 describe('Logger', () => {
-  // In the Winston configuration, we've set stderrLevels to ['error', 'warn']
-  // This means that error and warn logs should go to stderr, while info logs go to stdout
+  // The custom logger implementation outputs all logs to stderr using console.error
+  // This ensures that logs don't interfere with stdout which is used for JSON-RPC
 
   // We can verify this by checking the logger.ts file directly
   test('logger should be configured correctly', () => {
@@ -13,10 +13,10 @@ describe('Logger', () => {
     const loggerFilePath = path.resolve(__dirname, '../utils/logger.ts');
     const loggerFileContent = fs.readFileSync(loggerFilePath, 'utf8');
 
-    // Check that the stderrLevels array only contains 'error' and 'warn'
-    expect(loggerFileContent).toContain('stderrLevels: [\'error\', \'warn\']');
-
-    // Check that the stderrLevels array does not contain 'info'
-    expect(loggerFileContent).not.toContain('stderrLevels: [\'error\', \'warn\', \'info\'');
+    // Check that all log levels use console.error
+    expect(loggerFileContent).toContain('console.error(`[ERROR]');
+    expect(loggerFileContent).toContain('console.error(`[WARN]');
+    expect(loggerFileContent).toContain('console.error(`[INFO]');
+    expect(loggerFileContent).toContain('console.error(`[DEBUG]');
   });
 });

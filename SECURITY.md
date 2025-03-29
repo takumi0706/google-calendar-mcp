@@ -4,17 +4,13 @@
 
 We currently provide security updates for the following versions:
 
-| Version     | Supported          |
-|-------------|--------------------|
-| 0.8.0       | :white_check_mark: |
-| 0.7.0       | :x:                |
-| 0.6.9       | :x:                |
-| 0.6.0-0.6.8 | :x:                |
-| 0.5.x       | :white_check_mark: |
-| 0.4.x       | :x:                |
-| 0.3.x       | :x:                |
-| 0.2.7       | :x:                |
-| < 0.2.7     | :x:                |
+| Version | Supported          |
+|---------|--------------------|
+| 1.0.0   | :white_check_mark: |
+| 0.8.0   | :x:                |
+| 0.7.0   | :x:                |
+| 0.6.x   | :x:                |
+| < 0.6.0 | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -38,6 +34,20 @@ We take the security of Google Calendar MCP seriously. If you believe you've fou
 ## Security Mechanisms
 
 The Google Calendar MCP handles OAuth tokens and calendar data, which may contain sensitive information. We've implemented the following security measures:
+
+### Security Features Added in Version 1.0.0
+
+1. **Internationalization and Improved Error Handling**:
+   - Standardized all error messages in English for better clarity and consistency
+   - Enhanced error messages to provide more specific information about what went wrong
+   - Improved error handling patterns throughout the codebase
+   - Standardized logging format for better diagnostics and troubleshooting
+
+2. **Code Refactoring for Security**:
+   - Comprehensive code review and refactoring to identify and address potential security issues
+   - Improved code organization and structure for better maintainability and security
+   - Enhanced documentation of security-related code and features
+   - Standardized coding patterns for handling sensitive data
 
 ### Security Features Added in Version 0.8.x
 

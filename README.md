@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 0.8.0 has improved the OAuth authentication flow to handle refresh token issues. Version 0.7.0 fixed the OAuth callback handling issue. Version 0.6.9 fixed OAuth authentication prompt issues. Version 0.6.8 fixed port conflict issues and improved version management. Version 0.6.7 fixed the critical JSON parsing bug that was present in earlier 0.6.x versions. This version is now stable and recommended for use.
+> Version 1.0.0 marks a significant milestone as our first production-ready release that is fully usable as a product, with comprehensive code refactoring and internationalization of all messages and comments.
 
-![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -136,7 +136,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@0.8.0
+npx @takumi0706/google-calendar-mcp@1.0.0
 ```
 
 ### Prerequisites
@@ -213,6 +213,15 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 1.0.0 Changes
+- Major version release marking production readiness
+- Comprehensive code refactoring for improved maintainability
+- Internationalization of all messages and comments (translated Japanese to English)
+- Enhanced code consistency and readability
+- Improved error messages for better user experience
+- Updated documentation to reflect current state of the project
+- Standardized coding style throughout the codebase
 
 ### Version 0.8.0 Changes
 - Enhanced OAuth authentication flow to handle refresh token issues

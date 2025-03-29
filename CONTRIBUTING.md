@@ -51,6 +51,18 @@ npm run lint
 npm run format
 ```
 
+### Internationalization Guidelines
+
+To maintain consistency throughout the codebase:
+
+1. All code comments should be written in English
+2. All user-facing messages should be in English
+3. Variable names, function names, and other identifiers should be in English
+4. Log messages should be in English for better troubleshooting
+5. Documentation should be in English
+
+This ensures that the codebase is accessible to developers worldwide and maintains a consistent style.
+
 ## Release Process
 
 ### Manual NPM Publishing

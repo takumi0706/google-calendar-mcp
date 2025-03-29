@@ -124,14 +124,14 @@ class OAuthAuth {
 
     this.authorizationPromise = new Promise((resolve, reject) => {
       try {
-        // OAuthHandlerを使用して認証URLを生成
+        // Generate authentication URL using OAuthHandler
         const userId = 'default-user';
         const redirectUri = `http://${config.auth.host}:${config.auth.port}/auth-success`;
         const authUrl = this.oauthHandler.generateAuthUrl(userId, redirectUri);
 
         logger.info(`Please authorize this app by visiting this URL: ${authUrl}`);
 
-        // ブラウザで認証URLを開く
+        // Open authentication URL in browser
         try {
           open(authUrl);
           logger.info('Opening browser for authorization...');
@@ -140,25 +140,25 @@ class OAuthAuth {
           logger.info(`Please open this URL manually: ${authUrl}`);
         }
 
-        // 認証成功ページのルート
+        // Authentication success page route
         this.expressApp.get('/auth-success', (req, res) => {
           res.send(`<html lang="en"><body><h3>Authentication was successful. Please close this window and continue.</h3></body></html>`);
         });
 
-        // トークンマネージャーからトークンを監視
+        // Monitor tokens from token manager
         const checkToken = async () => {
           try {
             const refreshToken = tokenManager.getToken(userId);
             const accessToken = tokenManager.getToken(`${userId}_access`);
 
-            // アクセストークンがあれば認証成功とみなす
-            // リフレッシュトークンは存在する場合のみ設定
+            // Consider authentication successful if access token exists
+            // Set refresh token only if it exists
             if (accessToken) {
               const credentials: any = {
                 access_token: accessToken
               };
 
-              // リフレッシュトークンが存在する場合は追加
+              // Add refresh token if it exists
               if (refreshToken) {
                 credentials.refresh_token = refreshToken;
                 logger.info('Using stored refresh token for authentication');
@@ -166,7 +166,7 @@ class OAuthAuth {
                 logger.warn('No refresh token available, proceeding with access token only');
               }
 
-              // トークンが取得できたらOAuth2クライアントに設定
+              // Set credentials to OAuth2 client when tokens are obtained
               this.oauth2Client.setCredentials(credentials);
 
               clearInterval(intervalId);
@@ -178,10 +178,10 @@ class OAuthAuth {
           }
         };
 
-        // 定期的にトークンをチェック
+        // Check tokens periodically
         const intervalId = setInterval(checkToken, 1000);
 
-        // タイムアウト設定
+        // Set timeout
         setTimeout(() => {
           clearInterval(intervalId);
           this.authorizationPromise = null;

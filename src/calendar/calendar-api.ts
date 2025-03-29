@@ -13,7 +13,7 @@ import {
 class GoogleCalendarApi {
   private calendar: calendar_v3.Calendar | null = null;
 
-  // Calendar APIクライアントの初期化
+  // Initialize Calendar API client
   private async initCalendarClient(): Promise<calendar_v3.Calendar> {
     if (this.calendar) {
       return this.calendar;
@@ -29,7 +29,7 @@ class GoogleCalendarApi {
     }
   }
 
-  // イベント一覧の取得
+  // Get list of events
   async getEvents(params: GetEventsParams): Promise<CalendarApiResponse> {
     try {
       const calendar = await this.initCalendarClient();
@@ -47,19 +47,19 @@ class GoogleCalendarApi {
       const events = response.data.items;
       return {
         success: true,
-        content: `${events?.length || 0}件のイベントを取得しました。`,
+        content: `Retrieved ${events?.length || 0} events.`,
         data: events,
       };
     } catch (error) {
       logger.error(`Error getting events: ${error}`);
       return {
         success: false,
-        content: `イベントの取得に失敗しました: ${error}`,
+        content: `Failed to retrieve events: ${error}`,
       };
     }
   }
 
-  // イベントの作成
+  // Create a new event
   async createEvent(params: CreateEventParams): Promise<CalendarApiResponse> {
     try {
       const calendar = await this.initCalendarClient();
@@ -73,19 +73,19 @@ class GoogleCalendarApi {
       const createdEvent = response.data;
       return {
         success: true,
-        content: `イベント「${createdEvent.summary}」を作成しました。`,
+        content: `Created event "${createdEvent.summary}".`,
         data: createdEvent,
       };
     } catch (error) {
       logger.error(`Error creating event: ${error}`);
       return {
         success: false,
-        content: `イベントの作成に失敗しました: ${error}`,
+        content: `Failed to create event: ${error}`,
       };
     }
   }
 
-  // イベントの更新
+  // Update an existing event
   async updateEvent(params: UpdateEventParams): Promise<CalendarApiResponse> {
     try {
       const calendar = await this.initCalendarClient();
@@ -100,19 +100,19 @@ class GoogleCalendarApi {
       const updatedEvent = response.data;
       return {
         success: true,
-        content: `イベント「${updatedEvent.summary}」を更新しました。`,
+        content: `Updated event "${updatedEvent.summary}".`,
         data: updatedEvent,
       };
     } catch (error) {
       logger.error(`Error updating event: ${error}`);
       return {
         success: false,
-        content: `イベントの更新に失敗しました: ${error}`,
+        content: `Failed to update event: ${error}`,
       };
     }
   }
 
-  // イベントの削除
+  // Delete an event
   async deleteEvent(params: DeleteEventParams): Promise<CalendarApiResponse> {
     try {
       const calendar = await this.initCalendarClient();
@@ -125,18 +125,18 @@ class GoogleCalendarApi {
 
       return {
         success: true,
-        content: `イベントを削除しました。`,
+        content: `Event deleted successfully.`,
       };
     } catch (error) {
       logger.error(`Error deleting event: ${error}`);
       return {
         success: false,
-        content: `イベントの削除に失敗しました: ${error}`,
+        content: `Failed to delete event: ${error}`,
       };
     }
   }
 
-  // カレンダーリソースの取得
+  // Get calendar resource
   async getCalendar(params: GetCalendarParams): Promise<CalendarApiResponse> {
     try {
       const calendar = await this.initCalendarClient();
@@ -149,14 +149,14 @@ class GoogleCalendarApi {
       const calendarResource = response.data;
       return {
         success: true,
-        content: `カレンダー「${calendarResource.summary}」を取得しました。`,
+        content: `Retrieved calendar "${calendarResource.summary}".`,
         data: calendarResource,
       };
     } catch (error) {
       logger.error(`Error getting calendar: ${error}`);
       return {
         success: false,
-        content: `カレンダーの取得に失敗しました: ${error}`,
+        content: `Failed to retrieve calendar: ${error}`,
       };
     }
   }

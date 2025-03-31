@@ -6,8 +6,6 @@ import { OAuthHandler } from './oauth-handler';
 import config from '../config/config';
 import logger from '../utils/logger';
 import { tokenManager } from './token-manager';
-import open from 'open';
-
 /**
  * OAuthAuth - Google authentication class using OAuthHandler
  * 
@@ -133,8 +131,15 @@ class OAuthAuth {
 
         // Open authentication URL in browser
         try {
-          open(authUrl);
-          logger.info('Opening browser for authorization...');
+          // Use dynamic import for the 'open' package (ESM module)
+          // This is necessary because 'open' v10+ is ESM-only and doesn't support CommonJS require()
+          import('open').then(openModule => {
+            openModule.default(authUrl);
+            logger.info('Opening browser for authorization...');
+          }).catch(error => {
+            logger.warn(`Failed to import 'open' package: ${error}`);
+            logger.info(`Please open this URL manually: ${authUrl}`);
+          });
         } catch (error) {
           logger.warn(`Failed to open browser automatically: ${error}`);
           logger.info(`Please open this URL manually: ${authUrl}`);

@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.0 marks a significant milestone as our first production-ready release that is fully usable as a product, with comprehensive code refactoring and internationalization of all messages and comments.
+> Version 1.0.1 includes a fix for Node.js v20.9.0+ compatibility with the 'open' package, which is now ESM-only in version 10+. Version 1.0.0 marks our first production-ready release with comprehensive code refactoring and internationalization.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -136,7 +136,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.0
+npx @takumi0706/google-calendar-mcp@1.0.1
 ```
 
 ### Prerequisites
@@ -213,6 +213,12 @@ If you encounter any issues:
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 1.0.1 Changes
+- Fixed compatibility issue with Node.js v20.9.0+ and the 'open' package (v10+)
+- Replaced static import with dynamic import for the ESM-only 'open' package
+- Improved error handling for browser opening during OAuth authentication
+- Enhanced code comments for better maintainability
 
 ### Version 1.0.0 Changes
 - Major version release marking production readiness

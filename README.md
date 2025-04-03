@@ -149,9 +149,15 @@ npx @takumi0706/google-calendar-mcp@1.0.1
 # Create a .env file with your Google OAuth credentials
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
+GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback
 # Optional: Token encryption key (auto-generated if not provided)
 TOKEN_ENCRYPTION_KEY=32-byte-hex-key
+# Optional: Auth server port and host (default port: 4153, host: localhost)
+AUTH_PORT=4153
+AUTH_HOST=localhost
+# Optional: MCP server port and host (default port: 3000, host: localhost)
+PORT=3000
+HOST=localhost
 ```
 
 ### Claude Desktop Configuration
@@ -170,7 +176,7 @@ Add the server to your `claude_desktop_config.json`:
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
-        "GOOGLE_REDIRECT_URI": "http://localhost:3000/oauth2callback"
+        "GOOGLE_REDIRECT_URI": "http://localhost:4153/oauth2callback"
       }
     }
   }

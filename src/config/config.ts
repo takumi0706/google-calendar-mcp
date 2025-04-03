@@ -24,7 +24,7 @@ export default {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
-    redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${parseInt(process.env.AUTH_PORT || '4153', 10)}/oauth2callback`,
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://${process.env.AUTH_HOST || 'localhost'}:${parseInt(process.env.AUTH_PORT || '4153', 10)}/oauth2callback`,
     scopes: SCOPES,
   },
   server: {

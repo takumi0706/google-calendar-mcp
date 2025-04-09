@@ -2,32 +2,32 @@
 import { z } from 'zod';
 
 /**
- * 日時の検証スキーマ
- * ISO 8601形式またはYYYY-MM-DD形式をサポート
+ * DateTime validation schema
+ * Supports ISO 8601 format or YYYY-MM-DD format
  */
 const dateTimeSchema = z.object({
   dateTime: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: '日時はISO 8601形式(YYYY-MM-DDThh:mm:ss+hh:mm)である必要があります' }),
+    { message: 'DateTime must be in ISO 8601 format (YYYY-MM-DDThh:mm:ss+hh:mm)' }),
   timeZone: z.string().optional()
 }).or(z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 
-    { message: '日付はYYYY-MM-DD形式である必要があります' }),
+    { message: 'Date must be in YYYY-MM-DD format' }),
   timeZone: z.string().optional()
 }));
 
 /**
- * 参加者スキーマ
+ * Attendee schema
  */
 const attendeeSchema = z.object({
-  email: z.string().email({ message: '有効なメールアドレスを入力してください' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
   displayName: z.string().optional()
 });
 
 /**
- * リマインダースキーマ
+ * Reminder schema
  */
 const reminderSchema = z.object({
-  useDefault: z.boolean(), // undefined を許容しない
+  useDefault: z.boolean(), // does not allow undefined
   overrides: z.array(
     z.object({
       method: z.enum(['email', 'popup']),
@@ -37,49 +37,49 @@ const reminderSchema = z.object({
 });
 
 /**
- * イベントスキーマ - Google Calendarイベントの作成・更新に使用
+ * Event schema - Used for creating and updating Google Calendar events
  */
 export const eventSchema = z.object({
-  summary: z.string().min(1, { message: '件名は必須です' }).max(500),
+  summary: z.string().min(1, { message: 'Summary is required' }).max(500),
   description: z.string().max(8000).optional(),
   location: z.string().max(1000).optional(),
   start: dateTimeSchema,
   end: dateTimeSchema,
   attendees: z.array(attendeeSchema).optional(),
-  reminders: reminderSchema.optional(), // リマインダースキーマを使用
-  colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
+  reminders: reminderSchema.optional(), // using reminder schema
+  colorId: z.string().optional().describe('Event color ID (number 1-11)'),
 });
 
 /**
- * イベント更新スキーマ - すべてのフィールドを任意に
- * ただし、createdEventが必要になるため、summaryは必須
+ * Event update schema - All fields are optional
+ * All fields are optional to merge with existing event data
  */
 export const eventUpdateSchema = z.object({
-  summary: z.string().min(1), // 必須
+  summary: z.string().min(1).optional(), // optional
   description: z.string().max(8000).optional(),
   location: z.string().max(1000).optional(),
   start: dateTimeSchema.optional(),
   end: dateTimeSchema.optional(),
   attendees: z.array(attendeeSchema).optional(),
   reminders: reminderSchema.optional(),
-  colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
+  colorId: z.string().optional().describe('Event color ID (number 1-11)'),
 });
 
 /**
- * getEvents関数パラメータスキーマ
+ * getEvents function parameter schema
  */
 export const getEventsParamsSchema = z.object({
   calendarId: z.string().optional().default('primary'),
   timeMin: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMinはISO 8601形式である必要があります' }).optional(),
+    { message: 'timeMin must be in ISO 8601 format' }).optional(),
   timeMax: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMaxはISO 8601形式である必要があります' }).optional(),
+    { message: 'timeMax must be in ISO 8601 format' }).optional(),
   maxResults: z.number().int().positive().max(2500).optional().default(10),
   orderBy: z.enum(['startTime', 'updated']).optional()
 });
 
 /**
- * createEvent関数パラメータスキーマ
+ * createEvent function parameter schema
  */
 export const createEventParamsSchema = z.object({
   calendarId: z.string().optional().default('primary'),
@@ -87,35 +87,35 @@ export const createEventParamsSchema = z.object({
 });
 
 /**
- * updateEvent関数パラメータスキーマ
+ * updateEvent function parameter schema
  */
 export const updateEventParamsSchema = z.object({
   calendarId: z.string().optional().default('primary'),
-  eventId: z.string().min(1, { message: 'イベントIDは必須です' }),
+  eventId: z.string().min(1, { message: 'Event ID is required' }),
   event: eventUpdateSchema
 });
 
 /**
- * deleteEvent関数パラメータスキーマ
+ * deleteEvent function parameter schema
  */
 export const deleteEventParamsSchema = z.object({
   calendarId: z.string().optional().default('primary'),
-  eventId: z.string().min(1, { message: 'イベントIDは必須です' })
+  eventId: z.string().min(1, { message: 'Event ID is required' })
 });
 
 /**
- * getCalendar関数パラメータスキーマ
+ * getCalendar function parameter schema
  */
 export const getCalendarParamsSchema = z.object({
-  calendarId: z.string().min(1, { message: 'カレンダーIDは必須です' })
+  calendarId: z.string().min(1, { message: 'Calendar ID is required' })
 });
 
 /**
- * resources/read リクエストスキーマ
+ * resources/read request schema
  */
 export const readResourceRequestSchema = z.object({
   method: z.literal('resources/read'),
   params: z.object({
-    uri: z.string().min(1, { message: 'URIは必須です' })
+    uri: z.string().min(1, { message: 'URI is required' })
   })
 });

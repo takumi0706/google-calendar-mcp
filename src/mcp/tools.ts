@@ -11,29 +11,29 @@ import { CalendarEvent } from '../calendar/types';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 /**
- * ツール管理クラス
- * MCPサーバーにツールを登録する機能を提供
+ * Tools Manager Class
+ * Provides functionality to register tools with the MCP server
  */
 export class ToolsManager {
   /**
-   * 登録されたツールを保持するプロパティ
+   * Property that holds registered tools
    */
   public tools: Record<string, any> = {};
 
   /**
-   * MCPサーバーにツールを登録する
-   * @param server MCPサーバーインスタンス
+   * Register tools with the MCP server
+   * @param server MCP server instance
    */
   public registerTools(server: McpServer): void {
     logger.debug('Registering calendar tools with MCP server');
 
-    // getEvents ツール
+    // getEvents tool
     const getEventsSchema = {
-      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-      timeMin: z.string().optional().describe('取得開始日時（ISO 8601形式。例: 2025-03-01T00:00:00Z）'),
-      timeMax: z.string().optional().describe('取得終了日時（ISO 8601形式）'),
-      maxResults: z.number().int().positive().optional().describe('最大取得件数（デフォルト10）'),
-      orderBy: z.enum(['startTime', 'updated']).optional().describe('並び順（startTime: 開始時刻順、updated: 更新順）'),
+      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
+      timeMin: z.string().optional().describe('Start time for event retrieval (ISO 8601 format. Example: 2025-03-01T00:00:00Z)'),
+      timeMax: z.string().optional().describe('End time for event retrieval (ISO 8601 format)'),
+      maxResults: z.number().int().positive().optional().describe('Maximum number of events to retrieve (default: 10)'),
+      orderBy: z.enum(['startTime', 'updated']).optional().describe('Sort order (startTime: by start time, updated: by update time)'),
     };
 
     this.tools['getEvents'] = getEventsSchema;
@@ -52,35 +52,35 @@ export class ToolsManager {
         } catch (error) {
           logger.error(`Error in getEvents: ${error}`);
           return {
-            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `Error: ${error}` }],
             isError: true
           };
         }
       }
     );
 
-    // createEvent ツール
+    // createEvent tool
     const createEventSchema = {
-      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
+      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
       event: z.object({
-        summary: z.string().min(1).describe('イベントの件名（必須）'),
-        description: z.string().optional().describe('イベントの説明'),
-        location: z.string().optional().describe('場所'),
+        summary: z.string().min(1).describe('Event title (required)'),
+        description: z.string().optional().describe('Event description'),
+        location: z.string().optional().describe('Location'),
         start: z.object({
-          dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T09:00:00+09:00）'),
-          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-          timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
+          dateTime: z.string().optional().describe('ISO 8601 format datetime (example: 2025-03-15T09:00:00+09:00)'),
+          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
+          timeZone: z.string().optional().describe('Timezone (example: Asia/Tokyo)'),
         }),
         end: z.object({
-          dateTime: z.string().optional().describe('ISO 8601形式の日時（例: 2025-03-15T10:00:00+09:00）'),
-          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-          timeZone: z.string().optional().describe('タイムゾーン（例: Asia/Tokyo）'),
+          dateTime: z.string().optional().describe('ISO 8601 format datetime (example: 2025-03-15T10:00:00+09:00)'),
+          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
+          timeZone: z.string().optional().describe('Timezone (example: Asia/Tokyo)'),
         }),
         attendees: z.array(z.object({
           email: z.string().email(),
           displayName: z.string().optional(),
-        })).optional().describe('参加者リスト'),
-        colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
+        })).optional().describe('Attendee list'),
+        colorId: z.string().optional().describe('Event color ID (number 1-11)'),
       }),
     };
 
@@ -100,32 +100,32 @@ export class ToolsManager {
         } catch (error) {
           logger.error(`Error in createEvent: ${error}`);
           return {
-            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `Error: ${error}` }],
             isError: true
           };
         }
       }
     );
 
-    // updateEvent ツール
+    // updateEvent tool
     const updateEventSchema = {
-      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-      eventId: z.string().min(1).describe('更新するイベントのID（必須）'),
+      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
+      eventId: z.string().min(1).describe('ID of the event to update (required)'),
       event: z.object({
-        summary: z.string().optional().describe('イベントの件名'),
-        description: z.string().optional().describe('イベントの説明'),
-        location: z.string().optional().describe('場所'),
+        summary: z.string().optional().describe('Event title (uses existing value if omitted)'),
+        description: z.string().optional().describe('Event description (uses existing value if omitted)'),
+        location: z.string().optional().describe('Location (uses existing value if omitted)'),
         start: z.object({
-          dateTime: z.string().optional().describe('ISO 8601形式の日時'),
-          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-          timeZone: z.string().optional().describe('タイムゾーン'),
-        }).optional(),
+          dateTime: z.string().optional().describe('ISO 8601 format datetime'),
+          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
+          timeZone: z.string().optional().describe('Timezone'),
+        }).optional().describe('Start time (uses existing value if omitted)'),
         end: z.object({
-          dateTime: z.string().optional().describe('ISO 8601形式の日時'),
-          date: z.string().optional().describe('YYYY-MM-DD形式の日付（終日イベント用）'),
-          timeZone: z.string().optional().describe('タイムゾーン'),
-        }).optional(),
-        colorId: z.string().optional().describe('イベントの色ID（1-11の数字）'),
+          dateTime: z.string().optional().describe('ISO 8601 format datetime'),
+          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
+          timeZone: z.string().optional().describe('Timezone'),
+        }).optional().describe('End time (uses existing value if omitted)'),
+        colorId: z.string().optional().describe('Event color ID (number 1-11, uses existing value if omitted)'),
       }),
     };
 
@@ -138,20 +138,47 @@ export class ToolsManager {
         try {
           logger.debug(`Executing updateEvent with params: ${JSON.stringify(args)}`);
 
-          // 既存のイベントを取得して、更新データとマージ
-          // 必須フィールドを確保
+          // Parameter validation
           const validatedParams = updateEventParamsSchema.parse(args);
-          const eventWithDefaults: CalendarEvent = {
-            ...validatedParams.event,
-            summary: validatedParams.event.summary || '（無題）',  // summaryがない場合はデフォルト値を設定
-            start: validatedParams.event.start || { dateTime: new Date().toISOString() },
-            end: validatedParams.event.end || { dateTime: new Date(Date.now() + 3600000).toISOString() }
+
+          // Get existing event
+          const existingEventResponse = await calendarApi.getEvent(
+            validatedParams.calendarId || 'primary', 
+            validatedParams.eventId
+          );
+
+          if (!existingEventResponse.success || !existingEventResponse.data) {
+            return {
+              content: [{ type: 'text' as const, text: `Error: Existing event not found: ${existingEventResponse.content}` }],
+              isError: true
+            };
+          }
+
+          const existingEvent = existingEventResponse.data;
+
+          // Merge update data with existing data
+          // Only update fields explicitly specified in the update data, preserve existing values for others
+          const mergedEvent: CalendarEvent = {
+            summary: validatedParams.event.summary || existingEvent.summary,
+            description: validatedParams.event.description !== undefined 
+              ? validatedParams.event.description 
+              : existingEvent.description,
+            location: validatedParams.event.location !== undefined 
+              ? validatedParams.event.location 
+              : existingEvent.location,
+            start: validatedParams.event.start || existingEvent.start,
+            end: validatedParams.event.end || existingEvent.end,
+            colorId: validatedParams.event.colorId !== undefined 
+              ? validatedParams.event.colorId 
+              : existingEvent.colorId,
+            // Process other fields similarly
+            attendees: validatedParams.event.attendees || existingEvent.attendees,
           };
 
           const updateParams = {
             calendarId: validatedParams.calendarId,
             eventId: validatedParams.eventId,
-            event: eventWithDefaults
+            event: mergedEvent
           };
 
           const result = await calendarApi.updateEvent(updateParams);
@@ -161,17 +188,17 @@ export class ToolsManager {
         } catch (error) {
           logger.error(`Error in updateEvent: ${error}`);
           return {
-            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `Error: ${error}` }],
             isError: true
           };
         }
       }
     );
 
-    // deleteEvent ツール
+    // deleteEvent tool
     const deleteEventSchema = {
-      calendarId: z.string().optional().describe('カレンダーID（省略時は主要カレンダー）'),
-      eventId: z.string().min(1).describe('削除するイベントのID（必須）'),
+      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
+      eventId: z.string().min(1).describe('ID of the event to delete (required)'),
     };
 
     this.tools['deleteEvent'] = deleteEventSchema;
@@ -190,7 +217,7 @@ export class ToolsManager {
         } catch (error) {
           logger.error(`Error in deleteEvent: ${error}`);
           return {
-            content: [{ type: 'text' as const, text: `エラー: ${error}` }],
+            content: [{ type: 'text' as const, text: `Error: ${error}` }],
             isError: true
           };
         }
@@ -201,5 +228,5 @@ export class ToolsManager {
   }
 }
 
-// シングルトンインスタンスをエクスポート
+// Export singleton instance
 export default new ToolsManager();

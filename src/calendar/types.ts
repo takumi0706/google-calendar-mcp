@@ -1,4 +1,4 @@
-// Google Calendar Event関連の型定義
+// Type definitions related to Google Calendar Event
 export interface CalendarEvent {
   id?: string;
   summary: string;
@@ -12,9 +12,9 @@ export interface CalendarEvent {
 }
 
 export interface EventDateTime {
-  dateTime?: string; // ISO 8601形式の日時
-  date?: string;     // YYYY-MM-DD形式の日付（終日イベント用）
-  timeZone?: string; // 例: 'Asia/Tokyo'
+  dateTime?: string; // DateTime in ISO 8601 format
+  date?: string;     // Date in YYYY-MM-DD format (for all-day events)
+  timeZone?: string; // Example: 'Asia/Tokyo'
 }
 
 export interface EventAttendee {
@@ -34,14 +34,14 @@ export interface EventReminder {
   minutes: number;
 }
 
-// APIレスポンスの型定義
+// Type definition for API response
 export interface CalendarApiResponse {
   success: boolean;
   content: string;
   data?: any;
 }
 
-// イベント一覧取得のパラメータ型
+// Parameter type for retrieving event list
 export interface GetEventsParams {
   calendarId?: string;
   timeMin?: string;
@@ -50,26 +50,26 @@ export interface GetEventsParams {
   orderBy?: 'startTime' | 'updated';
 }
 
-// イベント作成のパラメータ型
+// Parameter type for creating event
 export interface CreateEventParams {
   calendarId?: string;
   event: CalendarEvent;
 }
 
-// イベント更新のパラメータ型
+// Parameter type for updating event
 export interface UpdateEventParams {
   calendarId?: string;
   eventId: string;
   event: CalendarEvent;
 }
 
-// イベント削除のパラメータ型
+// Parameter type for deleting event
 export interface DeleteEventParams {
   calendarId?: string;
   eventId: string;
 }
 
-// カレンダーリソースの型定義
+// Type definition for calendar resource
 export interface CalendarResource {
   id: string;
   summary: string;
@@ -78,7 +78,7 @@ export interface CalendarResource {
   accessRole?: string;
 }
 
-// カレンダー取得のパラメータ型
+// Parameter type for retrieving calendar
 export interface GetCalendarParams {
   calendarId: string;
 }

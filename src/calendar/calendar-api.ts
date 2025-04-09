@@ -59,6 +59,31 @@ class GoogleCalendarApi {
     }
   }
 
+  // Get a single event by ID
+  async getEvent(calendarId: string = 'primary', eventId: string): Promise<CalendarApiResponse> {
+    try {
+      const calendar = await this.initCalendarClient();
+
+      const response = await calendar.events.get({
+        calendarId,
+        eventId,
+      });
+
+      const event = response.data;
+      return {
+        success: true,
+        content: `Retrieved event "${event.summary}".`,
+        data: event,
+      };
+    } catch (error) {
+      logger.error(`Error getting event: ${error}`);
+      return {
+        success: false,
+        content: `Failed to retrieve event: ${error}`,
+      };
+    }
+  }
+
   // Create a new event
   async createEvent(params: CreateEventParams): Promise<CalendarApiResponse> {
     try {

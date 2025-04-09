@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.1 includes a fix for Node.js v20.9.0+ compatibility with the 'open' package, which is now ESM-only in version 10+. Version 1.0.0 marks our first production-ready release with comprehensive code refactoring and internationalization.
+> Version 1.0.2 includes a fix for the `updateEvent` function to preserve existing event data when performing partial updates. Version 1.0.1 includes a fix for Node.js v20.9.0+ compatibility with the 'open' package, which is now ESM-only in version 10+. Version 1.0.0 marks our first production-ready release with comprehensive code refactoring and internationalization.
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -82,12 +82,15 @@ Creates a new calendar event.
 
 ### 3. updateEvent
 
-Updates an existing calendar event.
+Updates an existing calendar event. The function fetches the existing event data first and merges it with the update data, preserving fields that are not included in the update request.
 
 **Parameters:**
 - `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
 - `eventId` (required): ID of the event to update
 - `event`: Event details object containing fields to update (same structure as createEvent, all fields optional)
+  - Only fields that are explicitly provided will be updated
+  - Fields not included in the update request will retain their existing values
+  - This allows for partial updates without losing data
 
 ### 4. deleteEvent
 
@@ -220,6 +223,13 @@ If you encounter any issues:
 
 ## Version History
 
+### Version 1.0.2 Changes
+- Fixed `updateEvent` function to preserve existing event data when performing partial updates
+- Added `getEvent` function to fetch existing event data before updating
+- Modified `updateEvent` to merge update data with existing data to prevent data loss
+- Updated schema validation to make all fields optional in update requests
+- Improved documentation for the `updateEvent` function
+
 ### Version 1.0.1 Changes
 - Fixed compatibility issue with Node.js v20.9.0+ and the 'open' package (v10+)
 - Replaced static import with dynamic import for the ESM-only 'open' package
@@ -242,157 +252,6 @@ If you encounter any issues:
 - Improved token refresh logic to handle cases where there's no refresh token or if the refresh token is invalid
 - Updated token storage to save refreshed access tokens for better token management
 - Fixed potential infinite loop in token refresh logic
-
-### Version 0.7.0 Changes
-- Fixed OAuth callback handling issue that caused "Cannot GET /oauth2callback" errors
-- Added automatic redirection from MCP server to OAuth server for callback handling
-- Improved compatibility with different OAuth redirect URI configurations
-- Enhanced error handling for OAuth authentication flow
-- Updated documentation to reflect the OAuth callback handling fix
-
-### Version 0.6.9 Changes
-- Fixed OAuth authentication prompt issue that caused repeated authentication requests
-- Improved authentication flow to prevent multiple browser windows from opening
-- Enhanced token refresh mechanism to properly handle expired tokens
-- Updated documentation to reflect the OAuth authentication fix
-
-### Version 0.6.8 Changes
-- Fixed port conflict issues when multiple instances are running
-- Improved version management system
-- Enhanced server startup and shutdown procedures
-- Updated dependencies to latest compatible versions
-
-### Version 0.6.7 Changes
-- Fixed critical JSON parsing bug that caused errors when using the MCP Inspector
-- Improved logging to prevent interference with JSON-RPC messages
-- Enhanced message handling in STDIO transport
-- Improved error handling for malformed JSON messages
-- Added automated npm install process when updating the version using npm version command
-- Updated documentation to reflect the JSON parsing bug fix and automated npm install process
-
-### Version 0.6.6 Changes
-- Added dedicated JSON-RPC message parsing utility in utils/json-parser.ts
-- Created comprehensive test suite for JSON parsing to prevent regression
-- Implemented 10 test cases covering various malformed JSON scenarios
-- Refactored server.ts to use the common JSON parsing utility
-- Improved code maintainability and testability
-
-### Version 0.6.5 Changes
-- Completely redesigned JSON-RPC message processing to resolve parsing errors
-- Simplified and improved the algorithm for extracting valid JSON from messages
-- Fixed the "Unexpected non-whitespace character after JSON at position 4" error
-- Enhanced error handling with more descriptive error messages
-- Improved logging for better diagnostics and troubleshooting
-
-### Version 0.6.4 Changes
-- Further improved JSON-RPC message processing to handle malformed messages more robustly
-- Enhanced regex pattern for JSON object and array extraction with non-greedy matching
-- Added balanced bracket matching algorithm to find the correct end of JSON objects and arrays
-- Fixed ESLint warnings in the regex patterns
-- Improved error logging for better diagnostics
-- Updated version number in package.json and server.ts
-
-### Version 0.6.3 Changes
-- Fixed JSON-RPC message processing to handle malformed messages more robustly
-- Improved regex pattern for JSON object extraction
-- Added fallback mechanism for JSON parsing
-- Updated version number in server.ts to match package.json
-
-### Version 0.6.2 Changes
-- Implemented HTML sanitization to prevent cross-site scripting (XSS) vulnerabilities
-- Added escapeHtml utility function to safely handle user-controlled data in HTML responses
-- Fixed potential XSS vulnerabilities in OAuth error handling
-- Added comprehensive test suite for HTML sanitization functionality
-- Improved overall security posture against injection attacks
-
-### Version 0.6.1 Changes
-- Fixed logger configuration to ensure info logs go to stdout instead of stderr
-- Updated dependencies to resolve outdated package warnings
-- Removed unnecessary @types/helmet dependency
-- Fixed eslint version to be compatible with @typescript-eslint packages
-- Improved overall stability and compatibility
-
-### Version 0.6.0 Changes
-- Version upgrade to maintain compatibility with the latest dependencies
-- Implemented OAuth 2.1 authentication at the transport layer
-- Added support for JSON-RPC batch processing for multiple requests
-- Enhanced PKCE implementation with explicit code_verifier and code_challenge generation
-- Improved CSRF protection with explicit state parameter validation
-- Fixed TokenManager cleanup timer to properly release resources when tests complete
-- Improved handling of interval timers to prevent potential memory leaks
-- Enhanced resource management for better application stability
-- Improved overall stability and performance
-- Enhanced code quality and maintainability
-
-### Version 0.5.1 Changes
-- Minor bug fixes and stability improvements
-- Documentation updates
-
-### Version 0.5.0 Changes
-- Added color support for calendar events with colorId parameter
-- Enhanced event creation and update capabilities
-- Updated @modelcontextprotocol/sdk from 1.7.0 to 1.8.0
-- Updated googleapis from 133.0.0 to 148.0.0
-- Updated winston from 3.11.0 to 3.17.0
-- Updated zod from 3.22.4 to 3.24.2
-- Improved stability and compatibility with latest dependencies
-
-### Version 0.4.2 Changes
-- Improved tools registration to properly expose tool details to clients
-- Enhanced server capabilities registration with explicit tool definitions
-- Fixed order of operations in server initialization
-- Improved code documentation and comments
-
-### Version 0.4.1 Changes
-- Refactored code architecture for better maintainability
-- Implemented ToolsManager class to encapsulate tool definitions
-- Improved code organization by moving functionality from server.ts to tools.ts
-- Removed unused imports and type definitions
-- Enhanced code quality and readability
-
-### Version 0.4.0 Changes
-- Implemented token encryption system (AES-256-GCM)
-- Added basic OAuth authentication flow enhancements
-- Added security headers using Helmet.js
-- Implemented rate limiting for DDoS protection
-- Enhanced input validation and error handling
-- Improved test coverage
-- Automated CI/CD with GitHub Actions
-- Enhanced security documentation
-
-### Version 0.3.3 Changes
-- Removed file-based token storage and improved in-memory token management
-- Fixed various memory leaks and improved resource management
-- Enhanced stability and error handling
-
-### Version 0.3.2 Changes
-- Added automatic browser opening for Google Calendar authorization
-- Improved user experience during authentication flow
-
-### Version 0.3.1 Changes
-- Updated server version indicator
-- Fixed minor bugs in event handling
-
-### Version 0.2.7 Fixes
-- Fixed JSON-RPC message processing to handle malformed messages
-- Improved message processing between client and server with more robust parsing
-- Enhanced logging format with better context information
-- Added debug mode support for troubleshooting JSON-RPC messages
-
-### Version 0.2.6 Fixes
-- Fixed JSON-RPC message handling that was causing parsing errors
-- Removed custom TCP socket server which was causing connection issues
-- Added proper error handling for transport errors
-- Improved logging of message exchanges between client and server
-
-### Version 0.2.0 Changes
-- Updated to use the latest MCP SDK API (v1.8.0+)
-- Migrated from `Server` class to the modern `McpServer` class
-- Improved type safety with properly typed tool handlers
-- Fixed update operations to handle partial event updates properly
-- Enhanced error handling with detailed error messages
-- Optimized performance when handling calendar operations
-- Simplified implementation with direct API calls
 
 ## Development
 

@@ -23,9 +23,10 @@
     "format": "prettier --write 'src/**/*.ts'",
     "prepare": "npm run build || true",
     "prepublishOnly": "npm test && npm run lint",
-    "version": "npm run format && git add -A src && npm install",
+    "version": "npm run format && git add -A src && npm run install:legacy",
     "postversion": "git push && git push --tags",
-    "security": "npm audit"
+    "security": "npm audit",
+    "install:legacy": "npm install --legacy-peer-deps"
   },
   "repository": {
     "type": "git",
@@ -52,8 +53,8 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.25",
-    "@typescript-eslint/eslint-plugin": "^7.1.1",
-    "@typescript-eslint/parser": "^7.1.1",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "prettier": "^3.2.5",

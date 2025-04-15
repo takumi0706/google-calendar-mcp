@@ -2,6 +2,11 @@
 import { z } from 'zod';
 
 /**
+ * Authentication schema - Empty object as no parameters are needed
+ */
+export const authenticateParamsSchema = z.object({});
+
+/**
  * DateTime validation schema
  * Supports ISO 8601 format or YYYY-MM-DD format
  */

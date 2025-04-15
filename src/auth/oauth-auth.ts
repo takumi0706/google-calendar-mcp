@@ -138,7 +138,7 @@ class OAuthAuth {
   }
 
   // Start authentication flow
-  private initiateAuthorization(): Promise<OAuth2Client> {
+  public initiateAuthorization(): Promise<OAuth2Client> {
     if (this.authorizationPromise) {
       return this.authorizationPromise;
     }

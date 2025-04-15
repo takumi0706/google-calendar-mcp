@@ -368,6 +368,14 @@ class GoogleCalendarMcpServer {
               required: ['eventId'],
             },
           },
+          {
+            name: 'authenticate',
+            description: 'Re-authenticate with Google Calendar (useful when switching between Google accounts)',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
         ],
       };
     });

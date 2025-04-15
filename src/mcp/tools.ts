@@ -4,11 +4,13 @@ import {
   createEventParamsSchema,
   updateEventParamsSchema,
   deleteEventParamsSchema,
+  authenticateParamsSchema,
 } from './schemas';
 import logger from '../utils/logger';
 import { z } from 'zod';
 import { CalendarEvent } from '../calendar/types';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import oauthAuth from '../auth/oauth-auth';
 
 /**
  * Tools Manager Class
@@ -216,6 +218,34 @@ export class ToolsManager {
           };
         } catch (error) {
           logger.error(`Error in deleteEvent: ${error}`);
+          return {
+            content: [{ type: 'text' as const, text: `Error: ${error}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // authenticate tool
+    const authenticateSchema = {};
+
+    this.tools['authenticate'] = authenticateSchema;
+
+    server.tool(
+      'authenticate',
+      authenticateSchema,
+      async (args, _extra) => {
+        try {
+          logger.debug('Executing authenticate');
+          // Validate parameters (empty object)
+          authenticateParamsSchema.parse(args);
+          // Call the initiateAuthorization method to start the authentication flow
+          await oauthAuth.initiateAuthorization();
+          return {
+            content: [{ type: 'text' as const, text: 'Authentication process started. Please check your browser to complete the authentication.' }]
+          };
+        } catch (error) {
+          logger.error(`Error in authenticate: ${error}`);
           return {
             content: [{ type: 'text' as const, text: `Error: ${error}` }],
             isError: true

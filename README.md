@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.2 includes a fix for the `updateEvent` function to preserve existing event data when performing partial updates. Version 1.0.1 includes a fix for Node.js v20.9.0+ compatibility with the 'open' package, which is now ESM-only in version 10+. Version 1.0.0 marks our first production-ready release with comprehensive code refactoring and internationalization.
+> Version 1.0.3 fixes the "Invalid state parameter" error during re-authentication by improving the OAuth server lifecycle management. Version 1.0.2 includes a fix for the `updateEvent` function to preserve existing event data when performing partial updates.
 
-![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -139,7 +139,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.1
+npx @takumi0706/google-calendar-mcp@1.0.3
 ```
 
 ### Prerequisites
@@ -218,10 +218,17 @@ If you encounter any issues:
 
 - **JSON Parsing Errors**: If you see errors like `Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)`, it's typically due to malformed JSON-RPC messages. This issue has been fixed in version 0.6.7 and later. If you're still experiencing these errors, please update to the latest version.
 - **Authentication Errors**: Verify your Google OAuth credentials
+- **Invalid state parameter**: If you see `Authentication failed: Invalid state parameter` when re-authenticating, update to version 1.0.3 or later which fixes the OAuth server lifecycle management. In older versions, you may need to close port 4153 and restart the application.
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 
 ## Version History
+
+### Version 1.0.3 Changes
+- Fixed "Invalid state parameter" error during re-authentication
+- Modified OAuth server to start on-demand and shut down after authentication
+- Improved server lifecycle management to prevent port conflicts
+- Enhanced error handling for authentication flow
 
 ### Version 1.0.2 Changes
 - Fixed `updateEvent` function to preserve existing event data when performing partial updates

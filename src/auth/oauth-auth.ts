@@ -18,6 +18,7 @@ class OAuthAuth {
   private oauthHandler: OAuthHandler;
   private server: any;
   private authorizationPromise: Promise<OAuth2Client> | null = null;
+  private isServerRunning: boolean = false;
 
   constructor() {
     // Initialize OAuth2 client
@@ -33,27 +34,8 @@ class OAuthAuth {
     // Initialize OAuthHandler
     this.oauthHandler = new OAuthHandler(this.expressApp as Express);
 
-    // Start Express server (catch error if port is already in use)
-    try {
-      this.server = this.expressApp.listen(config.auth.port, config.auth.host, () => {
-        logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
-      });
-
-      // Add error handling
-      this.server.on('error', (err: any) => {
-        if (err.code === 'EADDRINUSE') {
-          logger.warn(`Port ${config.auth.port} is already in use, assuming OAuth server is already running`);
-          // Set server object to null to indicate that we're using an existing server
-          this.server = null;
-        } else {
-          logger.error(`OAuth server error: ${err}`);
-        }
-      });
-    } catch (err) {
-      logger.warn(`Could not start OAuth server: ${err}`);
-      // Set server object to null
-      this.server = null;
-    }
+    // Server will be started on-demand when needed
+    logger.info('OAuth server will be started when authentication is needed');
   }
 
   // Get or refresh token
@@ -114,11 +96,55 @@ class OAuthAuth {
     }
   }
 
+  // Shut down the authentication server
+  private shutdownServer(): void {
+    if (this.server && this.isServerRunning) {
+      logger.info('Shutting down OAuth server');
+      this.server.close(() => {
+        logger.info('OAuth server has been shut down');
+        this.isServerRunning = false;
+      });
+    }
+  }
+
+  // Start or restart the authentication server
+  private startServer(): void {
+    if (!this.isServerRunning) {
+      try {
+        this.server = this.expressApp.listen(config.auth.port, config.auth.host, () => {
+          logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
+          this.isServerRunning = true;
+        });
+
+        // Add error handling
+        this.server.on('error', (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            logger.warn(`Port ${config.auth.port} is already in use, assuming OAuth server is already running`);
+            // Set server object to null to indicate that we're using an existing server
+            this.server = null;
+            this.isServerRunning = false;
+          } else {
+            logger.error(`OAuth server error: ${err}`);
+            this.isServerRunning = false;
+          }
+        });
+      } catch (err) {
+        logger.warn(`Could not start OAuth server: ${err}`);
+        // Set server object to null
+        this.server = null;
+        this.isServerRunning = false;
+      }
+    }
+  }
+
   // Start authentication flow
   private initiateAuthorization(): Promise<OAuth2Client> {
     if (this.authorizationPromise) {
       return this.authorizationPromise;
     }
+
+    // Ensure the server is running before starting the authentication flow
+    this.startServer();
 
     this.authorizationPromise = new Promise((resolve, reject) => {
       try {
@@ -176,6 +202,10 @@ class OAuthAuth {
 
               clearInterval(intervalId);
               this.authorizationPromise = null;
+
+              // Shut down the authentication server after successful authentication
+              this.shutdownServer();
+
               resolve(this.oauth2Client);
             }
           } catch (error) {
@@ -190,12 +220,20 @@ class OAuthAuth {
         setTimeout(() => {
           clearInterval(intervalId);
           this.authorizationPromise = null;
+
+          // Shut down the authentication server if authentication times out
+          this.shutdownServer();
+
           reject(new Error('Authorization timed out after 5 minutes'));
         }, 5 * 60 * 1000);
 
       } catch (error) {
         logger.error(`Error in authorization: ${error}`);
         this.authorizationPromise = null;
+
+        // Shut down the authentication server if there's an error during authentication
+        this.shutdownServer();
+
         reject(error);
       }
     });

@@ -1,7 +1,7 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.3 fixes the "Invalid state parameter" error during re-authentication by improving the OAuth server lifecycle management. Version 1.0.2 includes a fix for the `updateEvent` function to preserve existing event data when performing partial updates.
+> Version 1.0.3 updates the zod dependency to the latest version (3.24.2), fixes the "Invalid state parameter" error during re-authentication by improving the OAuth server lifecycle management. Version 1.0.2 includes a fix for the `updateEvent` function to preserve existing event data when performing partial updates.
 
 ![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -225,6 +225,9 @@ If you encounter any issues:
 ## Version History
 
 ### Version 1.0.3 Changes
+- Updated zod dependency to the latest version (3.24.2)
+- Improved schema validation with the latest zod features
+- Enhanced code stability and security
 - Fixed "Invalid state parameter" error during re-authentication
 - Modified OAuth server to start on-demand and shut down after authentication
 - Improved server lifecycle management to prevent port conflicts

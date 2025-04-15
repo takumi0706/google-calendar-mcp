@@ -34,5 +34,6 @@ export default {
   auth: {
     port: parseInt(process.env.AUTH_PORT || '4153', 10),
     host: process.env.AUTH_HOST || 'localhost',
+    useManualAuth: process.env.USE_MANUAL_AUTH === 'true',
   },
 };

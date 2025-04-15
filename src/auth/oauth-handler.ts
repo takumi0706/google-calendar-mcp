@@ -36,9 +36,10 @@ export class OAuthHandler {
    * 
    * @param userId User ID
    * @param redirectUri Redirect URI after successful authentication
-   * @returns Authentication URL
+   * @param forManualAuth Whether this is for manual authentication
+   * @returns Object containing auth URL and state for manual auth, or just auth URL for regular flow
    */
-  public generateAuthUrl(userId: string, redirectUri: string): string {
+  public generateAuthUrl(userId: string, redirectUri: string, forManualAuth: boolean = false): any {
     // Random state value for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
 
@@ -54,7 +55,7 @@ export class OAuthHandler {
 
     // Generate OAuth authentication URL
     const oauth2Client = this.getOAuthClient();
-    return oauth2Client.generateAuthUrl({
+    const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
@@ -64,6 +65,75 @@ export class OAuthHandler {
       code_challenge_method: CodeChallengeMethod.S256,
       code_challenge: codeChallenge
     });
+
+    // For manual auth, return both the URL and state so we can match them later
+    if (forManualAuth) {
+      return { authUrl, state };
+    }
+
+    // For regular flow, just return the URL
+    return authUrl;
+  }
+
+  /**
+   * Exchange authorization code for tokens (for manual authentication)
+   * 
+   * @param code Authorization code from Google
+   * @param state State parameter from the auth URL
+   * @returns Success status and message
+   */
+  public async exchangeCodeForTokens(code: string, state: string): Promise<{ success: boolean, message: string }> {
+    try {
+      // Validate state
+      const stateData = this.stateMap.get(state);
+      if (!stateData) {
+        logger.error('Invalid state parameter', { state });
+        return { success: false, message: 'Authentication failed: Invalid state parameter' };
+      }
+
+      // Expiration check
+      if (stateData.expiry < Date.now()) {
+        logger.error('Expired state parameter', { state, expiry: stateData.expiry });
+        this.stateMap.delete(state);
+        return { success: false, message: 'Authentication failed: Authentication flow has expired' };
+      }
+
+      const oauth2Client = this.getOAuthClient();
+
+      // Exchange authorization code for token using PKCE code_verifier
+      const { tokens } = await oauth2Client.getToken({
+        code,
+        codeVerifier: stateData.codeVerifier
+      });
+
+      // Delete state after it's been used
+      this.stateMap.delete(state);
+
+      // Identify user ID (actual implementation would require user authentication)
+      // Using 'default-user' as a simple implementation for now
+      const userId = 'default-user';
+
+      // Encrypt and store token
+      if (tokens.refresh_token) {
+        tokenManager.storeToken(userId, tokens.refresh_token);
+        logger.info('Successfully obtained and stored refresh token', { userId });
+      } else {
+        logger.warn('No refresh token in the response', { userId });
+      }
+
+      // Store access token for a short period as needed
+      if (tokens.access_token) {
+        const expiresIn = tokens.expiry_date ? tokens.expiry_date - Date.now() : 3600 * 1000;
+        tokenManager.storeToken(`${userId}_access`, tokens.access_token, expiresIn);
+        logger.debug('Stored access token', { userId, expiresIn });
+      }
+
+      return { success: true, message: 'Authentication successful' };
+    } catch (err: unknown) {
+      const error = err as Error;
+      logger.error('OAuth token exchange failed', { error: error.message, stack: error.stack });
+      return { success: false, message: `Token exchange failed: ${error.message}` };
+    }
   }
 
   /**

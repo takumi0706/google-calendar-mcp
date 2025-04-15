@@ -1,6 +1,6 @@
 {
   "name": "@takumi0706/google-calendar-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Google Calendar MCP server for Claude Desktop integration with enhanced security",
   "main": "dist/index.js",
   "bin": {

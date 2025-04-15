@@ -6,6 +6,7 @@ import { OAuthHandler } from './oauth-handler';
 import config from '../config/config';
 import logger from '../utils/logger';
 import { tokenManager } from './token-manager';
+import readline from 'readline';
 /**
  * OAuthAuth - Google authentication class using OAuthHandler
  * 
@@ -137,19 +138,112 @@ class OAuthAuth {
     }
   }
 
+  // Create a readline interface for manual code input
+  private createReadlineInterface(): readline.Interface {
+    return readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  // Handle manual authentication flow
+  private async handleManualAuth(userId: string): Promise<OAuth2Client> {
+    try {
+      // Generate authentication URL for manual auth
+      const redirectUri = `http://${config.auth.host}:${config.auth.port}/auth-success`;
+      const { authUrl, state } = this.oauthHandler.generateAuthUrl(userId, redirectUri, true);
+
+      logger.info(`Please authorize this app by visiting this URL: ${authUrl}`);
+
+      // Try to open the browser automatically
+      try {
+        import('open').then(openModule => {
+          openModule.default(authUrl);
+          logger.info('Opening browser for authorization...');
+        }).catch(error => {
+          logger.warn(`Failed to import 'open' package: ${error}`);
+          logger.info(`Please open this URL manually: ${authUrl}`);
+        });
+      } catch (error) {
+        logger.warn(`Failed to open browser automatically: ${error}`);
+        logger.info(`Please open this URL manually: ${authUrl}`);
+      }
+
+      // Create readline interface for manual code input
+      const rl = this.createReadlineInterface();
+
+      // Prompt for authorization code
+      const authCode = await new Promise<string>((resolve) => {
+        rl.question('\nAfter authorizing, please enter the authorization code shown by Google: ', (code) => {
+          resolve(code.trim());
+        });
+      });
+
+      // Close readline interface
+      rl.close();
+
+      if (!authCode) {
+        throw new Error('No authorization code provided');
+      }
+
+      // Exchange code for tokens
+      const result = await this.oauthHandler.exchangeCodeForTokens(authCode, state);
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      logger.info('Manual authentication successful');
+
+      // Get tokens from token manager
+      const refreshToken = tokenManager.getToken(userId);
+      const accessToken = tokenManager.getToken(`${userId}_access`);
+
+      if (!accessToken) {
+        throw new Error('Failed to obtain access token');
+      }
+
+      // Set credentials
+      const credentials: any = {
+        access_token: accessToken
+      };
+
+      if (refreshToken) {
+        credentials.refresh_token = refreshToken;
+        logger.info('Using stored refresh token for authentication');
+      } else {
+        logger.warn('No refresh token available, proceeding with access token only');
+      }
+
+      this.oauth2Client.setCredentials(credentials);
+      return this.oauth2Client;
+    } catch (error) {
+      logger.error(`Error in manual authentication: ${error}`);
+      throw error;
+    }
+  }
+
   // Start authentication flow
   public initiateAuthorization(): Promise<OAuth2Client> {
     if (this.authorizationPromise) {
       return this.authorizationPromise;
     }
 
+    const userId = 'default-user';
+
+    // Check if manual authentication is enabled
+    if (config.auth.useManualAuth) {
+      logger.info('Using manual authentication flow');
+      this.authorizationPromise = this.handleManualAuth(userId);
+      return this.authorizationPromise;
+    }
+
+    // Regular authentication flow with local server
     // Ensure the server is running before starting the authentication flow
     this.startServer();
 
     this.authorizationPromise = new Promise((resolve, reject) => {
       try {
         // Generate authentication URL using OAuthHandler
-        const userId = 'default-user';
         const redirectUri = `http://${config.auth.host}:${config.auth.port}/auth-success`;
         const authUrl = this.oauthHandler.generateAuthUrl(userId, redirectUri);
 

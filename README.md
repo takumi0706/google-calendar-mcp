@@ -1,9 +1,9 @@
 # Google Calendar MCP Server
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.3 adds a new `authenticate` tool that allows re-authentication without restarting Claude, making it possible to switch between different Google accounts during a session. It also updates the zod dependency to the latest version (3.24.2) and fixes the "Invalid state parameter" error during re-authentication by improving the OAuth server lifecycle management.
+> Version 1.0.4 is a maintenance release that updates the version number while maintaining all the features from 1.0.3, including the `authenticate` tool that allows re-authentication without restarting Claude, manual authentication option for environments where localhost is not accessible, updated zod dependency, and fixed "Invalid state parameter" error during re-authentication.
 
-![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -146,7 +146,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.3
+npx @takumi0706/google-calendar-mcp@1.0.4
 ```
 
 ### Prerequisites
@@ -168,11 +168,13 @@ AUTH_HOST=localhost
 # Optional: MCP server port and host (default port: 3000, host: localhost)
 PORT=3000
 HOST=localhost
+# Optional: Enable manual authentication (useful when localhost is not accessible)
+USE_MANUAL_AUTH=true
 ```
 
 ### Claude Desktop Configuration
 
-Add the server to your `claude_desktop_config.json`:
+Add the server to your `claude_desktop_config.json`. If you're running in an environment where localhost is not accessible, add the `USE_MANUAL_AUTH` environment variable set to "true".
 
 ```json
 {
@@ -186,7 +188,8 @@ Add the server to your `claude_desktop_config.json`:
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
-        "GOOGLE_REDIRECT_URI": "http://localhost:4153/oauth2callback"
+        "GOOGLE_REDIRECT_URI": "http://localhost:4153/oauth2callback",
+        "USE_MANUAL_AUTH": "true"
       }
     }
   }
@@ -228,14 +231,23 @@ If you encounter any issues:
 - **Invalid state parameter**: If you see `Authentication failed: Invalid state parameter` when re-authenticating, update to version 1.0.3 or later which fixes the OAuth server lifecycle management. In older versions, you may need to close port 4153 and restart the application.
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
+- **Cannot access localhost**: If you're running the application in an environment where localhost is not accessible (like a remote server or container), enable manual authentication by setting `USE_MANUAL_AUTH=true`. This will allow you to manually enter the authorization code shown by Google after authorizing the application.
 
 ## Version History
+
+### Version 1.0.4 Changes
+- Maintenance release with version number update
+- No functional changes from version 1.0.3
+- Ensures compatibility with the latest dependencies
 
 ### Version 1.0.3 Changes
 - Added new `authenticate` tool to allow re-authentication without restarting Claude
 - Made it possible to switch between different Google accounts during a session
 - Exposed authentication functionality through the MCP interface
 - Enhanced user experience by eliminating the need to restart for account switching
+- Added manual authentication option for environments where localhost is not accessible
+- Implemented readline interface for entering authorization codes manually
+- Added USE_MANUAL_AUTH environment variable to enable manual authentication
 - Updated zod dependency to the latest version (3.24.2)
 - Improved schema validation with the latest zod features
 - Enhanced code stability and security

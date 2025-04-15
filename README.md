@@ -1,4 +1,6 @@
 # Google Calendar MCP Server
+![Apr-15-2025 12-17-08](https://github.com/user-attachments/assets/8970351e-c90d-42e3-8609-b4dfe33f8615)
+
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
 > Version 1.0.4 is a maintenance release that updates the version number while maintaining all the features from 1.0.3, including the `authenticate` tool that allows re-authentication without restarting Claude, manual authentication option for environments where localhost is not accessible, updated zod dependency, and fixed "Invalid state parameter" error during re-authentication.

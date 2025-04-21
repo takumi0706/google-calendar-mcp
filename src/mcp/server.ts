@@ -312,6 +312,11 @@ class GoogleCalendarMcpServer {
                       description: 'List of attendees',
                     },
                     colorId: { type: 'string', description: 'Event color ID (1-11)' },
+                    recurrence: {
+                      type: 'array',
+                      items: { type: 'string' },
+                      description: 'Recurrence rules in RFC5545 format (examples: ["RRULE:FREQ=DAILY;COUNT=5"], ["RRULE:FREQ=WEEKLY;UNTIL=20250515T000000Z;BYDAY=MO,WE,FR"])'
+                    },
                   },
                   required: ['summary', 'start', 'end'],
                 },
@@ -350,6 +355,11 @@ class GoogleCalendarMcpServer {
                       },
                     },
                     colorId: { type: 'string', description: 'Event color ID (1-11)' },
+                    recurrence: {
+                      type: 'array',
+                      items: { type: 'string' },
+                      description: 'Recurrence rules in RFC5545 format (examples: ["RRULE:FREQ=DAILY;COUNT=5"], ["RRULE:FREQ=WEEKLY;UNTIL=20250515T000000Z;BYDAY=MO,WE,FR"])'
+                    },
                   },
                 },
               },

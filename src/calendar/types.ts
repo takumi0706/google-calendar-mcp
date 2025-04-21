@@ -9,6 +9,7 @@ export interface CalendarEvent {
   attendees?: EventAttendee[];
   reminders?: EventReminders;
   colorId?: string;
+  recurrence?: string[]; // RFC5545 Repeating rules in RRULE format (example: ['RRULE:FREQ=DAILY;COUNT=5'])
 }
 
 export interface EventDateTime {

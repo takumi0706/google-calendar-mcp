@@ -83,6 +83,7 @@ export class ToolsManager {
           displayName: z.string().optional(),
         })).optional().describe('Attendee list'),
         colorId: z.string().optional().describe('Event color ID (number 1-11)'),
+        recurrence: z.array(z.string()).optional().describe('Recurrence rules in RFC5545 format (examples: ["RRULE:FREQ=DAILY;COUNT=5"], ["RRULE:FREQ=WEEKLY;UNTIL=20250515T000000Z;BYDAY=MO,WE,FR"])'),
       }),
     };
 
@@ -128,6 +129,7 @@ export class ToolsManager {
           timeZone: z.string().optional().describe('Timezone'),
         }).optional().describe('End time (uses existing value if omitted)'),
         colorId: z.string().optional().describe('Event color ID (number 1-11, uses existing value if omitted)'),
+        recurrence: z.array(z.string()).optional().describe('Recurrence rules in RFC5545 format (examples: ["RRULE:FREQ=DAILY;COUNT=5"], ["RRULE:FREQ=WEEKLY;UNTIL=20250515T000000Z;BYDAY=MO,WE,FR"])'),
       }),
     };
 
@@ -173,6 +175,10 @@ export class ToolsManager {
             colorId: validatedParams.event.colorId !== undefined 
               ? validatedParams.event.colorId 
               : existingEvent.colorId,
+            // Process recurrence field
+            recurrence: validatedParams.event.recurrence !== undefined 
+              ? validatedParams.event.recurrence 
+              : existingEvent.recurrence,
             // Process other fields similarly
             attendees: validatedParams.event.attendees || existingEvent.attendees,
           };

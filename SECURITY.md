@@ -6,8 +6,10 @@ We currently provide security updates for the following versions:
 
 | Version | Supported          |
 |---------|--------------------|
+| 1.0.5   | :white_check_mark: |
+| 1.0.4   | :white_check_mark: |
 | 1.0.3   | :white_check_mark: |
-| 1.0.2   | :white_check_mark: |
+| 1.0.2   | :x:                |
 | 1.0.1   | :x:                |
 | 1.0.0   | :x:                |
 | < 0.8.0 | :x:                |
@@ -34,6 +36,20 @@ We take the security of Google Calendar MCP seriously. If you believe you've fou
 ## Security Mechanisms
 
 The Google Calendar MCP handles OAuth tokens and calendar data, which may contain sensitive information. We've implemented the following security measures:
+
+### Security Features Added in Version 1.0.5
+
+1. **Enhanced Input Validation for Recurring Events**:
+   - Added strict schema validation for the `recurrence` parameter using Zod
+   - Implemented proper validation of RFC5545 RRULE format strings
+   - Enhanced error handling for invalid recurrence patterns
+
+### Security Features Added in Version 1.0.4
+
+1. **Dependency Updates and Maintenance**:
+   - Updated dependencies to patch security vulnerabilities
+   - Improved compatibility with secure Node.js environments
+   - Maintained and verified existing security measures
 
 ### Security Features Added in Version 1.0.0
 

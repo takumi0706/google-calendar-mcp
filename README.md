@@ -3,9 +3,9 @@
 
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.4 is a maintenance release that updates the version number while maintaining all the features from 1.0.3, including the `authenticate` tool that allows re-authentication without restarting Claude, manual authentication option for environments where localhost is not accessible, updated zod dependency, and fixed "Invalid state parameter" error during re-authentication.
+> Version 1.0.5 adds support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools. This allows you to create and modify recurring events directly without having to set them up manually after creation.
 
-![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Security](https://img.shields.io/badge/security-enhanced-green.svg)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
@@ -77,6 +77,7 @@ Creates a new calendar event.
   - `end`: End time object (same format as start)
   - `attendees` (optional): Array of attendees with email and optional displayName
   - `colorId` (optional): Event color ID (1-11)
+  - `recurrence` (optional): Array of recurrence rules in RFC5545 format (e.g., ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR"])
 
 ### 3. updateEvent
 
@@ -89,6 +90,7 @@ Updates an existing calendar event. The function fetches the existing event data
   - Only fields that are explicitly provided will be updated
   - Fields not included in the update request will retain their existing values
   - This allows for partial updates without losing data
+  - `recurrence` parameter can be updated to modify recurring event patterns
 
 ### 4. deleteEvent
 
@@ -144,7 +146,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.4
+npx @takumi0706/google-calendar-mcp@1.0.5
 ```
 
 ### Prerequisites
@@ -232,6 +234,10 @@ If you encounter any issues:
 - **Cannot access localhost**: If you're running the application in an environment where localhost is not accessible (like a remote server or container), enable manual authentication by setting `USE_MANUAL_AUTH=true`. This will allow you to manually enter the authorization code shown by Google after authorizing the application.
 
 ## Version History
+
+### Version 1.0.5 Changes
+- Added support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools
+- Allows creation and modification of recurring events directly without manual setup
 
 ### Version 1.0.4 Changes
 - Maintenance release with version number update

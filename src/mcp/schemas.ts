@@ -53,6 +53,7 @@ export const eventSchema = z.object({
   attendees: z.array(attendeeSchema).optional(),
   reminders: reminderSchema.optional(), // using reminder schema
   colorId: z.string().optional().describe('Event color ID (number 1-11)'),
+  recurrence: z.array(z.string()).optional().describe('Recurrence rules in RFC5545 format (e.g., ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR"])')
 });
 
 /**
@@ -68,6 +69,7 @@ export const eventUpdateSchema = z.object({
   attendees: z.array(attendeeSchema).optional(),
   reminders: reminderSchema.optional(),
   colorId: z.string().optional().describe('Event color ID (number 1-11)'),
+  recurrence: z.array(z.string()).optional().describe('Recurrence rules in RFC5545 format (e.g., ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR"])'),
 });
 
 /**

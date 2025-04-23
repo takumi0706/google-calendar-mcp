@@ -5,10 +5,10 @@
 > **🔔 VERSION UPDATE NOTICE 🔔**  
 > Version 1.0.5 adds support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools. This allows you to create and modify recurring events directly without having to set them up manually after creation.
 
-![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)
+![](https://badge.mcpx.dev?type=server 'MCP Server')
+![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Security](https://img.shields.io/badge/security-enhanced-green.svg)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
+
 
 ## Project Overview
 
@@ -234,6 +234,9 @@ If you encounter any issues:
 - **Cannot access localhost**: If you're running the application in an environment where localhost is not accessible (like a remote server or container), enable manual authentication by setting `USE_MANUAL_AUTH=true`. This will allow you to manually enter the authorization code shown by Google after authorizing the application.
 
 ## Version History
+
+### Version 1.0.6 Changes
+- Fixed the scope is not needed in this google calendar mcp server
 
 ### Version 1.0.5 Changes
 - Added support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools

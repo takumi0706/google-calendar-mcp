@@ -16,7 +16,6 @@ if (missingEnvVars.length > 0 && process.env.NODE_ENV !== 'test') {
 
 // Set scopes
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
 ];
 

@@ -25,10 +25,8 @@ process.on('uncaughtException', (error: Error) => {
 // Server startup
 async function main() {
   try {
-    // Initialize authentication before starting the server
-    // Always assume we're running under MCP inspector
-    await oauthAuth.getAuthenticatedClient();
     await mcpServer.start();
+    await oauthAuth.getAuthenticatedClient();
   } catch (error) {
     logger.error(`Failed to start server: ${error}`);
     process.exit(1);

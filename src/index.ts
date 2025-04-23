@@ -25,8 +25,8 @@ process.on('uncaughtException', (error: Error) => {
 // Server startup
 async function main() {
   try {
-    await mcpServer.start();
     await oauthAuth.getAuthenticatedClient();
+    await mcpServer.start();
   } catch (error) {
     logger.error(`Failed to start server: ${error}`);
     process.exit(1);

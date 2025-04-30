@@ -188,8 +188,7 @@ Add the server to your `claude_desktop_config.json`. If you're running in an env
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
-        "GOOGLE_REDIRECT_URI": "http://localhost:4153/oauth2callback",
-        "USE_MANUAL_AUTH": "true"
+        "GOOGLE_REDIRECT_URI": "http://localhost:4153/oauth2callback"
       }
     }
   }
@@ -213,16 +212,14 @@ For more details, see [SECURITY.md](SECURITY.md).
 
 - Regular updates to maintain compatibility with the Google Calendar API
 - Version updates are documented in README.md
-- Logs are stored in the user's home directory `~/.google-calendar-mcp/logs/`
 
 ## Troubleshooting
 
 If you encounter any issues:
 
-1. Check the logs in your home directory at `~/.google-calendar-mcp/logs/`
-2. Make sure your Google OAuth credentials are correctly configured
-3. Ensure you have sufficient permissions for Google Calendar API access
-4. Verify your Claude Desktop configuration is correct
+1. Make sure your Google OAuth credentials are correctly configured
+2. Ensure you have sufficient permissions for Google Calendar API access
+3. Verify your Claude Desktop configuration is correct
 
 ### Common Errors
 

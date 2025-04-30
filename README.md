@@ -9,6 +9,9 @@
 ![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+[![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
+[![English](https://img.shields.io/badge/English-Click-blue)](README.md)
+
 
 ## Project Overview
 

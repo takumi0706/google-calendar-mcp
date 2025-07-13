@@ -2,7 +2,6 @@
 
 import mcpServer from './mcp/server';
 import logger from './utils/logger';
-import oauthAuth from './auth/oauth-auth';
 
 // Process termination handling
 process.on('SIGINT', async () => {
@@ -25,7 +24,6 @@ process.on('uncaughtException', (error: Error) => {
 // Server startup
 async function main() {
   try {
-    await oauthAuth.getAuthenticatedClient();
     await mcpServer.start();
   } catch (error) {
     logger.error(`Failed to start server: ${error}`);

@@ -95,7 +95,7 @@ export class OAuthHandler {
               <meta charset="utf-8">
             </head>
             <body>
-              <h3>認証が成功しました。このウィンドウを閉じて続行してください。</h3>
+              <h3>Authentication succeeded. Please close this window to continue.</h3>
               <script>window.close();</script>
             </body>
           </html>
@@ -109,7 +109,7 @@ export class OAuthHandler {
               <meta charset="utf-8">
             </head>
             <body>
-              <h3>認証エラーが発生しました</h3>
+              <h3>An authentication error has occurred.</h3>
               <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
             </body>
           </html>
@@ -126,7 +126,7 @@ export class OAuthHandler {
             <meta charset="utf-8">
           </head>
           <body>
-            <h3>認証が成功しました。このウィンドウを閉じて続行してください。</h3>
+            <h3>Authentication succeeded. Please close this window to continue.</h3>
           </body>
         </html>
       `);

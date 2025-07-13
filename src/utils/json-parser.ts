@@ -13,7 +13,7 @@ import logger from './logger';
  * @returns The parsed JSON object or array
  * @throws Error if no valid JSON can be extracted or parsed
  */
-export function processJsonRpcMessage(message: string): any {
+export function processJsonRpcMessage(message: string): unknown {
   try {
     // Remove special characters like BOM and trim whitespace
     const cleanedMessage = message.replace(/^\uFEFF/, '').trim();

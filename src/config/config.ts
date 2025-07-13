@@ -35,4 +35,10 @@ export default {
     host: process.env.AUTH_HOST || 'localhost',
     useManualAuth: process.env.USE_MANUAL_AUTH === 'true',
   },
+  security: {
+    enableDetailedErrors: process.env.NODE_ENV !== 'production',
+    sanitizeLogs: process.env.SANITIZE_LOGS !== 'false',
+    logLevel: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'warn' : 'debug'),
+    redactSensitiveData: process.env.REDACT_SENSITIVE_DATA !== 'false',
+  },
 };

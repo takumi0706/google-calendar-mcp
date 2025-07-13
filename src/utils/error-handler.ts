@@ -1,5 +1,5 @@
 // src/utils/error-handler.ts
-import { Request, Response, NextFunction } from 'express';
+import { Context, Next } from 'hono';
 import logger from './logger';
 
 /**
@@ -27,7 +27,7 @@ export class AppError extends Error {
     public code: ErrorCode,
     public message: string,
     public statusCode: number = 500,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -44,20 +44,15 @@ interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
 }
 
 /**
- * Error handling middleware
- * Used in Express applications to return appropriate error responses
+ * Error handling middleware for Hono
+ * Used in Hono applications to return appropriate error responses
  */
-export function handleError(err: any, req: Request, res: Response, next: NextFunction) {
-  // If response has already been sent, pass to next middleware
-  if (res.headersSent) {
-    return next(err);
-  }
-
+export function handleError(err: unknown, c: Context): Response {
   // If error is an instance of AppError, return structured response
   if (err instanceof AppError) {
     const errorResponse: ErrorResponse = {
@@ -75,62 +70,87 @@ export function handleError(err: any, req: Request, res: Response, next: NextFun
     logger.error(`${err.code}: ${err.message}`, { 
       statusCode: err.statusCode,
       details: err.details,
-      path: req.path,
-      method: req.method,
-      ip: req.ip
+      path: c.req.path,
+      method: c.req.method,
+      url: c.req.url
     });
 
-    return res.status(err.statusCode).json(errorResponse);
+    return c.json(errorResponse, err.statusCode as 200 | 201 | 300 | 400 | 401 | 403 | 404 | 500);
   }
 
   // Handle Google API errors appropriately
-  if (err.response && err.response.data && err.response.data.error) {
-    const googleError = err.response.data.error;
-    const statusCode = err.response.status || 500;
+  if (typeof err === 'object' && err !== null && 'response' in err) {
+    const errorWithResponse = err as { response?: { data?: { error?: unknown }; status?: number } };
+    if (errorWithResponse.response?.data?.error) {
+      const googleError = errorWithResponse.response.data.error;
+      const statusCode = errorWithResponse.response.status || 500;
 
-    logger.error('Google API Error', { 
-      googleError,
-      statusCode,
-      path: req.path,
-      method: req.method
-    });
+      logger.error('Google API Error', { 
+        googleError,
+        statusCode,
+        path: c.req.path,
+        method: c.req.method
+      });
 
-    return res.status(statusCode).json({
-      error: {
-        code: ErrorCode.API_ERROR,
-        message: googleError.message || 'Google API Error',
-        details: process.env.NODE_ENV !== 'production' ? googleError : undefined
-      }
-    });
+      const errorMessage = typeof googleError === 'object' && googleError !== null && 'message' in googleError 
+        ? (googleError as { message: string }).message 
+        : 'Google API Error';
+
+      return c.json({
+        error: {
+          code: ErrorCode.API_ERROR,
+          message: errorMessage,
+          details: process.env.NODE_ENV !== 'production' ? googleError as Record<string, unknown> : undefined
+        }
+      }, statusCode as 200 | 201 | 300 | 400 | 401 | 403 | 404 | 500);
+    }
   }
 
   // Handle other unknown errors
-  const statusCode = err.statusCode || err.status || 500;
-  const errorMessage = err.message || 'Internal server error occurred';
+  const errorObj = err as { statusCode?: number; status?: number; message?: string; stack?: string };
+  const statusCode = errorObj.statusCode || errorObj.status || 500;
+  const errorMessage = errorObj.message || 'Internal server error occurred';
 
   logger.error('Unexpected error', { 
-    error: err.message, 
-    stack: err.stack,
-    path: req.path,
-    method: req.method
+    error: errorObj.message, 
+    stack: errorObj.stack,
+    path: c.req.path,
+    method: c.req.method
   });
 
-  return res.status(statusCode).json({
+  return c.json({
     error: {
       code: ErrorCode.SERVER_ERROR,
       message: process.env.NODE_ENV === 'production' 
         ? 'Internal server error occurred' 
         : errorMessage
     }
-  });
+  }, statusCode as 200 | 201 | 300 | 400 | 401 | 403 | 404 | 500);
 }
 
 /**
  * Wrap async functions to automate error handling
- * Used in Express route handlers
+ * Used in Hono route handlers
  */
-export function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+export function asyncHandler(fn: (c: Context, next?: Next) => Promise<any>) {
+  return async (c: Context, next?: Next) => {
+    try {
+      return await Promise.resolve(fn(c, next));
+    } catch (err) {
+      return handleError(err, c);
+    }
+  };
+}
+
+/**
+ * Create error handling middleware for Hono
+ */
+export function createErrorHandler() {
+  return async (c: Context, next: Next) => {
+    try {
+      await next();
+    } catch (err) {
+      return handleError(err, c);
+    }
   };
 }

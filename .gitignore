@@ -34,6 +34,3 @@ token.json
 
 # Coverage directory
 coverage/
-
-# Npm debug logs
-npm-debug.log*

@@ -20,8 +20,10 @@ yarn-error.log*
 .idea/
 .junie/
 .vscode/
+.claude/
 *.swp
 *.swo
+CLAUDE.local.md
 
 # OS specific files
 .DS_Store

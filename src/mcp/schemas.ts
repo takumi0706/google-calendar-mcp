@@ -76,13 +76,33 @@ export const eventUpdateSchema = z.object({
  * getEvents function parameter schema
  */
 export const getEventsParamsSchema = z.object({
-  calendarId: z.string().optional().default('primary'),
-  timeMin: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMin must be in ISO 8601 format' }).optional(),
-  timeMax: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMax must be in ISO 8601 format' }).optional(),
+  calendarId: z.union([
+    z.string().min(1),
+    z.literal('').transform(() => 'primary'),
+    z.null().transform(() => 'primary'),
+    z.undefined().transform(() => 'primary')
+  ]).default('primary'),
+  timeMin: z.union([
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
+      { message: 'timeMin must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined),
+    z.undefined()
+  ]).optional(),
+  timeMax: z.union([
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
+      { message: 'timeMax must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined),
+    z.undefined()
+  ]).optional(),
   maxResults: z.number().int().positive().max(2500).optional().default(10),
-  orderBy: z.enum(['startTime', 'updated']).optional().default('startTime')
+  orderBy: z.union([
+    z.enum(['startTime', 'updated']),
+    z.literal('').transform(() => 'startTime' as const),
+    z.null().transform(() => 'startTime' as const),
+    z.undefined().transform(() => 'startTime' as const)
+  ]).default('startTime')
 });
 
 /**

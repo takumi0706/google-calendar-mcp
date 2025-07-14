@@ -62,33 +62,32 @@ export abstract class BaseToolHandler {
     // Debug log the original args
     logger.debug(`[${this.toolName}] Raw args received:`, args);
     
-    const processed: Record<string, unknown> = {};
+    const cleaned: Record<string, unknown> = {};
     
     for (const [key, value] of Object.entries(args)) {
-      // Convert empty strings to undefined to allow default values
-      // This is needed because some MCP clients send empty strings instead of omitting parameters
+      // Skip empty, null, or undefined values entirely
+      // This allows Zod optional() defaults to be applied correctly
       if (value === '' || value === null || value === undefined) {
-        processed[key] = undefined;
-      } else if (typeof value === 'string' && value.trim() === '') {
-        // Also handle strings that are only whitespace
-        processed[key] = undefined;
-      } else if (key === 'maxResults' && typeof value === 'string') {
-        // Special handling for maxResults - convert string to number
+        logger.debug(`[${this.toolName}] Skipping empty value for key: ${key}`);
+        continue;
+      }
+      
+      // Skip strings that are only whitespace
+      if (typeof value === 'string' && value.trim() === '') {
+        logger.debug(`[${this.toolName}] Skipping whitespace-only value for key: ${key}`);
+        continue;
+      }
+      
+      // Special handling for maxResults - convert string to number
+      if (key === 'maxResults' && typeof value === 'string') {
         const numValue = parseInt(value, 10);
         if (!isNaN(numValue) && numValue > 0) {
-          processed[key] = numValue;
+          cleaned[key] = numValue;
         } else {
-          processed[key] = undefined; // Invalid number, use default
+          logger.debug(`[${this.toolName}] Skipping invalid maxResults: ${value}`);
+          // Skip invalid numbers to use default
         }
       } else {
-        processed[key] = value;
-      }
-    }
-    
-    // Remove undefined properties entirely to allow Zod defaults to apply
-    const cleaned: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(processed)) {
-      if (value !== undefined) {
         cleaned[key] = value;
       }
     }

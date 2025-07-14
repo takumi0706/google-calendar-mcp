@@ -82,7 +82,7 @@ export const getEventsParamsSchema = z.object({
   timeMax: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
     { message: 'timeMax must be in ISO 8601 format' }).optional(),
   maxResults: z.number().int().positive().max(2500).optional().default(10),
-  orderBy: z.enum(['startTime', 'updated']).optional()
+  orderBy: z.enum(['startTime', 'updated']).optional().default('startTime')
 });
 
 /**

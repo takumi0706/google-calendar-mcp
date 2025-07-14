@@ -62,7 +62,14 @@ export class ToolsManager {
         toolName,
         handler.getSchema(),
         async (args: any, extra: any) => {
-          return await handler.handle(args, extra);
+          logger.debug(`[MCP] Tool "${toolName}" called`);
+          try {
+            const result = await handler.handle(args, extra);
+            return result;
+          } catch (error) {
+            logger.error(`[MCP] Tool "${toolName}" error:`, { error } as any);
+            throw error;
+          }
         }
       );
       

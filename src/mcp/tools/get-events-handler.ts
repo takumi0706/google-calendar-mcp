@@ -15,16 +15,11 @@ export class GetEventsHandler extends BaseCalendarToolHandler {
   }
 
   /**
-   * Define Zod schema
+   * Define Zod schema using the shared schema
    */
   getSchema(): z.ZodRawShape {
-    return {
-      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
-      timeMin: z.string().optional().describe('Start time for event retrieval (ISO 8601 format. Example: 2025-03-01T00:00:00Z)'),
-      timeMax: z.string().optional().describe('End time for event retrieval (ISO 8601 format)'),
-      maxResults: z.number().int().positive().optional().describe('Maximum number of events to retrieve (default: 10)'),
-      orderBy: z.enum(['startTime', 'updated']).optional().describe('Sort order (startTime: by start time, updated: by update time)'),
-    };
+    // Use the shared schema from schemas.ts but extract its shape for consistency
+    return getEventsParamsSchema.shape;
   }
 
   /**

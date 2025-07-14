@@ -1,6 +1,6 @@
 {
   "name": "@takumi0706/google-calendar-mcp",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Google Calendar MCP server for Claude Desktop integration with enhanced security",
   "main": "dist/index.js",
   "bin": {
@@ -16,17 +16,11 @@
     "build": "tsc",
     "postbuild": "chmod +x dist/index.js",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
     "test": "jest",
-    "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write 'src/**/*.ts'",
-    "prepare": "npm run build || true",
-    "prepublishOnly": "npm test && npm run lint",
-    "version": "npm run format && git add -A src && npm run install:legacy",
-    "postversion": "git push && git push --tags",
-    "security": "npm audit",
-    "install:legacy": "npm install --legacy-peer-deps"
+    "check-circular": "node scripts/check-circular-deps.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint && npm run check-circular"
   },
   "repository": {
     "type": "git",

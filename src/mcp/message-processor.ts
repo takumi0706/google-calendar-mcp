@@ -105,6 +105,11 @@ export class MessageProcessor {
       try {
         const processedMessage = this.processIncomingMessage(message);
         
+        // Check if this is a tool call
+        if (processedMessage && processedMessage.method === 'tools/call') {
+          logger.debug(`[MCP] Tool call: ${processedMessage.params?.name}`);
+        }
+        
         // Log message output
         this.logIncomingMessage(processedMessage);
 
@@ -113,7 +118,7 @@ export class MessageProcessor {
           return await this.originalOnMessage(processedMessage);
         }
       } catch (err) {
-        logger.error(`Error processing incoming message: ${err}`);
+        logger.error(`[MCP] Error processing incoming message: ${err}`);
       }
     };
   }
@@ -242,7 +247,7 @@ export class MessageProcessor {
     // For complex objects, use manual cloning
     const cloned: any = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         cloned[key] = this.performDeepClone(obj[key]);
       }
     }
@@ -259,7 +264,7 @@ export class MessageProcessor {
 
     // Check for functions, undefined values, or circular references
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const value = obj[key];
         if (typeof value === 'function' || value === undefined) {
           return false;
@@ -284,7 +289,7 @@ export class MessageProcessor {
     }
 
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const value = obj[key];
         if (typeof value === 'function' || value === undefined) {
           return false;

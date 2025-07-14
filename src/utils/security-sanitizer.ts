@@ -3,6 +3,8 @@
  * Prevents sensitive information leakage in error responses and logs
  */
 
+import { ErrorCode } from './error-codes';
+
 /**
  * Sensitive data patterns that should be redacted
  */
@@ -29,8 +31,8 @@ const SENSITIVE_PATTERNS = [
   /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
   
   // File paths that might contain usernames
-  /\b\/[Uu]sers\/[^\/\s]+/g,
-  /\b[A-Z]:\\\\[Uu]sers\\\\[^\\\\\\s]+/g,
+  /\b\/[Uu]sers\/[^/\s]+/g,
+  /\b[A-Z]:\\[Uu]sers\\[^\\\s]+/g,
 ];
 
 /**
@@ -69,8 +71,6 @@ const SAFE_ERROR_MESSAGES = {
   [ErrorCode.RATE_LIMIT_ERROR]: 'Rate limit exceeded.',
   [ErrorCode.TOKEN_ERROR]: 'Token error occurred.'
 };
-
-import { ErrorCode } from './error-handler';
 
 /**
  * Sanitize text by removing or redacting sensitive information
@@ -213,9 +213,9 @@ export function redactFilePath(path: string): string {
   
   // Replace user directories with generic placeholder
   return path
-    .replace(/\/Users\/[^\/]+/g, '/Users/[USER]')
+    .replace(/\/Users\/[^/]+/g, '/Users/[USER]')
     .replace(/C:\\Users\\[^\\]+/g, 'C:\\Users\\[USER]')
-    .replace(/\/home\/[^\/]+/g, '/home/[USER]');
+    .replace(/\/home\/[^/]+/g, '/home/[USER]');
 }
 
 /**

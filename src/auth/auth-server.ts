@@ -169,6 +169,7 @@ export class AuthServer {
   private startAuthenticationFlow(oauth2Client: OAuth2Client, userId: string): Promise<OAuth2Client> {
     return new Promise((resolve, reject) => {
       try {
+        logger.debug('Starting authentication flow for user:', { userId } as LoggerMeta);
         this.generateAndOpenAuthUrl(userId);
         this.setupTokenMonitoring(oauth2Client, userId, resolve, reject);
       } catch (error) {
@@ -214,15 +215,13 @@ export class AuthServer {
     resolve: (client: OAuth2Client) => void, 
     reject: (error: Error) => void
   ): void {
-    let intervalId: NodeJS.Timeout;
-    let timeoutId: NodeJS.Timeout;
-    
     const checkToken = async () => {
       try {
         const accessToken = tokenManager.getToken(`${userId}_access`);
         if (accessToken) {
+          logger.debug('Access token found, setting credentials');
           const result = await this.setCredentialsFromTokens(oauth2Client, userId);
-          this.processAuthenticationSuccess(resolve, intervalId, timeoutId);
+          this.processAuthenticationSuccess(resolve, result, intervalId, timeoutId);
           return result;
         }
       } catch (error) {
@@ -230,8 +229,8 @@ export class AuthServer {
       }
     };
 
-    intervalId = setInterval(checkToken, 1000);
-    timeoutId = setTimeout(() => {
+    const intervalId = setInterval(checkToken, 1000);
+    const timeoutId = setTimeout(() => {
       this.handleAuthenticationTimeout(intervalId, timeoutId, reject);
     }, 5 * 60 * 1000);
   }
@@ -267,16 +266,21 @@ export class AuthServer {
    */
   private processAuthenticationSuccess(
     resolve: (client: OAuth2Client) => void,
+    oauth2Client: OAuth2Client,
     intervalId?: NodeJS.Timeout,
     timeoutId?: NodeJS.Timeout
   ): void {
+    logger.debug('Processing successful authentication');
+    
     // Clean up timers
     if (intervalId) clearInterval(intervalId);
     if (timeoutId) clearTimeout(timeoutId);
     
     this.authorizationPromise = null;
     this.shutdownServer();
-    resolve;
+    
+    logger.info('Authentication completed successfully, resolving with OAuth2Client');
+    resolve(oauth2Client);
   }
 
   /**

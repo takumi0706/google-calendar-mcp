@@ -293,9 +293,19 @@ If you encounter any issues:
 - Updated token storage to save refreshed access tokens for better token management
 - Fixed potential infinite loop in token refresh logic
 
-## Development
+## Installation
 
-To contribute to this project:
+### Quick Start (Recommended)
+
+Install directly from npm:
+
+```bash
+npm install -g @takumi0706/google-calendar-mcp
+```
+
+### Manual Installation
+
+For development or customization:
 
 ```bash
 # Clone the repository
@@ -305,9 +315,16 @@ cd google-calendar-mcp
 # Install dependencies
 npm install
 
-# Run in development mode
-npm run dev
+# Build the project
+npm run build
+
+# Run the server
+npm start
 ```
+
+## Production Deployment
+
+For production use, the server requires valid Google OAuth credentials. The server will fail to start without proper credentials, ensuring security compliance.
 
 ## Testing
 

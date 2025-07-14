@@ -62,13 +62,22 @@ export class ToolSchemaRegistry {
     Object.entries(zodSchema).forEach(([key, zodType]: [string, any]) => {
       if (zodType && typeof zodType === 'object') {
         // Extract type and description from Zod schema
+        const jsonType = this.getJsonTypeFromZod(zodType);
+        const isOptional = this.isZodOptional(zodType);
+        
         properties[key] = {
-          type: this.getJsonTypeFromZod(zodType),
+          type: jsonType,
           description: zodType.description || `${key} parameter`
         };
 
-        // Check if field is required (not optional)
-        if (zodType._def && !zodType._def.optional) {
+        // Add default value if it exists
+        const defaultValue = this.getZodDefault(zodType);
+        if (defaultValue !== undefined) {
+          properties[key].default = defaultValue;
+        }
+
+        // Only add to required if it's not optional and has no default
+        if (!isOptional && defaultValue === undefined) {
           required.push(key);
         }
       }
@@ -107,9 +116,45 @@ export class ToolSchemaRegistry {
       return 'string';
     case 'ZodOptional':
       return this.getJsonTypeFromZod(zodType._def.innerType);
+    case 'ZodDefault':
+      return this.getJsonTypeFromZod(zodType._def.innerType);
     default:
       return 'string';
     }
+  }
+
+  /**
+   * Check if Zod type is optional
+   */
+  private isZodOptional(zodType: any): boolean {
+    if (!zodType._def) return false;
+    
+    const typeName = zodType._def.typeName;
+    if (typeName === 'ZodOptional') return true;
+    if (typeName === 'ZodDefault') return true; // Default values make fields optional
+    
+    return false;
+  }
+
+  /**
+   * Get default value from Zod type
+   */
+  private getZodDefault(zodType: any): any {
+    if (!zodType._def) return undefined;
+    
+    const typeName = zodType._def.typeName;
+    if (typeName === 'ZodDefault') {
+      const defaultValue = zodType._def.defaultValue;
+      return typeof defaultValue === 'function' ? defaultValue() : defaultValue;
+    }
+    
+    // Check nested types for defaults
+    if (typeName === 'ZodOptional' && zodType._def.innerType._def?.typeName === 'ZodDefault') {
+      const innerDefault = zodType._def.innerType._def.defaultValue;
+      return typeof innerDefault === 'function' ? innerDefault() : innerDefault;
+    }
+    
+    return undefined;
   }
 
   /**

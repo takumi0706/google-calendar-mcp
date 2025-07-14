@@ -406,7 +406,7 @@ class GoogleCalendarApi {
     hasActiveClient: boolean;
     authInProgress: boolean;
     lastAuthTime: number | null;
-  } {
+    } {
     let lastAuthTime = null;
     if (this.cachedClients.size > 0) {
       const entries = Array.from(this.cachedClients.values());

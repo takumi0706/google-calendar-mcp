@@ -1,6 +1,7 @@
 // src/utils/error-handler.ts
 import { Context, Next } from 'hono';
 import logger from './logger';
+import { ErrorCode } from './error-codes';
 import { 
   sanitizeErrorForLogging, 
   sanitizeRequestContext, 
@@ -8,21 +9,8 @@ import {
   getProductionSafeErrorMessage 
 } from './security-sanitizer';
 
-/**
- * Error codes used in the application
- */
-export enum ErrorCode {
-  AUTHENTICATION_ERROR = 'AUTH_ERROR',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  API_ERROR = 'API_ERROR',
-  SERVER_ERROR = 'SERVER_ERROR',
-  CALENDAR_ERROR = 'CALENDAR_ERROR',
-  CONFIGURATION_ERROR = 'CONFIG_ERROR',
-  PERMISSION_ERROR = 'PERMISSION_ERROR',
-  NOT_FOUND_ERROR = 'NOT_FOUND_ERROR',
-  RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
-  TOKEN_ERROR = 'TOKEN_ERROR'
-}
+// Re-export ErrorCode for backward compatibility
+export { ErrorCode };
 
 /**
  * Application-specific error class
@@ -70,7 +58,7 @@ export function handleError(err: unknown, c: Context): Response {
     logger.error(`${err.code}: ${err.message}`, {
       statusCode: err.statusCode,
       details: sanitizeErrorForLogging(err.details),
-      context: sanitizeRequestContext({
+      requestContext: sanitizeRequestContext({
         path: c.req.path,
         method: c.req.method,
         url: c.req.url
@@ -91,7 +79,7 @@ export function handleError(err: unknown, c: Context): Response {
       logger.error('Google API Error', {
         googleError: sanitizeErrorForLogging(googleError),
         statusCode,
-        context: sanitizeRequestContext({
+        requestContext: sanitizeRequestContext({
           path: c.req.path,
           method: c.req.method
         })
@@ -118,8 +106,8 @@ export function handleError(err: unknown, c: Context): Response {
 
   // Use sanitized logging for unexpected errors
   logger.error('Unexpected error', {
-    error: sanitizeErrorForLogging(err),
-    context: sanitizeRequestContext({
+    errorDetails: sanitizeErrorForLogging(err),
+    requestContext: sanitizeRequestContext({
       path: c.req.path,
       method: c.req.method
     })
@@ -257,8 +245,8 @@ class McpErrorHandler {
     
     // Use sanitized logging
     logger.error(`[${errorCode}] ${originalMessage}`, {
-      context: sanitizeRequestContext(context || {}),
-      error: sanitizeErrorForLogging(error)
+      requestContext: sanitizeRequestContext(context || {}),
+      errorDetails: sanitizeErrorForLogging(error)
     });
 
     // Generate user-friendly message

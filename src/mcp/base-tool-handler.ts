@@ -56,6 +56,48 @@ export abstract class BaseToolHandler {
   }
 
   /**
+   * Preprocess arguments to handle empty strings and ensure MCP compatibility
+   */
+  private preprocessArgs(args: Record<string, unknown>): Record<string, unknown> {
+    // Debug log the original args
+    logger.debug(`[${this.toolName}] Raw args received:`, args);
+    
+    const processed: Record<string, unknown> = {};
+    
+    for (const [key, value] of Object.entries(args)) {
+      // Convert empty strings to undefined to allow default values
+      // This is needed because some MCP clients send empty strings instead of omitting parameters
+      if (value === '' || value === null || value === undefined) {
+        processed[key] = undefined;
+      } else if (typeof value === 'string' && value.trim() === '') {
+        // Also handle strings that are only whitespace
+        processed[key] = undefined;
+      } else if (key === 'maxResults' && typeof value === 'string') {
+        // Special handling for maxResults - convert string to number
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue) && numValue > 0) {
+          processed[key] = numValue;
+        } else {
+          processed[key] = undefined; // Invalid number, use default
+        }
+      } else {
+        processed[key] = value;
+      }
+    }
+    
+    // Remove undefined properties entirely to allow Zod defaults to apply
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(processed)) {
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    
+    logger.debug(`[${this.toolName}] Cleaned args:`, cleaned);
+    return cleaned;
+  }
+
+  /**
    * Validate input arguments
    */
   private validateInput(args: Record<string, unknown>): {
@@ -64,8 +106,11 @@ export abstract class BaseToolHandler {
     errorResponse?: McpToolResponse;
   } {
     try {
+      // Preprocess arguments to handle empty strings
+      const processedArgs = this.preprocessArgs(args);
+      
       const schema = z.object(this.getSchema());
-      const validatedArgs = schema.parse(args);
+      const validatedArgs = schema.parse(processedArgs);
       return { isValid: true, validatedArgs };
     } catch (error) {
       logger.error(`Validation error in ${this.toolName}:`, { error } as LoggerMeta);
@@ -93,18 +138,20 @@ export abstract class BaseToolHandler {
   public async handle(args: Record<string, unknown>, extra?: unknown): Promise<McpToolResponse> {
     const startTime = Date.now();
 
-    try {
-      logger.debug(`Executing ${this.toolName} with args:`, args);
+    logger.debug(`[MCP] Starting execution of tool: ${this.toolName}`);
 
+    try {
       // 1. Authentication check
       const authCheck = this.checkAuthentication();
       if (!authCheck.isAuthenticated) {
+        logger.warn(`[${this.toolName}] Authentication failed`);
         return authCheck.errorResponse!;
       }
 
       // 2. Input validation
       const validation = this.validateInput(args);
       if (!validation.isValid) {
+        logger.warn(`[${this.toolName}] Validation failed`);
         return validation.errorResponse!;
       }
 
@@ -123,12 +170,12 @@ export abstract class BaseToolHandler {
       const response = this.createSuccessResponse(result, context);
 
       const executionTime = Date.now() - startTime;
-      logger.debug(`${this.toolName} executed successfully in ${executionTime}ms`);
+      logger.debug(`[MCP] Tool ${this.toolName} completed in ${executionTime}ms`);
 
       return response;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      logger.error(`Error in ${this.toolName} (${executionTime}ms):`, { error } as LoggerMeta);
+      logger.error(`[MCP] Error in tool ${this.toolName} (${executionTime}ms):`, { error } as LoggerMeta);
 
       return mcpErrorHandler.handleError(error, {
         toolName: this.toolName,

@@ -101,7 +101,7 @@ export class OAuthHandler {
           </html>
         `);
       } catch (error) {
-        logger.error('OAuth callback error', { error });
+        logger.error('OAuth callback error', { errorDetails: error });
         return c.html(`
           <html lang="en">
             <head>

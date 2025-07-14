@@ -36,11 +36,18 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
     // Validate parameters (empty object)
     authenticateParamsSchema.parse(validatedArgs);
     
-    // Start authentication flow
-    await oauthAuth.initiateAuthorization();
+    this.logInfo('Starting authentication flow...');
     
-    this.logInfo('Authentication process started');
-    return { authenticationStarted: true };
+    try {
+      // Start authentication flow and wait for completion
+      await oauthAuth.initiateAuthorization();
+      
+      this.logInfo('Authentication completed successfully');
+      return { authenticationCompleted: true, authenticated: true };
+    } catch (error) {
+      this.logError('Authentication failed:', { error } as any);
+      throw error;
+    }
   }
 
   /**
@@ -51,9 +58,16 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
       return responseBuilder.alreadyAuthenticated();
     }
     
+    if (result.authenticationCompleted) {
+      return responseBuilder.success({
+        message: 'Authentication completed successfully',
+        authenticated: true
+      });
+    }
+    
     return responseBuilder.processStarted(
       'Google Calendar Authentication',
-      'Please complete authentication in your browser. After successful authentication, you can use other calendar tools.'
+      'Please complete authentication in your browser.'
     );
   }
 }

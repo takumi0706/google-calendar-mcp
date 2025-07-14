@@ -6,7 +6,7 @@
 > バージョン1.0.5では、`createEvent`と`updateEvent`ツールの両方に`recurrence`パラメータを追加し、定期的なイベントのサポートを追加しました。これにより、作成後に手動で設定することなく、直接定期的なイベントを作成および変更できるようになりました。
 
 ![](https://badge.mcpx.dev?type=server 'MCP Server')
-![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 [![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
@@ -32,10 +32,13 @@ Google Calendar MCP Serverは、GoogleカレンダーとClaude Desktopの間の�
 - **TypeScript**: 型安全なコード開発のため
 - **MCP SDK**: Claude Desktopとの統合のために`@modelcontextprotocol/sdk`を使用
 - **Google API**: Google Calendar APIアクセスのために`googleapis`を使用
+- **Hono**: 認証サーバー用の軽量で高速なWebフレームワーク
+- **OAuth2 Providers**: PKCE対応のOAuth2フローのために`@hono/oauth-providers`を使用
 - **Zod**: リクエスト/レスポンスデータのスキーマ検証を実装
 - **環境ベースの設定**: 設定管理にdotenvを使用
-- **Helmet.js**: セキュリティヘッダーのため
-- **AES-256-GCM**: トークン暗号化のため
+- **AES-256-GCM**: Node.js cryptoモジュールを使用したトークン暗号化
+- **Open**: 認証時のブラウザ自動起動のため
+- **Readline**: サーバー環境での手動認証入力のため
 - **Jest**: ユニットテストとカバレッジのため
 - **GitHub Actions**: CI/CDのため
 
@@ -56,11 +59,11 @@ Google Calendar MCP Serverは、GoogleカレンダーとClaude Desktopの間の�
 様々なフィルタリングオプションでカレンダーイベントを取得します。
 
 **パラメータ:**
-- `calendarId` (オプション): カレンダーID（省略時はプライマリカレンダーを使用）
-- `timeMin` (オプション): イベント取得の開始時間（ISO 8601形式、例："2025-03-01T00:00:00Z"）
-- `timeMax` (オプション): イベント取得の終了時間（ISO 8601形式）
+- `calendarId` (オプション): カレンダーID（省略、空文字列、null、undefinedの場合はプライマリカレンダーを使用）
+- `timeMin` (オプション): イベント取得の開始時間（ISO 8601形式、例："2025-03-01T00:00:00Z"）。空文字列、null、undefined値は無視されます
+- `timeMax` (オプション): イベント取得の終了時間（ISO 8601形式）。空文字列、null、undefined値は無視されます
 - `maxResults` (オプション): 取得するイベントの最大数（デフォルト：10）
-- `orderBy` (オプション): 並べ替え順序（"startTime"または"updated"）
+- `orderBy` (オプション): 並べ替え順序（"startTime"または"updated"）。空文字列、null、undefinedの場合は"startTime"がデフォルト
 
 ### 2. createEvent
 
@@ -148,7 +151,7 @@ Googleカレンダーに再認証します。これは、Claudeを再起動せ�
 このパッケージはnpmで`@takumi0706/google-calendar-mcp`として公開されています：
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.5
+npx @takumi0706/google-calendar-mcp@1.0.7
 ```
 
 ### 前提条件
@@ -205,7 +208,6 @@ USE_MANUAL_AUTH=true
 - **トークン暗号化**：安全な保存のためにAES-256-GCMを使用
 - **PKCE実装**：明示的なcode_verifierとcode_challenge生成
 - **状態パラメータ検証**：CSRF保護のため
-- **セキュリティヘッダー**：Helmet.jsを使用して適用
 - **レート制限**：APIエンドポイント保護のため
 - **入力検証**：Zodスキーマを使用
 
@@ -233,8 +235,15 @@ USE_MANUAL_AUTH=true
 - **接続エラー**：サーバーのインスタンスが1つだけ実行されていることを確認してください
 - **切断の問題**：サーバーがカスタムTCPソケットなしでMCPメッセージを適切に処理していることを確認してください
 - **localhostにアクセスできない**：リモートサーバーやコンテナなど、localhostにアクセスできない環境でアプリケーションを実行している場合は、`USE_MANUAL_AUTH=true`を設定して手動認証を有効にしてください。これにより、アプリケーションを承認した後にGoogleによって表示される認証コードを手動で入力できるようになります。
+- **MCPパラメータ検証エラー**：空文字列パラメータでエラー-32602が発生する場合は、空文字列、null、undefined値を適切に処理するバージョン1.0.7以降にアップデートしてください。
 
 ## バージョン履歴
+
+### バージョン1.0.7の変更点
+- MCPツールのパラメータ検証を強化し、空文字列、null、undefined値を適切に処理
+- getEventsツールに空文字列パラメータが渡された際のMCPエラー-32602を修正
+- preprocessArgs関数を改善し、空の値をスキップすることでZodスキーマのデフォルト値が適切に適用されるように
+- 空パラメータ処理の包括的なテストカバレッジを追加
 
 ### バージョン1.0.6の変更点
 - このGoogle Calendar MCPサーバーで不要なスコープを修正しました

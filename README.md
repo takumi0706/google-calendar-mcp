@@ -6,7 +6,7 @@
 > Version 1.0.5 adds support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools. This allows you to create and modify recurring events directly without having to set them up manually after creation.
 
 ![](https://badge.mcpx.dev?type=server 'MCP Server')
-![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 [![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
@@ -33,10 +33,13 @@ This project uses:
 - **TypeScript**: For type-safe code development
 - **MCP SDK**: Uses `@modelcontextprotocol/sdk` for integration with Claude Desktop
 - **Google API**: Uses `googleapis` for Google Calendar API access
+- **Hono**: Lightweight and fast web framework for the authentication server
+- **OAuth2 Providers**: Uses `@hono/oauth-providers` for PKCE-enabled OAuth2 flow
 - **Zod**: Implements schema validation for request/response data
 - **Environment-based configuration**: Uses dotenv for configuration management
-- **Helmet.js**: For security headers
-- **AES-256-GCM**: For token encryption
+- **AES-256-GCM**: For token encryption using Node.js crypto module
+- **Open**: For automatic browser launching during authentication
+- **Readline**: For manual authentication input in server environments
 - **Jest**: For unit testing and coverage
 - **GitHub Actions**: For CI/CD
 
@@ -57,11 +60,11 @@ This MCP server provides the following tools for interacting with Google Calenda
 Retrieves calendar events with various filtering options.
 
 **Parameters:**
-- `calendarId` (optional): Calendar ID (uses primary calendar if omitted)
-- `timeMin` (optional): Start time for event retrieval (ISO 8601 format, e.g., "2025-03-01T00:00:00Z")
-- `timeMax` (optional): End time for event retrieval (ISO 8601 format)
+- `calendarId` (optional): Calendar ID (uses primary calendar if omitted, empty string, null, or undefined)
+- `timeMin` (optional): Start time for event retrieval (ISO 8601 format, e.g., "2025-03-01T00:00:00Z"). Empty strings, null, or undefined values are ignored
+- `timeMax` (optional): End time for event retrieval (ISO 8601 format). Empty strings, null, or undefined values are ignored
 - `maxResults` (optional): Maximum number of events to retrieve (default: 10)
-- `orderBy` (optional): Sort order ("startTime" or "updated")
+- `orderBy` (optional): Sort order ("startTime" or "updated"). Defaults to "startTime" if empty string, null, or undefined
 
 ### 2. createEvent
 
@@ -149,7 +152,7 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.5
+npx @takumi0706/google-calendar-mcp@1.0.7
 ```
 
 ### Prerequisites
@@ -205,7 +208,6 @@ Add the server to your `claude_desktop_config.json`. If you're running in an env
 - **Token encryption** using AES-256-GCM for secure storage
 - **PKCE implementation** with explicit code_verifier and code_challenge generation
 - **State parameter validation** for CSRF protection
-- **Security headers** applied using Helmet.js
 - **Rate limiting** for API endpoint protection
 - **Input validation** with Zod schema
 
@@ -232,8 +234,15 @@ If you encounter any issues:
 - **Connection Errors**: Make sure only one instance of the server is running
 - **Disconnection Issues**: Ensure your server is properly handling MCP messages without custom TCP sockets
 - **Cannot access localhost**: If you're running the application in an environment where localhost is not accessible (like a remote server or container), enable manual authentication by setting `USE_MANUAL_AUTH=true`. This will allow you to manually enter the authorization code shown by Google after authorizing the application.
+- **MCP Parameter Validation Errors**: If you see error -32602 with empty string parameters, update to version 1.0.7 or later which handles empty strings, null, and undefined values properly.
 
 ## Version History
+
+### Version 1.0.7 Changes
+- Enhanced parameter validation for MCP tools to properly handle empty strings, null, and undefined values
+- Fixed MCP error -32602 when empty string parameters were passed to getEvents tool
+- Improved preprocessArgs function to skip empty values, allowing Zod schema defaults to be applied correctly
+- Added comprehensive test coverage for empty parameter handling
 
 ### Version 1.0.6 Changes
 - Fixed the scope is not needed in this google calendar mcp server

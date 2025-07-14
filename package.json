@@ -19,8 +19,7 @@
     "test": "jest",
     "lint": "eslint . --ext .ts",
     "check-circular": "node scripts/check-circular-deps.js",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint && npm run check-circular"
+    "prepublishOnly": "npm run build && npm test && npm run lint && npm run check-circular"
   },
   "repository": {
     "type": "git",

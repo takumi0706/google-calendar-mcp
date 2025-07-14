@@ -76,13 +76,33 @@ export const eventUpdateSchema = z.object({
  * getEvents function parameter schema
  */
 export const getEventsParamsSchema = z.object({
-  calendarId: z.string().optional().default('primary'),
-  timeMin: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMin must be in ISO 8601 format' }).optional(),
-  timeMax: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-    { message: 'timeMax must be in ISO 8601 format' }).optional(),
+  calendarId: z.union([
+    z.string().min(1),
+    z.literal('').transform(() => 'primary'),
+    z.null().transform(() => 'primary'),
+    z.undefined().transform(() => 'primary')
+  ]).default('primary'),
+  timeMin: z.union([
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
+      { message: 'timeMin must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined),
+    z.undefined()
+  ]).optional(),
+  timeMax: z.union([
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
+      { message: 'timeMax must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined),
+    z.undefined()
+  ]).optional(),
   maxResults: z.number().int().positive().max(2500).optional().default(10),
-  orderBy: z.enum(['startTime', 'updated']).optional()
+  orderBy: z.union([
+    z.enum(['startTime', 'updated']),
+    z.literal('').transform(() => 'startTime' as const),
+    z.null().transform(() => 'startTime' as const),
+    z.undefined().transform(() => 'startTime' as const)
+  ]).default('startTime')
 });
 
 /**
@@ -126,3 +146,58 @@ export const readResourceRequestSchema = z.object({
     uri: z.string().min(1, { message: 'URI is required' })
   })
 });
+
+/**
+ * Calendar resource schema definition for MCP resources
+ * Used to avoid duplication between resource-provider and tool-schema-registry
+ */
+export const CALENDAR_RESOURCE_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', description: 'Calendar ID' },
+    summary: { type: 'string', description: 'Calendar name' },
+    description: { type: 'string', description: 'Calendar description' },
+    timeZone: { type: 'string', description: 'Calendar time zone' },
+    accessRole: { type: 'string', description: 'User\'s access role for this calendar' }
+  }
+} as const;
+
+/**
+ * Calendar list schema definition
+ */
+export const CALENDAR_LIST_SCHEMA = {
+  type: 'array',
+  items: CALENDAR_RESOURCE_SCHEMA
+} as const;
+
+/**
+ * Common resource definitions for MCP resources
+ * Centralized to prevent duplication between resource-provider and tool-schema-registry
+ */
+export const MCP_RESOURCE_DEFINITIONS = [
+  {
+    name: 'primary_calendar',
+    description: 'User\'s primary Google Calendar',
+    uri: 'google-calendar://primary',
+    schema: {
+      type: 'object',
+      properties: {
+        id: CALENDAR_RESOURCE_SCHEMA.properties.id,
+        summary: CALENDAR_RESOURCE_SCHEMA.properties.summary,
+        description: CALENDAR_RESOURCE_SCHEMA.properties.description,
+        timeZone: CALENDAR_RESOURCE_SCHEMA.properties.timeZone
+      }
+    }
+  },
+  {
+    name: 'user_calendars',
+    description: 'List of all calendars accessible to the user',
+    uri: 'google-calendar://calendars',
+    schema: CALENDAR_LIST_SCHEMA
+  }
+] as const;
+
+/**
+ * Type definitions for schemas
+ */
+export type McpResourceDefinition = typeof MCP_RESOURCE_DEFINITIONS[number];

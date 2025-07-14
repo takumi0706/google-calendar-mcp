@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Pre-commit hook to run quality checks
+# This helps catch issues before they reach the repository
+
+echo "🔍 Running pre-commit checks..."
+
+# Function to print colored output
+print_status() {
+  if [ $1 -eq 0 ]; then
+    echo "✅ $2"
+  else
+    echo "❌ $2"
+  fi
+}
+
+# Check for circular dependencies
+echo "\n📦 Checking for circular dependencies..."
+npm run check-circular
+circular_exit_code=$?
+print_status $circular_exit_code "Circular dependency check"
+
+# Run linting
+echo "\n🔧 Running ESLint..."
+npm run lint
+lint_exit_code=$?
+print_status $lint_exit_code "ESLint check"
+
+# Run TypeScript compilation
+echo "\n🏗️  Running TypeScript compilation..."
+npm run build
+build_exit_code=$?
+print_status $build_exit_code "TypeScript compilation"
+
+# Run tests
+echo "\n🧪 Running tests..."
+npm test
+test_exit_code=$?
+print_status $test_exit_code "Test execution"
+
+# Check if any step failed
+if [ $circular_exit_code -ne 0 ] || [ $lint_exit_code -ne 0 ] || [ $build_exit_code -ne 0 ] || [ $test_exit_code -ne 0 ]; then
+  echo "\n❌ Pre-commit checks failed. Please fix the issues before committing."
+  echo "💡 You can run 'npm run check-all' to run all checks manually."
+  exit 1
+fi
+
+echo "\n✅ All pre-commit checks passed!"
+exit 0

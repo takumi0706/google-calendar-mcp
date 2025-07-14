@@ -23,17 +23,15 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     
-    - name: Update package-lock.json
-      run: npm install --package-lock-only
-    
     - name: Install dependencies
       run: npm install
       
-    - name: Create dummy .env file
+    - name: Create test environment file
       run: |
-        echo "GOOGLE_CLIENT_ID=dummy-id" > .env
-        echo "GOOGLE_CLIENT_SECRET=dummy-secret" >> .env
-        echo "GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback" >> .env
+        echo "GOOGLE_CLIENT_ID=test-client-id-for-ci" > .env
+        echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-ci" >> .env
+        echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
+        echo "NODE_ENV=test" >> .env
     
     - name: TypeScript Check
       run: npx tsc --noEmit
@@ -45,8 +43,12 @@ jobs:
       run: npm run build
       env:
         NODE_ENV: test
+        GOOGLE_CLIENT_ID: test-client-id-for-ci
+        GOOGLE_CLIENT_SECRET: test-client-secret-for-ci
       
     - name: Test
       run: npm test
       env:
         NODE_ENV: test
+        GOOGLE_CLIENT_ID: test-client-id-for-ci
+        GOOGLE_CLIENT_SECRET: test-client-secret-for-ci

@@ -1,134 +1,178 @@
 // src/auth/oauth-handler.ts
-import crypto from 'crypto';
-import { Express, Request, Response } from 'express';
-import { google } from 'googleapis';
+import { Hono } from 'hono';
+import { googleAuth } from '@hono/oauth-providers/google';
 import { tokenManager } from './token-manager';
 import logger from '../utils/logger';
 import { AppError, ErrorCode } from '../utils/error-handler';
-import { CodeChallengeMethod } from 'google-auth-library/build/src/auth/oauth2client';
-import { escapeHtml } from '../utils/html-sanitizer';
+import config from '../config/config';
+
+// Type definitions for Google OAuth tokens and user
+interface GoogleTokens {
+  token: string;
+  expires_in: number;
+  refresh_token?: string;
+  access_token?: string;
+}
+
+interface GoogleUser {
+  id: string;
+  email: string;
+  verified_email: boolean;
+  name: string;
+  given_name: string;
+  family_name: string;
+  picture: string;
+  locale: string;
+}
 
 /**
- * OAuthHandler - Secure OAuth authentication flow management class
+ * OAuthHandler - Secure OAuth authentication flow management class using Hono
  * 
- * Uses state parameter for CSRF protection and
- * implements PKCE (Proof Key for Code Exchange) to enhance authentication
+ * Uses Hono's OAuth provider integration with built-in PKCE support
  */
 export class OAuthHandler {
-  private stateMap: Map<string, { expiry: number, redirectUri: string, codeVerifier: string }> = new Map();
+  private app: Hono;
+  private authPromise: Promise<{ user: GoogleUser; tokens: GoogleTokens }> | null = null;
 
-  constructor(private app: Express) {
+  constructor() {
+    this.app = new Hono();
     this.setupRoutes();
-    // Periodically clean up expired state values
-    setInterval(this.cleanupExpiredStates.bind(this), 30 * 60 * 1000); // every 30 minutes
   }
 
   /**
    * Set up OAuth-related routes
    */
   private setupRoutes() {
-    // OAuth redirect endpoint
-    this.app.get('/oauth2callback', this.handleOAuthCallback.bind(this));
+    // Google OAuth authentication route with built-in PKCE
+    this.app.use(
+      '/auth/google',
+      googleAuth({
+        client_id: config.google.clientId,
+        client_secret: config.google.clientSecret,
+        scope: ['https://www.googleapis.com/auth/calendar'],
+        prompt: 'consent',
+        access_type: 'offline'
+      })
+    );
+
+    // OAuth callback handler
+    this.app.get('/auth/google', async (c) => {
+      try {
+        const token = c.get('token') as GoogleTokens;
+        const user = c.get('user-google') as GoogleUser;
+        
+        if (!token || !user) {
+          throw new AppError(ErrorCode.AUTHENTICATION_ERROR, 'Failed to get authentication tokens');
+        }
+
+        // Store tokens using existing token manager
+        const userId = 'default-user';
+        
+        // In @hono/oauth-providers, the token contains the access token
+        if (token.token) {
+          const expiresIn = token.expires_in ? token.expires_in * 1000 : 3600 * 1000;
+          tokenManager.storeToken(`${userId}_access`, token.token, expiresIn);
+          logger.debug('Stored access token', { userId, expiresIn });
+        }
+
+        // Check if there's a refresh token in the response
+        if (token.refresh_token) {
+          tokenManager.storeToken(userId, token.refresh_token);
+          logger.info('Successfully obtained and stored refresh token', { userId });
+        } else {
+          logger.warn('No refresh token in the response - need to check Google OAuth configuration', { userId });
+        }
+
+        // Resolve authentication promise if waiting
+        if (this.authPromise) {
+          this.authPromise = Promise.resolve({ user, tokens: token });
+        }
+
+        return c.html(`
+          <html lang="en">
+            <head>
+              <title>Authentication Successful</title>
+              <meta charset="utf-8">
+            </head>
+            <body>
+              <h3>Authentication succeeded. Please close this window to continue.</h3>
+              <script>window.close();</script>
+            </body>
+          </html>
+        `);
+      } catch (error) {
+        logger.error('OAuth callback error', { errorDetails: error });
+        return c.html(`
+          <html lang="en">
+            <head>
+              <title>Authentication Error</title>
+              <meta charset="utf-8">
+            </head>
+            <body>
+              <h3>An authentication error has occurred.</h3>
+              <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+            </body>
+          </html>
+        `, 500);
+      }
+    });
+
+    // Authentication success page
+    this.app.get('/auth-success', (c) => {
+      return c.html(`
+        <html lang="en">
+          <head>
+            <title>Authentication Successful</title>
+            <meta charset="utf-8">
+          </head>
+          <body>
+            <h3>Authentication succeeded. Please close this window to continue.</h3>
+          </body>
+        </html>
+      `);
+    });
   }
 
   /**
    * Generate authentication URL
    * 
-   * @param userId User ID
-   * @param redirectUri Redirect URI after successful authentication
+   * @param userId User ID (for compatibility)
+   * @param redirectUri Redirect URI after successful authentication (handled internally)
    * @param forManualAuth Whether this is for manual authentication
-   * @returns Object containing auth URL and state for manual auth, or just auth URL for regular flow
+   * @returns Auth URL string or object for manual auth
    */
-  public generateAuthUrl(userId: string, redirectUri: string, forManualAuth: boolean = false): any {
-    // Random state value for CSRF protection
-    const state = crypto.randomBytes(32).toString('hex');
+  public generateAuthUrl(userId: string, redirectUri: string, forManualAuth: boolean = false): string | { authUrl: string; state: string } {
+    const authUrl = `http://${config.auth.host}:${config.auth.port}/auth/google`;
+    
+    logger.info('Generated Hono-based auth URL', { authUrl, redirectUri });
 
-    // Generate code_verifier for PKCE
-    const codeVerifier = this.generateCodeVerifier();
-    const codeChallenge = this.generateCodeChallenge(codeVerifier);
-
-    // Set to expire after 10 minutes
-    const expiry = Date.now() + 10 * 60 * 1000;
-    this.stateMap.set(state, { expiry, redirectUri, codeVerifier });
-
-    logger.info('Generated auth URL with PKCE', { state, redirectUri });
-
-    // Generate OAuth authentication URL
-    const oauth2Client = this.getOAuthClient();
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/calendar'],
-      state,
-      // Always display consent screen to force obtaining a new refresh token
-      prompt: 'consent',
-      // Implementation of PKCE extension
-      code_challenge_method: CodeChallengeMethod.S256,
-      code_challenge: codeChallenge
-    });
-
-    // For manual auth, return both the URL and state so we can match them later
+    // For compatibility with existing code
     if (forManualAuth) {
-      return { authUrl, state };
+      return { authUrl, state: 'hono-oauth' };
     }
 
-    // For regular flow, just return the URL
     return authUrl;
   }
 
   /**
    * Exchange authorization code for tokens (for manual authentication)
    * 
-   * @param code Authorization code from Google
+   * @param code Authorization code from Google (not used in Hono implementation)
    * @param state State parameter from the auth URL
    * @returns Success status and message
    */
   public async exchangeCodeForTokens(code: string, state: string): Promise<{ success: boolean, message: string }> {
     try {
-      // Validate state
-      const stateData = this.stateMap.get(state);
-      if (!stateData) {
-        logger.error('Invalid state parameter', { state });
-        return { success: false, message: 'Authentication failed: Invalid state parameter' };
+      // For manual auth with Hono, we need to wait for the OAuth flow to complete
+      // This is handled internally by the googleAuth middleware
+      logger.info('Manual authentication using Hono OAuth flow', { state });
+      
+      if (this.authPromise) {
+        await this.authPromise;
+        return { success: true, message: 'Authentication successful' };
       }
 
-      // Expiration check
-      if (stateData.expiry < Date.now()) {
-        logger.error('Expired state parameter', { state, expiry: stateData.expiry });
-        this.stateMap.delete(state);
-        return { success: false, message: 'Authentication failed: Authentication flow has expired' };
-      }
-
-      const oauth2Client = this.getOAuthClient();
-
-      // Exchange authorization code for token using PKCE code_verifier
-      const { tokens } = await oauth2Client.getToken({
-        code,
-        codeVerifier: stateData.codeVerifier
-      });
-
-      // Delete state after it's been used
-      this.stateMap.delete(state);
-
-      // Identify user ID (actual implementation would require user authentication)
-      // Using 'default-user' as a simple implementation for now
-      const userId = 'default-user';
-
-      // Encrypt and store token
-      if (tokens.refresh_token) {
-        tokenManager.storeToken(userId, tokens.refresh_token);
-        logger.info('Successfully obtained and stored refresh token', { userId });
-      } else {
-        logger.warn('No refresh token in the response', { userId });
-      }
-
-      // Store access token for a short period as needed
-      if (tokens.access_token) {
-        const expiresIn = tokens.expiry_date ? tokens.expiry_date - Date.now() : 3600 * 1000;
-        tokenManager.storeToken(`${userId}_access`, tokens.access_token, expiresIn);
-        logger.debug('Stored access token', { userId, expiresIn });
-      }
-
-      return { success: true, message: 'Authentication successful' };
+      return { success: false, message: 'No authentication flow in progress' };
     } catch (err: unknown) {
       const error = err as Error;
       logger.error('OAuth token exchange failed', { error: error.message, stack: error.stack });
@@ -137,149 +181,52 @@ export class OAuthHandler {
   }
 
   /**
-   * OAuth authentication callback handler
+   * Get Hono app instance
    */
-  private async handleOAuthCallback(req: Request, res: Response) {
-    const { code, state, error } = req.query;
+  public getApp(): Hono {
+    return this.app;
+  }
 
-    // Error check
-    if (error) {
-      logger.error('OAuth error', { error });
-      return res.status(400).send(`Authentication error: ${escapeHtml(error)}`);
-    }
+  /**
+   * Wait for authentication to complete
+   * Used for synchronous authentication flows
+   */
+  public async waitForAuthentication(): Promise<{ user: GoogleUser; tokens: GoogleTokens }> {
+    if (!this.authPromise) {
+      this.authPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Authentication timeout'));
+        }, 5 * 60 * 1000); // 5 minutes timeout
 
-    // State parameter check
-    if (!state || typeof state !== 'string') {
-      logger.error('Missing state parameter');
-      return res.status(400).send('Invalid request: state parameter is missing');
-    }
-
-    // Validate state
-    const stateData = this.stateMap.get(state);
-    if (!stateData) {
-      logger.error('Invalid state parameter', { state });
-      return res.status(400).send('Authentication failed: Invalid state parameter');
-    }
-
-    // Expiration check
-    if (stateData.expiry < Date.now()) {
-      logger.error('Expired state parameter', { state, expiry: stateData.expiry });
-      this.stateMap.delete(state);
-      return res.status(400).send('Authentication failed: Authentication flow has expired');
-    }
-
-    // Code parameter check
-    if (!code || typeof code !== 'string') {
-      logger.error('Missing code parameter');
-      return res.status(400).send('Invalid request: code parameter is missing');
-    }
-
-    try {
-      const oauth2Client = this.getOAuthClient();
-
-      // Exchange authorization code for token using PKCE code_verifier
-      const { tokens } = await oauth2Client.getToken({
-        code,
-        codeVerifier: stateData.codeVerifier
+        // Set up a promise that resolves when authentication completes
+        const checkAuth = () => {
+          const userId = 'default-user';
+          const accessToken = tokenManager.getToken(`${userId}_access`);
+          if (accessToken) {
+            clearTimeout(timeout);
+            resolve({
+              user: {} as GoogleUser,
+              tokens: { token: accessToken, expires_in: 3600 } as GoogleTokens
+            });
+          } else {
+            setTimeout(checkAuth, 1000);
+          }
+        };
+        checkAuth();
       });
-
-      // Delete state after it's been used
-      this.stateMap.delete(state);
-
-      // Identify user ID (actual implementation would require user authentication)
-      // Using 'default-user' as a simple implementation for now
-      const userId = 'default-user';
-
-      // Encrypt and store token
-      if (tokens.refresh_token) {
-        tokenManager.storeToken(userId, tokens.refresh_token);
-        logger.info('Successfully obtained and stored refresh token', { userId });
-      } else {
-        logger.warn('No refresh token in the response', { userId });
-      }
-
-      // Store access token for a short period as needed
-      if (tokens.access_token) {
-        const expiresIn = tokens.expiry_date ? tokens.expiry_date - Date.now() : 3600 * 1000;
-        tokenManager.storeToken(`${userId}_access`, tokens.access_token, expiresIn);
-        logger.debug('Stored access token', { userId, expiresIn });
-      }
-
-      // Redirect
-      res.redirect(stateData.redirectUri || '/auth-success');
-    } catch (err: unknown) {
-      const error = err as Error;
-      logger.error('OAuth token exchange failed', { error: error.message, stack: error.stack });
-      res.status(500).send('Token exchange failed.');
     }
+
+    return this.authPromise;
   }
 
   /**
-   * Generate code_verifier for PKCE
-   * @returns Random code_verifier string
+   * Check if user is authenticated
    */
-  private generateCodeVerifier(): string {
-    return crypto.randomBytes(32)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  }
-
-  /**
-   * Generate code_challenge for PKCE
-   * @param codeVerifier code_verifier
-   * @returns SHA-256 hashed code_challenge
-   */
-  private generateCodeChallenge(codeVerifier: string): string {
-    return crypto.createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  }
-
-  /**
-   * Clean up expired state values
-   */
-  private cleanupExpiredStates(): void {
-    const now = Date.now();
-    let expiredCount = 0;
-
-    for (const [state, data] of this.stateMap.entries()) {
-      if (data.expiry < now) {
-        this.stateMap.delete(state);
-        expiredCount++;
-      }
-    }
-
-    if (expiredCount > 0) {
-      logger.info(`Cleaned up ${expiredCount} expired OAuth states`);
-    }
-  }
-
-  /**
-   * Get OAuth2 client
-   */
-  private getOAuthClient() {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-
-    if (!clientId || !clientSecret || !redirectUri) {
-      throw new AppError(
-        ErrorCode.CONFIGURATION_ERROR,
-        'Google OAuth configuration is missing',
-        500,
-        { missingVars: [
-          !clientId ? 'GOOGLE_CLIENT_ID' : null,
-          !clientSecret ? 'GOOGLE_CLIENT_SECRET' : null,
-          !redirectUri ? 'GOOGLE_REDIRECT_URI' : null
-        ].filter(Boolean) }
-      );
-    }
-
-    return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+  public isAuthenticated(): boolean {
+    const userId = 'default-user';
+    const accessToken = tokenManager.getToken(`${userId}_access`);
+    const refreshToken = tokenManager.getToken(userId);
+    
+    return !!(accessToken || refreshToken);
   }
 }

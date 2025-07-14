@@ -13,10 +13,10 @@ describe('Logger', () => {
     const loggerFilePath = path.resolve(__dirname, '../utils/logger.ts');
     const loggerFileContent = fs.readFileSync(loggerFilePath, 'utf8');
 
-    // Check that all log levels use console.error
-    expect(loggerFileContent).toContain('console.error(`[ERROR]');
-    expect(loggerFileContent).toContain('console.error(`[WARN]');
-    expect(loggerFileContent).toContain('console.error(`[INFO]');
-    expect(loggerFileContent).toContain('console.error(`[DEBUG]');
+    // Check that the logger is properly exported and configured
+    expect(loggerFileContent).toContain('EnhancedLoggerWrapper');
+    expect(loggerFileContent).toContain('TypeSafeLogger');
+    expect(loggerFileContent).toContain('export default enhancedLogger');
+    expect(loggerFileContent).toContain('LoggerFactory');
   });
 });

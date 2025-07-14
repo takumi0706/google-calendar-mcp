@@ -36,11 +36,17 @@ export interface EventReminder {
 }
 
 // Type definition for API response
-export interface CalendarApiResponse {
+export interface CalendarApiResponse<T = unknown> {
   success: boolean;
   content: string;
-  data?: any;
+  data?: T;
 }
+
+// Specialized API response types
+export type EventsListResponse = CalendarApiResponse<CalendarEvent[]>;
+export type SingleEventResponse = CalendarApiResponse<CalendarEvent>;
+export type CalendarResourceResponse = CalendarApiResponse<CalendarResource>;
+export type DeleteEventResponse = CalendarApiResponse<void>;
 
 // Parameter type for retrieving event list
 export interface GetEventsParams {

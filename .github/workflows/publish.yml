@@ -19,17 +19,26 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
       
-      - name: Create dummy .env file
+      - name: Create test environment file  
         run: |
-          echo "GOOGLE_CLIENT_ID=dummy-id" > .env
-          echo "GOOGLE_CLIENT_SECRET=dummy-secret" >> .env
-          echo "GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback" >> .env
+          echo "GOOGLE_CLIENT_ID=test-client-id-for-publish" > .env
+          echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-publish" >> .env
+          echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
+          echo "NODE_ENV=test" >> .env
       
       - name: Build
         run: npm run build
+        env:
+          NODE_ENV: test
+          GOOGLE_CLIENT_ID: test-client-id-for-publish
+          GOOGLE_CLIENT_SECRET: test-client-secret-for-publish
       
       - name: Test
         run: npm test
+        env:
+          NODE_ENV: test
+          GOOGLE_CLIENT_ID: test-client-id-for-publish
+          GOOGLE_CLIENT_SECRET: test-client-secret-for-publish
       
       - name: Publish to npm
         run: npm publish --access public

@@ -9,9 +9,9 @@ import responseBuilder from '../utils/response-builder';
  */
 export interface ToolExecutionContext {
   toolName: string;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   requiresAuth: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

@@ -1,6 +1,7 @@
 import logger, { LoggerMeta } from '../utils/logger';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarResource } from '../calendar/types';
+import { MCP_RESOURCE_DEFINITIONS, type McpResourceDefinition } from './schemas';
 
 /**
  * MCP resource definition
@@ -29,40 +30,12 @@ export interface ResourceResponse {
  * Manages provision of Google Calendar resources
  */
 export class ResourceProvider {
-  private readonly resources: McpResource[] = [
-    {
-      name: 'primary_calendar',
-      description: 'User\'s primary Google Calendar',
-      uri: 'google-calendar://primary',
-      schema: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Calendar ID' },
-          summary: { type: 'string', description: 'Calendar name' },
-          description: { type: 'string', description: 'Calendar description' },
-          timeZone: { type: 'string', description: 'Calendar time zone' }
-        }
-      }
-    },
-    {
-      name: 'user_calendars',
-      description: 'List of all calendars accessible to the user',
-      uri: 'google-calendar://calendars',
-      schema: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Calendar ID' },
-            summary: { type: 'string', description: 'Calendar name' },
-            description: { type: 'string', description: 'Calendar description' },
-            timeZone: { type: 'string', description: 'Calendar time zone' },
-            accessRole: { type: 'string', description: 'User\'s access role for this calendar' }
-          }
-        }
-      }
-    }
-  ];
+  private readonly resources: McpResource[] = MCP_RESOURCE_DEFINITIONS.map(def => ({
+    name: def.name,
+    description: def.description,
+    uri: def.uri,
+    schema: def.schema
+  }));
 
   /**
    * Get list of available resources

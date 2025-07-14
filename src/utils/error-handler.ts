@@ -65,7 +65,9 @@ export function handleError(err: unknown, c: Context): Response {
       })
     });
 
-    return c.json(errorResponse, err.statusCode as 200 | 201 | 300 | 400 | 401 | 403 | 404 | 500);
+    // Ensure statusCode is a valid HTTP error code (400-599 range)
+    const statusCode = (err.statusCode >= 400 && err.statusCode <= 599) ? err.statusCode : 500;
+    return c.json(errorResponse, statusCode as 400 | 401 | 403 | 404 | 422 | 429 | 500 | 502 | 503);
   }
 
   // Handle Google API errors appropriately

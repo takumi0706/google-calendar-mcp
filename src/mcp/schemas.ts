@@ -126,3 +126,58 @@ export const readResourceRequestSchema = z.object({
     uri: z.string().min(1, { message: 'URI is required' })
   })
 });
+
+/**
+ * Calendar resource schema definition for MCP resources
+ * Used to avoid duplication between resource-provider and tool-schema-registry
+ */
+export const CALENDAR_RESOURCE_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', description: 'Calendar ID' },
+    summary: { type: 'string', description: 'Calendar name' },
+    description: { type: 'string', description: 'Calendar description' },
+    timeZone: { type: 'string', description: 'Calendar time zone' },
+    accessRole: { type: 'string', description: 'User\'s access role for this calendar' }
+  }
+} as const;
+
+/**
+ * Calendar list schema definition
+ */
+export const CALENDAR_LIST_SCHEMA = {
+  type: 'array',
+  items: CALENDAR_RESOURCE_SCHEMA
+} as const;
+
+/**
+ * Common resource definitions for MCP resources
+ * Centralized to prevent duplication between resource-provider and tool-schema-registry
+ */
+export const MCP_RESOURCE_DEFINITIONS = [
+  {
+    name: 'primary_calendar',
+    description: 'User\'s primary Google Calendar',
+    uri: 'google-calendar://primary',
+    schema: {
+      type: 'object',
+      properties: {
+        id: CALENDAR_RESOURCE_SCHEMA.properties.id,
+        summary: CALENDAR_RESOURCE_SCHEMA.properties.summary,
+        description: CALENDAR_RESOURCE_SCHEMA.properties.description,
+        timeZone: CALENDAR_RESOURCE_SCHEMA.properties.timeZone
+      }
+    }
+  },
+  {
+    name: 'user_calendars',
+    description: 'List of all calendars accessible to the user',
+    uri: 'google-calendar://calendars',
+    schema: CALENDAR_LIST_SCHEMA
+  }
+] as const;
+
+/**
+ * Type definitions for schemas
+ */
+export type McpResourceDefinition = typeof MCP_RESOURCE_DEFINITIONS[number];

@@ -140,9 +140,10 @@ class ValidatedConfigManager {
       'https://www.googleapis.com/auth/calendar.events',
     ];
 
-    // In production, require actual values - no dummy fallbacks
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    // Allow dummy values in test environment, require real values in production
+    const isTestEnvironment = process.env.NODE_ENV === 'test';
+    const clientId = process.env.GOOGLE_CLIENT_ID || (isTestEnvironment ? 'test-client-id' : undefined);
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET || (isTestEnvironment ? 'test-client-secret' : undefined);
     
     if (!clientId || !clientSecret) {
       throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables are required');

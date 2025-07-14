@@ -61,8 +61,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create test environment file
+        run: |
+          echo "GOOGLE_CLIENT_ID=test-client-id-for-main" > .env
+          echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-main" >> .env
+          echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
+          echo "NODE_ENV=test" >> .env
+
       - name: Run tests
         run: npm test -- --coverage
+        env:
+          NODE_ENV: test
+          GOOGLE_CLIENT_ID: test-client-id-for-main
+          GOOGLE_CLIENT_SECRET: test-client-secret-for-main
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -86,8 +97,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create test environment file
+        run: |
+          echo "GOOGLE_CLIENT_ID=test-client-id-for-build" > .env
+          echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-build" >> .env
+          echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
+          echo "NODE_ENV=test" >> .env
+
       - name: Build
         run: npm run build
+        env:
+          NODE_ENV: test
+          GOOGLE_CLIENT_ID: test-client-id-for-build
+          GOOGLE_CLIENT_SECRET: test-client-secret-for-build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

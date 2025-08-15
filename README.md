@@ -9,6 +9,8 @@
 ![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/takumi0706/google-calendar-mcp)](https://archestra.ai/mcp-catalog/takumi0706__google-calendar-mcp)
+
 [![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
 [![English](https://img.shields.io/badge/English-Click-blue)](README.md)
 

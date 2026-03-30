@@ -331,6 +331,10 @@ npm run build
 npm start
 ```
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/takumi0706-google-calendar-mcp).
+
 ## Production Deployment
 
 For production use, the server requires valid Google OAuth credentials. The server will fail to start without proper credentials, ensuring security compliance.

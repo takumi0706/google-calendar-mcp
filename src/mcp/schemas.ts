@@ -78,31 +78,48 @@ export const eventUpdateSchema = z.object({
 const ISO_8601_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/;
 
 /**
- * 空文字 / null / undefined を既定値へ寄せる union は持たせていない。
+ * 空文字 / null を既定値へ寄せる分岐はスキーマ側に持たせる必要がある。
  *
- * MCP はツールのスキーマを JSON Schema として広告する必要があり、
- * z.undefined() は JSON Schema で表現できないため tools/list が
- * "Undefined cannot be represented in JSON Schema" で失敗する。
+ * MCP SDK はツール呼び出しの引数をこのスキーマから導出した JSON Schema で
+ * 先に検証するため、BaseToolHandler の normalizeToolArgs はその後ろにいて
+ * 到達しない。空文字の許容をハンドラ側だけに置くと、クライアントが
+ * calendarId: "" を送った時点で検証エラーになってしまう
+ * （README が「空文字でも primary を使う」と明記している挙動）。
  *
- * 空文字・null・空白のみの値は BaseToolHandler.normalizeToolArgs が
- * 検証前に取り除くため、下の .default() / .optional() で同じ結果になる。
+ * ただし z.undefined() は JSON Schema で表現できず tools/list 自体が
+ * "Undefined cannot be represented in JSON Schema" で落ちるため使わない。
+ * 「値が無い」は .optional() / .default() で表現する。
  */
 export const getEventsParamsSchema = z.object({
-  calendarId: z.string().min(1)
+  calendarId: z.union([
+    z.string().min(1),
+    z.literal('').transform(() => 'primary'),
+    z.null().transform(() => 'primary')
+  ])
     .default('primary')
-    .describe('Calendar ID (uses the primary calendar if omitted)'),
-  timeMin: z.string()
-    .regex(ISO_8601_DATETIME, { message: 'timeMin must be in ISO 8601 format' })
+    .describe('Calendar ID (uses the primary calendar if omitted or empty)'),
+  timeMin: z.union([
+    z.string().regex(ISO_8601_DATETIME, { message: 'timeMin must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined)
+  ])
     .optional()
     .describe('Lower bound (inclusive) for an event\'s end time, in ISO 8601 format'),
-  timeMax: z.string()
-    .regex(ISO_8601_DATETIME, { message: 'timeMax must be in ISO 8601 format' })
+  timeMax: z.union([
+    z.string().regex(ISO_8601_DATETIME, { message: 'timeMax must be in ISO 8601 format' }),
+    z.literal('').transform(() => undefined),
+    z.null().transform(() => undefined)
+  ])
     .optional()
     .describe('Upper bound (exclusive) for an event\'s start time, in ISO 8601 format'),
   maxResults: z.number().int().positive().max(2500)
     .default(10)
     .describe('Maximum number of events to return'),
-  orderBy: z.enum(['startTime', 'updated'])
+  orderBy: z.union([
+    z.enum(['startTime', 'updated']),
+    z.literal('').transform(() => 'startTime' as const),
+    z.null().transform(() => 'startTime' as const)
+  ])
     .default('startTime')
     .describe('Sort order for the returned events')
 });

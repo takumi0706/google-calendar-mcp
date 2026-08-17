@@ -2,24 +2,67 @@
  * Tests for empty string argument handling in MCP tools
  *
  * MCP クライアントは「値なし」を空文字や null で送ってくることがある。
- * 実際の経路は normalizeToolArgs で正規化してから Zod で検証する二段構えなので、
- * ここではその組み合わせをそのままテストする。
  *
- * 以前はスキーマ側の union（z.undefined() を含む）が空文字を吸収していたが、
- * z.undefined() は JSON Schema で表現できず tools/list が
- * "Undefined cannot be represented in JSON Schema" で失敗するため、
- * 正規化を normalizeToolArgs に集約した。
+ * 重要: MCP SDK はツール呼び出しの引数を getEventsParamsSchema から導出した
+ * JSON Schema で「先に」検証する。BaseToolHandler の normalizeToolArgs は
+ * その後ろにいて到達しないため、空文字と null の許容はスキーマ自身が
+ * 持っていなければならない。ハンドラ側だけに置くと calendarId: "" が
+ * 検証エラーになる（MCP Inspector での実測で確認済み）。
+ *
+ * そのためスキーマ単体でのふるまいを主に検証する。
+ * なお z.undefined() は JSON Schema で表現できず tools/list 自体が
+ * 落ちるので、「値が無い」は .optional() / .default() で表現している。
  */
 
 import { getEventsParamsSchema } from '../../mcp/schemas';
 import { normalizeToolArgs } from '../../mcp/base-tool-handler';
 
-/** 実際の検証パイプラインと同じ順序で処理する */
+/**
+ * ハンドラを直接呼んだ場合の経路（normalizeToolArgs → スキーマ）。
+ * SDK 経由では normalizeToolArgs は通らないので、こちらは
+ * ハンドラ単体でのロバストネスを見るためのもの。
+ */
 function parseGetEventsArgs(args: Record<string, unknown>) {
   return getEventsParamsSchema.parse(normalizeToolArgs(args));
 }
 
 describe('Empty Arguments Handling', () => {
+  describe('schema accepts empties without the handler preprocessing', () => {
+    // SDK はハンドラより前に検証するので、この経路が本番の実挙動になる
+    it('falls back to defaults for empty strings', () => {
+      const result = getEventsParamsSchema.parse({
+        calendarId: '',
+        timeMin: '',
+        timeMax: '',
+        orderBy: '',
+      });
+
+      expect(result.calendarId).toBe('primary');
+      expect(result.timeMin).toBeUndefined();
+      expect(result.timeMax).toBeUndefined();
+      expect(result.orderBy).toBe('startTime');
+    });
+
+    it('falls back to defaults for null', () => {
+      const result = getEventsParamsSchema.parse({
+        calendarId: null,
+        timeMin: null,
+        timeMax: null,
+        orderBy: null,
+      });
+
+      expect(result.calendarId).toBe('primary');
+      expect(result.timeMin).toBeUndefined();
+      expect(result.timeMax).toBeUndefined();
+      expect(result.orderBy).toBe('startTime');
+    });
+
+    it('still rejects values that are simply wrong', () => {
+      expect(() => getEventsParamsSchema.parse({ timeMin: 'not-a-date' })).toThrow();
+      expect(() => getEventsParamsSchema.parse({ orderBy: 'bogus' })).toThrow();
+    });
+  });
+
   describe('getEvents argument pipeline', () => {
     it('should handle empty strings correctly', () => {
       const result = parseGetEventsArgs({

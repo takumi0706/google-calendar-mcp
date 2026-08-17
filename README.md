@@ -34,7 +34,7 @@ This project uses:
 - **MCP SDK**: Uses `@modelcontextprotocol/sdk` for integration with Claude Desktop
 - **Google API**: Uses `googleapis` for Google Calendar API access
 - **Hono**: Lightweight and fast web framework for the authentication server
-- **OAuth2 Providers**: Uses `@hono/oauth-providers` for PKCE-enabled OAuth2 flow
+- **google-auth-library**: Drives the OAuth2 authorization code flow with PKCE (S256)
 - **Zod**: Implements schema validation for request/response data
 - **Environment-based configuration**: Uses dotenv for configuration management
 - **AES-256-GCM**: For token encryption using Node.js crypto module
@@ -203,13 +203,19 @@ Add the server to your `claude_desktop_config.json`. If you're running in an env
 
 ## Security Considerations
 
-- **OAuth tokens** are stored in memory only (not stored in a file-based storage)
+- **OAuth tokens** are stored in memory only (not stored in a file-based storage). They are
+  lost on restart, which means re-authentication is required after every restart.
 - **Sensitive credentials** must be provided as environment variables
-- **Token encryption** using AES-256-GCM for secure storage
-- **PKCE implementation** with explicit code_verifier and code_challenge generation
-- **State parameter validation** for CSRF protection
-- **Rate limiting** for API endpoint protection
+- **Token encryption** using AES-256-GCM while tokens sit in memory. Note that the key lives
+  in the same process as the ciphertext, so this protects against casual inspection of process
+  memory, not against an attacker who can already read this process's memory.
+- **PKCE (S256)** on the authorization code flow, with a `code_verifier` generated per request
+  and never sent to the authorization endpoint
+- **State parameter validation** for CSRF protection: 256-bit CSPRNG state, compared in constant
+  time, single-use, and expiring after 10 minutes
+- **Fixed redirect URI** taken from configuration rather than from the request's `Host` header
 - **Input validation** with Zod schema
+- **HTML escaping** on every value interpolated into the OAuth result pages
 
 For more details, see [SECURITY.md](SECURITY.md).
 

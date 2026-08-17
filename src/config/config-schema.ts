@@ -86,7 +86,11 @@ export const EnvironmentSchema = z.object({
   SANITIZE_LOGS: z.enum(['true', 'false']).optional(),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).optional(),
   REDACT_SENSITIVE_DATA: z.enum(['true', 'false']).optional(),
-  TOKEN_ENCRYPTION_KEY: z.string().optional()
+  // AES-256-GCM の鍵。32バイトを hex で表した 64 文字でなければならない。
+  // 以前は任意の文字列を受理していたため、hex でない値は黙って短い鍵になっていた。
+  TOKEN_ENCRYPTION_KEY: z.string()
+    .regex(/^[0-9a-fA-F]{64}$/, 'TOKEN_ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes)')
+    .optional()
 });
 
 // Type exports for TypeScript

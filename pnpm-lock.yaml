@@ -16,9 +16,6 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.2)
-      '@hono/oauth-providers':
-        specifier: ^0.8.7
-        version: 0.8.7(hono@4.13.2)
       '@modelcontextprotocol/sdk':
         specifier: ^1.30.0
         version: 1.30.0(zod@3.25.76)
@@ -346,12 +343,6 @@ packages:
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
-
-  '@hono/oauth-providers@0.8.7':
-    resolution: {integrity: sha512-N2onMhKxN1mN3XIOk4DfHoHdV9hlgOkPJSmUUyyrzRT4lFxogluFpYNEyz6bqxCXqKYm8CJs3DXTeELpa8h+bQ==}
-    engines: {node: '>=18.4.0'}
-    peerDependencies:
-      hono: '>=3.0.0'
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -2774,10 +2765,6 @@ snapshots:
   '@eslint/js@8.57.0': {}
 
   '@hono/node-server@2.1.1(hono@4.13.2)':
-    dependencies:
-      hono: 4.13.2
-
-  '@hono/oauth-providers@0.8.7(hono@4.13.2)':
     dependencies:
       hono: 4.13.2
 

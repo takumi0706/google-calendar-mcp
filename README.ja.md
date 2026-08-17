@@ -33,7 +33,7 @@ Google Calendar MCP Serverは、GoogleカレンダーとClaude Desktopの間の�
 - **MCP SDK**: Claude Desktopとの統合のために`@modelcontextprotocol/sdk`を使用
 - **Google API**: Google Calendar APIアクセスのために`googleapis`を使用
 - **Hono**: 認証サーバー用の軽量で高速なWebフレームワーク
-- **OAuth2 Providers**: PKCE対応のOAuth2フローのために`@hono/oauth-providers`を使用
+- **google-auth-library**: PKCE (S256) 付きOAuth2認可コードフローの実行に使用
 - **Zod**: リクエスト/レスポンスデータのスキーマ検証を実装
 - **環境ベースの設定**: 設定管理にdotenvを使用
 - **AES-256-GCM**: Node.js cryptoモジュールを使用したトークン暗号化
@@ -203,13 +203,17 @@ USE_MANUAL_AUTH=true
 
 ## セキュリティに関する考慮事項
 
-- **OAuthトークン**はメモリにのみ保存されます（ファイルベースのストレージには保存されません）
+- **OAuthトークン**はメモリにのみ保存されます（ファイルベースのストレージには保存されません）。
+  再起動で失われるため、都度再認証が必要です。
 - **機密認証情報**は環境変数として提供する必要があります
-- **トークン暗号化**：安全な保存のためにAES-256-GCMを使用
-- **PKCE実装**：明示的なcode_verifierとcode_challenge生成
-- **状態パラメータ検証**：CSRF保護のため
-- **レート制限**：APIエンドポイント保護のため
+- **トークン暗号化**：メモリ上のトークンをAES-256-GCMで暗号化します。ただし鍵と暗号文は
+  同一プロセス上に存在するため、プロセスメモリを読める攻撃者に対する防御にはなりません。
+- **PKCE (S256)**：認可リクエストごとにcode_verifierを生成し、認可エンドポイントには送信しません
+- **stateパラメータ検証**：CSRF対策として256ビットのCSPRNG値を使用し、定数時間比較・使い捨て・
+  10分で失効させます
+- **redirect_uriの固定**：リクエストのHostヘッダではなく設定値を使用します
 - **入力検証**：Zodスキーマを使用
+- **HTMLエスケープ**：OAuth結果ページに埋め込む全ての値をエスケープします
 
 詳細については、[SECURITY.md](SECURITY.md)を参照してください。
 

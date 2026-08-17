@@ -66,7 +66,6 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "@hono/oauth-providers": "^0.8.7",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "dotenv": "^17.4.2",
     "google-auth-library": "10.5.0",

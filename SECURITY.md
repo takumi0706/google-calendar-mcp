@@ -118,11 +118,9 @@ The Google Calendar MCP handles OAuth tokens and calendar data, which may contai
    - PKCE (Proof Key for Code Exchange) implementation for authentication strengthening
    - Strict validation of authentication requests
 
-3. **Security Headers and Middleware**:
-   - Secure HTTP headers setup using Helmet.js
-   - Content Security Policy (CSP) implementation
-   - Rate limiting to prevent brute force attacks
-   - XSS protection
+3. **XSS Protection**:
+   - Every value interpolated into the OAuth result pages is HTML-escaped
+   - Error details from the authorization server are logged rather than reflected in the page
 
 4. **Input Validation**:
    - Strict schema validation using Zod
@@ -159,25 +157,29 @@ Protection against cross-site scripting (XSS) attacks:
 
 ### 2. Token Encryption
 
-Refresh tokens are protected using AES-256-GCM encryption:
-- Unique initialization vector (IV) for each token
-- Integrity verification with authentication tag
-- Use of encryption key from environment variable or randomly generated
+Tokens are held only in memory and encrypted with AES-256-GCM:
+- A fresh 96-bit initialization vector for every token
+- Integrity verification with an authentication tag
+- Key taken from `TOKEN_ENCRYPTION_KEY`, which must be exactly 64 hexadecimal characters
+  (32 bytes). Invalid or all-zero keys are rejected at startup rather than silently accepted.
+- If `TOKEN_ENCRYPTION_KEY` is unset, a random key is generated per process
+
+**Scope of this protection.** The key and the ciphertext live in the same process. This
+raises the bar against casual inspection (core dumps, accidental logging) but does not
+protect against an attacker who can already read this process's memory. Tokens are never
+written to disk.
 
 ### 3. OAuth 2.0 Authentication Flow
 
-Implementation of OAuth 2.0 best practices:
-- Use of unique state parameter for protection against CSRF attacks
-- PKCE extension to protect against code interception attacks
-- Strict validation during authentication code exchange
-- Authentication sessions with expiration
-
-### 4. Rate Limiting and Protection
-
-Protection against denial of service attacks:
-- Rate limiting for API endpoints
-- Special rate limiting for OAuth authentication endpoints
-- Temporary blocking and gradual back-off
+Implementation of OAuth 2.0 best practices for a public client (RFC 8252):
+- PKCE with the `S256` challenge method. The `code_verifier` is generated per authorization
+  request and is never sent to the authorization endpoint.
+- A 256-bit CSPRNG `state` parameter, compared in constant time, usable exactly once, and
+  expiring after 10 minutes
+- `redirect_uri` pinned to the configured value rather than derived from the request's
+  `Host` header
+- The local authorization server refuses to continue when its port is already in use,
+  rather than assuming another instance is serving the flow
 
 ## Security Updates
 

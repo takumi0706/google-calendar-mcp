@@ -9,7 +9,10 @@ module.exports = {
       tsconfig: 'tsconfig.test.json'
     }]
   },
-  setupFiles: ['dotenv/config'],
+  // setup.ts must come after dotenv so its deterministic values win over whatever
+  // happens to be in a developer's local .env. Without it, tests silently ran
+  // against real credentials.
+  setupFiles: ['dotenv/config', '<rootDir>/src/__tests__/setup.ts'],
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },

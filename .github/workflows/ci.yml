@@ -45,6 +45,10 @@ jobs:
     - name: Build
       run: pnpm run build
 
+    # stdout carries JSON-RPC; a stray log line or dependency banner breaks MCP.
+    - name: Verify stdout stays clean at startup
+      run: pnpm run check-stdio
+
   coverage:
     runs-on: ubuntu-latest
 

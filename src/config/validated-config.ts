@@ -8,8 +8,11 @@ import {
   type Environment
 } from './config-schema';
 
-// Load .env file first
-config();
+// Load .env file first.
+// quiet: true is mandatory here — dotenv v17+ prints an "injected env" banner to
+// stdout, and this process speaks JSON-RPC over stdio. Any stray byte on stdout
+// corrupts the MCP message stream.
+config({ quiet: true });
 
 /**
  * Validated configuration manager

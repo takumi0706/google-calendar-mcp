@@ -43,6 +43,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Verify stdout stays clean at startup
+        run: pnpm run check-stdio
+
       # Published with the npm CLI rather than `pnpm publish` because only the
       # npm CLI supports --provenance. Lifecycle scripts are skipped since
       # validate and build already ran above.

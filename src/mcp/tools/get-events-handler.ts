@@ -9,27 +9,28 @@ import { McpToolResponse } from '../../utils/error-handler';
 /**
  * Handler for the getEvents tool
  */
-export class GetEventsHandler extends BaseCalendarToolHandler {
+export class GetEventsHandler extends BaseCalendarToolHandler<typeof getEventsParamsSchema> {
   constructor() {
     super('getEvents');
+  }
+
+  getDescription(): string {
+    return 'List events from a Google Calendar within an optional time range.';
   }
 
   /**
    * Define Zod schema using the shared schema
    */
-  getSchema(): z.ZodRawShape {
-    // Use the shared schema from schemas.ts but extract its shape for consistency
-    return getEventsParamsSchema.shape;
+  getSchema(): typeof getEventsParamsSchema {
+    return getEventsParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: any, _context: ToolExecutionContext): Promise<any> {
-    this.logDebug('Executing getEvents', validatedArgs);
+  async execute(params: z.infer<typeof getEventsParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+    this.logDebug('Executing getEvents', params);
 
-    // Re-validate parameters (for safety)
-    const params = getEventsParamsSchema.parse(validatedArgs);
     
     // Call Calendar API
     const result = await calendarApi.getEvents(params);

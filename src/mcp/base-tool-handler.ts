@@ -15,10 +15,50 @@ export interface ToolExecutionContext {
 }
 
 /**
+ * ツール引数の正規化
+ *
+ * MCP クライアントは「値なし」を空文字や null で送ってくることがある。
+ * それらを検証前に取り除くことで、Zod 側の .default() / .optional() が
+ * 期待どおりに効くようにする。スキーマ自身に空文字を吸収する union を
+ * 持たせる方法もあるが、z.undefined() は JSON Schema で表現できず
+ * tools/list が失敗するため、正規化はここに集約している。
+ */
+export function normalizeToolArgs(args: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(args)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    // 空文字・空白のみの文字列は「未指定」として扱う
+    if (typeof value === 'string' && value.trim() === '') {
+      continue;
+    }
+
+    // maxResults は数値だが、文字列で送ってくるクライアントがある
+    if (key === 'maxResults' && typeof value === 'string') {
+      const numValue = Number.parseInt(value, 10);
+      if (Number.isFinite(numValue) && numValue > 0) {
+        cleaned[key] = numValue;
+      }
+      // 解釈できない値は落として既定値に委ねる
+      continue;
+    }
+
+    cleaned[key] = value;
+  }
+
+  return cleaned;
+}
+
+/**
  * Abstract base class for MCP tools
  * Provides common processing (authentication check, validation, error handling)
  */
-export abstract class BaseToolHandler {
+export abstract class BaseToolHandler<
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
+> {
   protected readonly toolName: string;
   protected readonly requiresAuth: boolean;
 
@@ -29,13 +69,25 @@ export abstract class BaseToolHandler {
 
   /**
    * Define the Zod schema for the tool (implemented by subclasses)
+   *
+   * 完全な ZodObject を返す。MCP SDK v2 の registerTool は Standard Schema を
+   * 受け取り、そこから JSON Schema を導出する。以前は ZodRawShape を返して
+   * 別途 JSON Schema を手書きしていたため、広告するスキーマと検証に使う
+   * スキーマが食い違い、ネストした z.object の properties が失われていた。
    */
-  abstract getSchema(): z.ZodRawShape;
+  abstract getSchema(): TSchema;
+
+  /**
+   * Human-readable description surfaced to MCP clients (implemented by subclasses)
+   */
+  abstract getDescription(): string;
 
   /**
    * Execute the actual tool logic (implemented by subclasses)
+   *
+   * 引数は getSchema() で検証済みの値。各ハンドラで再度 parse する必要はない。
    */
-  abstract execute(validatedArgs: Record<string, unknown>, context: ToolExecutionContext): Promise<unknown>;
+  abstract execute(validatedArgs: z.infer<TSchema>, context: ToolExecutionContext): Promise<unknown>;
 
   /**
    * Check authentication status
@@ -56,67 +108,28 @@ export abstract class BaseToolHandler {
   }
 
   /**
-   * Preprocess arguments to handle empty strings and ensure MCP compatibility
-   */
-  private preprocessArgs(args: Record<string, unknown>): Record<string, unknown> {
-    // Debug log the original args
-    logger.debug(`[${this.toolName}] Raw args received:`, args);
-    
-    const cleaned: Record<string, unknown> = {};
-    
-    for (const [key, value] of Object.entries(args)) {
-      // Skip empty, null, or undefined values entirely
-      // This allows Zod optional() defaults to be applied correctly
-      if (value === '' || value === null || value === undefined) {
-        logger.debug(`[${this.toolName}] Skipping empty value for key: ${key}`);
-        continue;
-      }
-      
-      // Skip strings that are only whitespace
-      if (typeof value === 'string' && value.trim() === '') {
-        logger.debug(`[${this.toolName}] Skipping whitespace-only value for key: ${key}`);
-        continue;
-      }
-      
-      // Special handling for maxResults - convert string to number
-      if (key === 'maxResults' && typeof value === 'string') {
-        const numValue = parseInt(value, 10);
-        if (!isNaN(numValue) && numValue > 0) {
-          cleaned[key] = numValue;
-        } else {
-          logger.debug(`[${this.toolName}] Skipping invalid maxResults: ${value}`);
-          // Skip invalid numbers to use default
-        }
-      } else {
-        cleaned[key] = value;
-      }
-    }
-    
-    logger.debug(`[${this.toolName}] Cleaned args:`, cleaned);
-    return cleaned;
-  }
-
-  /**
    * Validate input arguments
    */
   private validateInput(args: Record<string, unknown>): {
     isValid: boolean;
-    validatedArgs?: Record<string, unknown>;
+    validatedArgs?: z.infer<TSchema>;
     errorResponse?: McpToolResponse;
   } {
     try {
-      // Preprocess arguments to handle empty strings
-      const processedArgs = this.preprocessArgs(args);
-      
-      const schema = z.object(this.getSchema());
-      const validatedArgs = schema.parse(processedArgs);
+      logger.debug(`[${this.toolName}] Raw args received:`, args);
+
+      const processedArgs = normalizeToolArgs(args);
+      logger.debug(`[${this.toolName}] Normalized args:`, processedArgs);
+
+      const validatedArgs = this.getSchema().parse(processedArgs);
       return { isValid: true, validatedArgs };
     } catch (error) {
       logger.error(`Validation error in ${this.toolName}:`, { error } as LoggerMeta);
 
       if (error instanceof z.ZodError) {
-        const errorMessages = error.errors
-          .map((err) => `${err.path.join('.')}: ${err.message}`)
+        // zod 4 で ZodError.errors は .issues に改名された
+        const errorMessages = error.issues
+          .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
           .join(', ');
         return {
           isValid: false,
@@ -149,21 +162,23 @@ export abstract class BaseToolHandler {
 
       // 2. Input validation
       const validation = this.validateInput(args);
-      if (!validation.isValid) {
+      if (!validation.isValid || validation.validatedArgs === undefined) {
         logger.warn(`[${this.toolName}] Validation failed`);
-        return validation.errorResponse!;
+        return validation.errorResponse ?? mcpErrorHandler.createValidationError('Invalid arguments');
       }
+
+      const validatedArgs = validation.validatedArgs;
 
       // 3. Create execution context
       const context: ToolExecutionContext = {
         toolName: this.toolName,
-        args: validation.validatedArgs || {},
+        args: validatedArgs,
         requiresAuth: this.requiresAuth,
         metadata: { startTime, extra },
       };
 
       // 4. Execute the actual processing
-      const result = await this.execute(validation.validatedArgs || {}, context);
+      const result = await this.execute(validatedArgs, context);
 
       // 5. Generate success response
       const response = this.createSuccessResponse(result, context);
@@ -230,7 +245,9 @@ export abstract class BaseToolHandler {
 /**
  * Base class for tools that don't require authentication
  */
-export abstract class BaseNoAuthToolHandler extends BaseToolHandler {
+export abstract class BaseNoAuthToolHandler<
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
+> extends BaseToolHandler<TSchema> {
   constructor(toolName: string) {
     super(toolName, false);
   }
@@ -239,7 +256,9 @@ export abstract class BaseNoAuthToolHandler extends BaseToolHandler {
 /**
  * Base class for calendar operation tools
  */
-export abstract class BaseCalendarToolHandler extends BaseToolHandler {
+export abstract class BaseCalendarToolHandler<
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
+> extends BaseToolHandler<TSchema> {
   constructor(toolName: string) {
     super(toolName, true);
   }

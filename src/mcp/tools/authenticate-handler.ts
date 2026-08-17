@@ -9,22 +9,26 @@ import { McpToolResponse } from '../../utils/error-handler';
 /**
  * Handler for the authenticate tool
  */
-export class AuthenticateHandler extends BaseNoAuthToolHandler {
+export class AuthenticateHandler extends BaseNoAuthToolHandler<typeof authenticateParamsSchema> {
   constructor() {
     super('authenticate');
+  }
+
+  getDescription(): string {
+    return 'Start the Google Calendar OAuth flow. Opens a browser window for consent and stores the resulting tokens in memory.';
   }
 
   /**
    * Define Zod schema
    */
-  getSchema(): z.ZodRawShape {
-    return {};
+  getSchema(): typeof authenticateParamsSchema {
+    return authenticateParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: any, _context: ToolExecutionContext): Promise<any> {
+  async execute(_params: z.infer<typeof authenticateParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
     this.logDebug('Executing authenticate');
 
     // Check if already authenticated
@@ -33,9 +37,6 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
       return { alreadyAuthenticated: true };
     }
 
-    // Validate parameters (empty object)
-    authenticateParamsSchema.parse(validatedArgs);
-    
     this.logInfo('Starting authentication flow...');
     
     try {

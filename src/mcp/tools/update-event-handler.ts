@@ -10,46 +10,29 @@ import { McpToolResponse } from '../../utils/error-handler';
 /**
  * Handler for the updateEvent tool
  */
-export class UpdateEventHandler extends BaseCalendarToolHandler {
+export class UpdateEventHandler extends BaseCalendarToolHandler<typeof updateEventParamsSchema> {
   constructor() {
     super('updateEvent');
+  }
+
+  getDescription(): string {
+    return 'Update an existing Google Calendar event. Omitted fields keep their current values.';
   }
 
   /**
    * Define Zod schema
    */
-  getSchema(): z.ZodRawShape {
-    return {
-      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
-      eventId: z.string().min(1).describe('ID of the event to update (required)'),
-      event: z.object({
-        summary: z.string().optional().describe('Event title (uses existing value if omitted)'),
-        description: z.string().optional().describe('Event description (uses existing value if omitted)'),
-        location: z.string().optional().describe('Location (uses existing value if omitted)'),
-        start: z.object({
-          dateTime: z.string().optional().describe('ISO 8601 format datetime'),
-          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
-          timeZone: z.string().optional().describe('Timezone'),
-        }).optional().describe('Start time (uses existing value if omitted)'),
-        end: z.object({
-          dateTime: z.string().optional().describe('ISO 8601 format datetime'),
-          date: z.string().optional().describe('YYYY-MM-DD format date (for all-day events)'),
-          timeZone: z.string().optional().describe('Timezone'),
-        }).optional().describe('End time (uses existing value if omitted)'),
-        colorId: z.string().optional().describe('Event color ID (number 1-11, uses existing value if omitted)'),
-        recurrence: z.array(z.string()).optional().describe('Recurrence rules in RFC5545 format (examples: ["RRULE:FREQ=DAILY;COUNT=5"], ["RRULE:FREQ=WEEKLY;UNTIL=20250515T000000Z;BYDAY=MO,WE,FR"])'),
-      }),
-    };
+  getSchema(): typeof updateEventParamsSchema {
+    // schemas.ts の共通スキーマを使う（従来はここに複製を持っていた）
+    return updateEventParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: Record<string, unknown>, _context: ToolExecutionContext): Promise<unknown> {
-    this.logDebug('Executing updateEvent', validatedArgs);
+  async execute(params: z.infer<typeof updateEventParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+    this.logDebug('Executing updateEvent', params);
 
-    // Validate parameters
-    const params = updateEventParamsSchema.parse(validatedArgs);
 
     // Get existing event
     const existingEventResponse = await calendarApi.getEvent(

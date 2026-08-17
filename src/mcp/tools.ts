@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 import logger from '../utils/logger';
 import {
   GetEventsHandler,
@@ -18,11 +18,6 @@ export class ToolsManager {
    * Property that holds registered tool handlers
    */
   private toolHandlers: Map<string, BaseToolHandler> = new Map();
-
-  /**
-   * Property that holds registered tool schemas for compatibility
-   */
-  public tools: Record<string, any> = {};
 
   constructor() {
     this.initializeToolHandlers();
@@ -44,7 +39,6 @@ export class ToolsManager {
     // Register each handler
     handlers.forEach(handler => {
       this.toolHandlers.set(handler.getName(), handler);
-      this.tools[handler.getName()] = handler.getSchema();
       logger.debug(`Registered tool handler: ${handler.getName()}`);
     });
   }
@@ -56,23 +50,30 @@ export class ToolsManager {
   public registerTools(server: McpServer): void {
     logger.debug('Registering calendar tools with MCP server using BaseToolHandler architecture');
 
-    // Register each tool handler with the MCP server
+    // Register each tool handler with the MCP server.
+    // inputSchema には完全な ZodObject を渡す。SDK がここから JSON Schema を
+    // 導出するため、広告されるスキーマと検証に使うスキーマが常に一致する。
     this.toolHandlers.forEach((handler, toolName) => {
-      server.tool(
+      server.registerTool(
         toolName,
-        handler.getSchema(),
-        async (args: any, extra: any) => {
+        {
+          description: handler.getDescription(),
+          inputSchema: handler.getSchema(),
+        },
+        async (args, extra) => {
           logger.debug(`[MCP] Tool "${toolName}" called`);
           try {
-            const result = await handler.handle(args, extra);
-            return result;
+            return await handler.handle(args, extra);
           } catch (error) {
-            logger.error(`[MCP] Tool "${toolName}" error:`, { error } as any);
+            logger.error(
+              `[MCP] Tool "${toolName}" error:`,
+              { error: error instanceof Error ? error : String(error) }
+            );
             throw error;
           }
         }
       );
-      
+
       logger.debug(`Registered MCP tool: ${toolName}`);
     });
 

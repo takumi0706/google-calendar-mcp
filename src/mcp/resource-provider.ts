@@ -1,7 +1,7 @@
 import logger, { LoggerMeta } from '../utils/logger';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarResource } from '../calendar/types';
-import { MCP_RESOURCE_DEFINITIONS, type McpResourceDefinition } from './schemas';
+import { MCP_RESOURCE_DEFINITIONS } from './schemas';
 
 /**
  * MCP resource definition

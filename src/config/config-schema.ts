@@ -53,8 +53,9 @@ const AuthConfigSchema = z.object({
 const SecurityConfigSchema = z.object({
   enableDetailedErrors: z.boolean(),
   sanitizeLogs: z.boolean(),
+  // zod 4 では errorMap が error / message に置き換わった
   logLevel: z.enum(['error', 'warn', 'info', 'debug'], {
-    errorMap: () => ({ message: 'Log level must be one of: error, warn, info, debug' })
+    message: 'Log level must be one of: error, warn, info, debug'
   }),
   redactSensitiveData: z.boolean()
 });

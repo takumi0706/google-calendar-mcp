@@ -9,29 +9,28 @@ import { McpToolResponse } from '../../utils/error-handler';
 /**
  * Handler for the deleteEvent tool
  */
-export class DeleteEventHandler extends BaseCalendarToolHandler {
+export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEventParamsSchema> {
   constructor() {
     super('deleteEvent');
+  }
+
+  getDescription(): string {
+    return 'Delete an event from a Google Calendar by its event ID.';
   }
 
   /**
    * Define Zod schema
    */
-  getSchema(): z.ZodRawShape {
-    return {
-      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
-      eventId: z.string().min(1).describe('ID of the event to delete (required)'),
-    };
+  getSchema(): typeof deleteEventParamsSchema {
+    return deleteEventParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: any, _context: ToolExecutionContext): Promise<any> {
-    this.logDebug('Executing deleteEvent', validatedArgs);
+  async execute(params: z.infer<typeof deleteEventParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+    this.logDebug('Executing deleteEvent', params);
 
-    // Re-validate parameters (for safety)
-    const params = deleteEventParamsSchema.parse(validatedArgs);
     
     // Call Calendar API
     const result = await calendarApi.deleteEvent(params);

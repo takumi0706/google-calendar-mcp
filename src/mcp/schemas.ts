@@ -75,34 +75,36 @@ export const eventUpdateSchema = z.object({
 /**
  * getEvents function parameter schema
  */
+const ISO_8601_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/;
+
+/**
+ * 空文字 / null / undefined を既定値へ寄せる union は持たせていない。
+ *
+ * MCP はツールのスキーマを JSON Schema として広告する必要があり、
+ * z.undefined() は JSON Schema で表現できないため tools/list が
+ * "Undefined cannot be represented in JSON Schema" で失敗する。
+ *
+ * 空文字・null・空白のみの値は BaseToolHandler.normalizeToolArgs が
+ * 検証前に取り除くため、下の .default() / .optional() で同じ結果になる。
+ */
 export const getEventsParamsSchema = z.object({
-  calendarId: z.union([
-    z.string().min(1),
-    z.literal('').transform(() => 'primary'),
-    z.null().transform(() => 'primary'),
-    z.undefined().transform(() => 'primary')
-  ]).default('primary'),
-  timeMin: z.union([
-    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-      { message: 'timeMin must be in ISO 8601 format' }),
-    z.literal('').transform(() => undefined),
-    z.null().transform(() => undefined),
-    z.undefined()
-  ]).optional(),
-  timeMax: z.union([
-    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/, 
-      { message: 'timeMax must be in ISO 8601 format' }),
-    z.literal('').transform(() => undefined),
-    z.null().transform(() => undefined),
-    z.undefined()
-  ]).optional(),
-  maxResults: z.number().int().positive().max(2500).optional().default(10),
-  orderBy: z.union([
-    z.enum(['startTime', 'updated']),
-    z.literal('').transform(() => 'startTime' as const),
-    z.null().transform(() => 'startTime' as const),
-    z.undefined().transform(() => 'startTime' as const)
-  ]).default('startTime')
+  calendarId: z.string().min(1)
+    .default('primary')
+    .describe('Calendar ID (uses the primary calendar if omitted)'),
+  timeMin: z.string()
+    .regex(ISO_8601_DATETIME, { message: 'timeMin must be in ISO 8601 format' })
+    .optional()
+    .describe('Lower bound (inclusive) for an event\'s end time, in ISO 8601 format'),
+  timeMax: z.string()
+    .regex(ISO_8601_DATETIME, { message: 'timeMax must be in ISO 8601 format' })
+    .optional()
+    .describe('Upper bound (exclusive) for an event\'s start time, in ISO 8601 format'),
+  maxResults: z.number().int().positive().max(2500)
+    .default(10)
+    .describe('Maximum number of events to return'),
+  orderBy: z.enum(['startTime', 'updated'])
+    .default('startTime')
+    .describe('Sort order for the returned events')
 });
 
 /**

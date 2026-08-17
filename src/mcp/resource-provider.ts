@@ -1,4 +1,4 @@
-import logger, { LoggerMeta } from '../utils/logger';
+import logger from '../utils/logger';
 import calendarApi from '../calendar/calendar-api';
 import { CalendarResource } from '../calendar/types';
 import { MCP_RESOURCE_DEFINITIONS } from './schemas';
@@ -10,7 +10,7 @@ export interface McpResource {
   name: string;
   description: string;
   uri: string;
-  schema?: Record<string, any>;
+  schema?: Record<string, unknown>;
 }
 
 /**
@@ -60,7 +60,7 @@ export class ResourceProvider {
         throw new Error(`Unsupported resource URI: ${uri}`);
       }
     } catch (error) {
-      logger.error(`Error reading resource ${uri}:`, { error } as LoggerMeta);
+      logger.error(`Error reading resource ${uri}:`, { error });
       throw error;
     }
   }
@@ -75,17 +75,26 @@ export class ResourceProvider {
       throw new Error(result.content);
     }
 
-    const calendarData = result.data as CalendarResource;
+    const calendarData = result.data;
+
+    // Google API 側は全フィールドが optional かつ null を取りうる。
+    // 以前は as CalendarResource で潰していたため、id や summary が
+    // 欠けていても気付けなかった。
+    if (!calendarData.id || !calendarData.summary) {
+      throw new Error('The primary calendar response is missing an id or summary.');
+    }
+
+    const calendar: CalendarResource = {
+      id: calendarData.id,
+      summary: calendarData.summary,
+      ...(calendarData.description ? { description: calendarData.description } : {}),
+      ...(calendarData.timeZone ? { timeZone: calendarData.timeZone } : {})
+    };
 
     return {
       resource: {
         uri: 'google-calendar://primary',
-        data: {
-          id: calendarData.id,
-          summary: calendarData.summary,
-          description: calendarData.description,
-          timeZone: calendarData.timeZone
-        },
+        data: calendar,
         contents: []
       }
     };

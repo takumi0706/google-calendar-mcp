@@ -1,5 +1,5 @@
 import { McpToolResponse } from './error-handler';
-import { CalendarEvent, CalendarResource } from '../calendar/types';
+import type { CalendarResource } from '../calendar/types';
 
 /**
  * Unified MCP tool response generation class (Singleton)
@@ -47,7 +47,12 @@ class ResponseBuilder {
   /**
    * Single event specific response
    */
-  public singleEvent(event: CalendarEvent, action: 'created' | 'updated' | 'retrieved' = 'retrieved'): McpToolResponse {
+  // summary しか読まないため、自前の CalendarEvent と Google API の
+  // Schema$Event のどちらも受けられる構造的な型にしている。
+  public singleEvent(
+    event: { summary?: string | null } | null | undefined,
+    action: 'created' | 'updated' | 'retrieved' = 'retrieved'
+  ): McpToolResponse {
     const actionMessages = {
       created: 'Event created',
       updated: 'Event updated',

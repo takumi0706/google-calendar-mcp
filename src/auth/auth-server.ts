@@ -5,7 +5,7 @@ import readline from 'readline';
 import { OAuthHandler } from './oauth-handler';
 import { tokenManager } from './token-manager';
 import config from '../config/config';
-import logger, { LoggerMeta } from '../utils/logger';
+import logger from '../utils/logger';
 import { sanitizeErrorForLogging, sanitizeText } from '../utils/security-sanitizer';
 
 /**
@@ -73,7 +73,7 @@ export class AuthServer {
         this.isServerRunning = false;
 
         if (settled) {
-          logger.error('OAuth server error after startup:', { error } as LoggerMeta);
+          logger.error('OAuth server error after startup:', { error });
           return;
         }
 
@@ -188,7 +188,7 @@ export class AuthServer {
     } catch (error) {
       logger.error('Error in manual authentication:', { 
         error: sanitizeErrorForLogging(error) 
-      } as LoggerMeta);
+      });
       throw error;
     }
   }
@@ -198,7 +198,7 @@ export class AuthServer {
    */
   private startAuthenticationFlow(oauth2Client: OAuth2Client, userId: string): Promise<OAuth2Client> {
     return new Promise((resolve, reject) => {
-      logger.debug('Starting authentication flow for user:', { userId } as LoggerMeta);
+      logger.debug('Starting authentication flow for user:', { userId });
 
       this.generateAndOpenAuthUrl(userId)
         .then(() => {
@@ -233,7 +233,7 @@ export class AuthServer {
       await openModule.default(authUrl);
       logger.info('Opening browser for authorization...');
     } catch (error) {
-      logger.warn('Failed to open browser automatically:', { error } as LoggerMeta);
+      logger.warn('Failed to open browser automatically:', { error });
       logger.info(`Please open this URL manually: ${authUrl}`);
     }
   }
@@ -257,11 +257,15 @@ export class AuthServer {
           return result;
         }
       } catch (error) {
-        logger.error('Error checking token:', { error } as LoggerMeta);
+        logger.error('Error checking token:', { error });
       }
     };
 
-    const intervalId = setInterval(checkToken, 1000);
+    // checkToken は async。void を期待する setInterval に直接渡すと
+    // 失敗が未処理の rejection になるため明示的に切り離す。
+    const intervalId = setInterval(() => {
+      void checkToken();
+    }, 1000);
     const timeoutId = setTimeout(() => {
       this.handleAuthenticationTimeout(intervalId, timeoutId, reject);
     }, 5 * 60 * 1000);
@@ -337,7 +341,7 @@ export class AuthServer {
   private handleAuthenticationError(error: unknown, reject: (error: Error) => void): void {
     logger.error('Error in authorization:', { 
       error: sanitizeErrorForLogging(error) 
-    } as LoggerMeta);
+    });
     this.authorizationPromise = null;
     this.shutdownServer();
     reject(error instanceof Error ? error : new Error('Authentication error occurred'));

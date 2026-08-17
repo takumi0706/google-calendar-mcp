@@ -7,6 +7,7 @@ import { ResourceProvider } from './resource-provider';
 import { PromptProvider } from './prompt-provider';
 import calendarApi from '../calendar/calendar-api';
 import { tokenManager } from '../auth/token-manager';
+import { describeError } from '../utils/format-error';
 
 /**
  * Build a fully configured MCP server instance.
@@ -99,7 +100,7 @@ function registerResources(server: McpServer): void {
 class GoogleCalendarMcpServer {
   private handle: StdioServerHandle | null = null;
 
-  public async start(): Promise<void> {
+  public start(): void {
     if (this.handle) {
       return;
     }
@@ -124,7 +125,7 @@ class GoogleCalendarMcpServer {
       tokenManager.stopCleanupTimer();
       logger.debug('Resources cleaned up successfully');
     } catch (error) {
-      logger.error(`Error during cleanup: ${error}`);
+      logger.error(`Error during cleanup: ${describeError(error)}`);
     }
   }
 
@@ -139,7 +140,7 @@ class GoogleCalendarMcpServer {
       this.handle = null;
       logger.debug('MCP Server stopped');
     } catch (error) {
-      logger.error(`Error stopping server: ${error}`);
+      logger.error(`Error stopping server: ${describeError(error)}`);
       throw error;
     }
   }

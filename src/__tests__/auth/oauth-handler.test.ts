@@ -23,14 +23,16 @@ describe('OAuthHandler', () => {
   function mockGetToken() {
     const spy = jest.spyOn(OAuth2Client.prototype, 'getToken');
 
-    spy.mockImplementation(async () => ({
-      tokens: {
-        access_token: 'test-access-token',
-        refresh_token: 'test-refresh-token',
-        expiry_date: Date.now() + 3600 * 1000,
-      },
-      res: null,
-    }));
+    spy.mockImplementation(() =>
+      Promise.resolve({
+        tokens: {
+          access_token: 'test-access-token',
+          refresh_token: 'test-refresh-token',
+          expiry_date: Date.now() + 3600 * 1000,
+        },
+        res: null,
+      })
+    );
 
     return spy;
   }

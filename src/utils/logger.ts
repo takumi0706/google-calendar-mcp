@@ -49,19 +49,13 @@ class EnhancedLoggerWrapper implements Logger {
    * Get configured log level from environment or config
    */
   private getConfiguredLogLevel(): LogLevel | null {
-    // Try to get from imported config if available
-    try {
-      // Use dynamic import to avoid circular dependencies
-      const configModule = eval('require')('../config/config');
-      const config = configModule?.default;
-      if (config?.security?.logLevel) {
-        return LogLevelUtils.fromString(config.security.logLevel);
-      }
-    } catch {
-      // Config not available, use environment or default
-    }
-
-    // Fallback to environment variable
+    // 環境変数だけを見る。
+    //
+    // 以前は eval('require')('../config/config') で設定モジュールを読んでいた。
+    // config → logger → config の循環依存を回避するための細工だったが、
+    // 静的解析からも循環依存チェックからも見えなくなるうえ、返ってくる値が
+    // すべて any になっていた。config.security.logLevel は結局 LOG_LEVEL から
+    // 作られるので、ここで直接読めば設定モジュールに依存する必要はない。
     if (process.env.LOG_LEVEL) {
       try {
         return LogLevelUtils.fromString(process.env.LOG_LEVEL);
@@ -70,7 +64,8 @@ class EnhancedLoggerWrapper implements Logger {
       }
     }
 
-    return null;
+    // LOG_LEVEL 未指定時は config/config.ts と同じ既定に合わせる
+    return process.env.NODE_ENV === 'production' ? LogLevel.WARN : LogLevel.DEBUG;
   }
 
   // Legacy interface implementation
@@ -212,34 +207,3 @@ export function createRequestLogger(requestId: string): TypeSafeLogger {
   return enhancedLogger.withRequestId(requestId);
 }
 
-/**
- * Performance measurement decorator
- * 
- * @example
- * class MyService {
- *   @performanceLog('myMethod')
- *   async myMethod() {
- *     // Method implementation
- *   }
- * }
- */
-export function performanceLog(label?: string) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
-    const timerLabel = label || `${target.constructor.name}.${propertyKey}`;
-
-    descriptor.value = async function (...args: any[]) {
-      enhancedLogger.time(timerLabel);
-      try {
-        const result = await originalMethod.apply(this, args);
-        enhancedLogger.timeEnd(timerLabel);
-        return result;
-      } catch (error) {
-        enhancedLogger.timeEnd(timerLabel, { hasError: true });
-        throw error;
-      }
-    };
-
-    return descriptor;
-  };
-}

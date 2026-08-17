@@ -2,6 +2,7 @@
 
 import mcpServer from './mcp/server';
 import logger from './utils/logger';
+import { describeError } from './utils/format-error';
 
 /**
  * プロセスのライフサイクルはこのファイルだけが購読する。
@@ -22,7 +23,7 @@ async function shutdown(reason: string, exitCode: number): Promise<never> {
   try {
     await mcpServer.stop();
   } catch (error) {
-    logger.error(`Error during shutdown: ${error}`);
+    logger.error(`Error during shutdown: ${describeError(error)}`);
   }
 
   process.exit(exitCode);
@@ -49,9 +50,9 @@ process.on('unhandledRejection', (reason: unknown) => {
 // Server startup
 async function main(): Promise<void> {
   try {
-    await mcpServer.start();
+    mcpServer.start();
   } catch (error) {
-    logger.error(`Failed to start server: ${error}`);
+    logger.error(`Failed to start server: ${describeError(error)}`);
     process.exit(1);
   }
 }

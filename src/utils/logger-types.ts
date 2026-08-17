@@ -73,8 +73,11 @@ export interface LoggerMeta {
   userId?: string;
   duration?: number;
   
-  // Error-specific fields
-  error?: Error | string;
+  // Error-specific fields.
+  // catch 節が渡してくる値は unknown なので、ここを Error | string に狭めると
+  // 呼び出し側が軒並み型アサーションを強いられる（実際 12 箇所で
+  // `{ error } as LoggerMeta` が書かれていた）。
+  error?: unknown;
   errorCode?: string;
   stackTrace?: string;
   
@@ -163,6 +166,22 @@ export interface PerformanceTimer {
 }
 
 /**
+ * ログレベル名の集合。
+ *
+ * Record<LogLevelString, true> にしているので、LogLevel に値を足して
+ * ここを更新し忘れるとコンパイルエラーになる（網羅性が型で保証される）。
+ */
+const LOG_LEVEL_NAMES: Record<LogLevelString, true> = {
+  ERROR: true,
+  WARN: true,
+  INFO: true,
+  HTTP: true,
+  VERBOSE: true,
+  DEBUG: true,
+  SILLY: true
+};
+
+/**
  * Log level utilities
  */
 export class LogLevelUtils {
@@ -170,11 +189,18 @@ export class LogLevelUtils {
    * Convert string to LogLevel enum
    */
   static fromString(level: string): LogLevel {
-    const upperLevel = level.toUpperCase() as LogLevelString;
-    if (upperLevel in LogLevel) {
+    const upperLevel = level.toUpperCase();
+    if (LogLevelUtils.isLogLevelString(upperLevel)) {
       return LogLevel[upperLevel];
     }
     throw new Error(`Invalid log level: ${level}`);
+  }
+
+  /**
+   * LogLevel の名前として妥当な文字列かどうかを実行時に判定する型ガード
+   */
+  static isLogLevelString(value: string): value is LogLevelString {
+    return Object.prototype.hasOwnProperty.call(LOG_LEVEL_NAMES, value);
   }
   
   /**
@@ -182,10 +208,10 @@ export class LogLevelUtils {
    */
   static toString(level: LogLevel): LogLevelString {
     const entry = Object.entries(LogLevel).find(([, value]) => value === level);
-    if (!entry) {
+    if (!entry || !LogLevelUtils.isLogLevelString(entry[0])) {
       throw new Error(`Invalid log level: ${level}`);
     }
-    return entry[0] as LogLevelString;
+    return entry[0];
   }
   
   /**
@@ -199,7 +225,9 @@ export class LogLevelUtils {
    * Get all available log levels
    */
   static getAllLevels(): LogLevelString[] {
-    return Object.keys(LogLevel).filter(key => isNaN(Number(key))) as LogLevelString[];
+    return Object.keys(LOG_LEVEL_NAMES).flatMap((key) =>
+      LogLevelUtils.isLogLevelString(key) ? [key] : []
+    );
   }
 }
 
@@ -225,12 +253,15 @@ export class SafeJsonSerializer {
    * Create JSON.stringify replacer with depth and length limits
    */
   private static createReplacer(maxDepth: number) {
-    const visited = new WeakSet();
-    const depthMap = new WeakMap();
+    const visited = new WeakSet<object>();
+    const depthMap = new WeakMap<object, number>();
     
-    return function replacer(this: any, key: string, value: unknown): unknown {
+    // JSON.stringify の replacer は呼び出し元オブジェクトを this で渡してくる。
+    // ここでは depthMap のキーとしてしか使わないので unknown で十分。
+    return function replacer(this: unknown, key: string, value: unknown): unknown {
       // Get current depth based on parent object
-      const currentDepth = (this && depthMap.get(this)) || 0;
+      const currentDepth =
+        typeof this === 'object' && this !== null ? depthMap.get(this) ?? 0 : 0;
       
       if (currentDepth > maxDepth) {
         return '[Max Depth Exceeded]';

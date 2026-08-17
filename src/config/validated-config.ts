@@ -14,6 +14,28 @@ import {
 // corrupts the MCP message stream.
 config({ quiet: true });
 
+type LogLevelName = Config['security']['logLevel'];
+
+/** 網羅性を型で保証するためのレベル集合 */
+const LOG_LEVEL_NAMES: Record<LogLevelName, true> = {
+  error: true,
+  warn: true,
+  info: true,
+  debug: true
+};
+
+function isLogLevelName(value: string): value is LogLevelName {
+  return Object.prototype.hasOwnProperty.call(LOG_LEVEL_NAMES, value);
+}
+
+/**
+ * LOG_LEVEL 環境変数を実行時に絞り込む。
+ * 未知の値はフォールバックへ倒す（型アサーションは使わない）。
+ */
+function toLogLevel(value: string | undefined, fallback: LogLevelName): LogLevelName {
+  return value !== undefined && isLogLevelName(value) ? value : fallback;
+}
+
 /**
  * Validated configuration manager
  * Provides type-safe configuration with comprehensive validation
@@ -171,7 +193,7 @@ class ValidatedConfigManager {
       security: {
         enableDetailedErrors: false, // Always disabled for production safety
         sanitizeLogs: process.env.SANITIZE_LOGS !== 'false',
-        logLevel: (process.env.LOG_LEVEL as 'error' | 'warn' | 'info' | 'debug') || 'warn',
+        logLevel: toLogLevel(process.env.LOG_LEVEL, 'warn'),
         redactSensitiveData: process.env.REDACT_SENSITIVE_DATA !== 'false',
       },
     };

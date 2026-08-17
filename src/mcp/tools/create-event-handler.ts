@@ -3,13 +3,14 @@ import { BaseCalendarToolHandler } from '../base-tool-handler';
 import { ToolExecutionContext } from '../base-tool-handler';
 import { createEventParamsSchema } from '../schemas';
 import calendarApi from '../../calendar/calendar-api';
+import type { SingleEventResponse } from '../../calendar/types';
 import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
  * Handler for the createEvent tool
  */
-export class CreateEventHandler extends BaseCalendarToolHandler<typeof createEventParamsSchema> {
+export class CreateEventHandler extends BaseCalendarToolHandler<typeof createEventParamsSchema, SingleEventResponse> {
   constructor() {
     super('createEvent');
   }
@@ -31,7 +32,7 @@ export class CreateEventHandler extends BaseCalendarToolHandler<typeof createEve
   /**
    * Execute the actual processing
    */
-  async execute(params: z.infer<typeof createEventParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+  async execute(params: z.infer<typeof createEventParamsSchema>, _context: ToolExecutionContext): Promise<SingleEventResponse> {
     this.logDebug('Executing createEvent', params);
 
     
@@ -48,7 +49,7 @@ export class CreateEventHandler extends BaseCalendarToolHandler<typeof createEve
   /**
    * Customize success response
    */
-  protected createSuccessResponse(result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(result: SingleEventResponse, _context: ToolExecutionContext): McpToolResponse {
     if (result.data) {
       return responseBuilder.singleEvent(result.data, 'created');
     }

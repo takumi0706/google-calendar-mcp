@@ -1,6 +1,6 @@
 import { OAuth2Client, Credentials } from 'google-auth-library';
 import { tokenManager } from './token-manager';
-import logger, { LoggerMeta } from '../utils/logger';
+import logger from '../utils/logger';
 import { sanitizeErrorForLogging } from '../utils/security-sanitizer';
 
 /**
@@ -146,7 +146,7 @@ export class TokenProcessor {
     } catch (error) {
       logger.error('Failed to refresh token:', { 
         error: sanitizeErrorForLogging(error) 
-      } as LoggerMeta);
+      });
 
       // If an error occurs, clear credentials and throw error
       logger.warn('Token refresh failed, re-authentication required');
@@ -231,7 +231,7 @@ export class TokenProcessor {
     } catch (error) {
       logger.error('Token validation failed:', { 
         error: sanitizeErrorForLogging(error) 
-      } as LoggerMeta);
+      });
       return false;
     }
   }

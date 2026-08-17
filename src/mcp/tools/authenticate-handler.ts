@@ -7,9 +7,21 @@ import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
+ * authenticate ツールの実行結果
+ */
+interface AuthenticateResult {
+  alreadyAuthenticated?: boolean;
+  authenticationCompleted?: boolean;
+  authenticated?: boolean;
+}
+
+/**
  * Handler for the authenticate tool
  */
-export class AuthenticateHandler extends BaseNoAuthToolHandler<typeof authenticateParamsSchema> {
+export class AuthenticateHandler extends BaseNoAuthToolHandler<
+  typeof authenticateParamsSchema,
+  AuthenticateResult
+> {
   constructor() {
     super('authenticate');
   }
@@ -28,7 +40,7 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler<typeof authentica
   /**
    * Execute the actual processing
    */
-  async execute(_params: z.infer<typeof authenticateParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+  async execute(_params: z.infer<typeof authenticateParamsSchema>, _context: ToolExecutionContext): Promise<AuthenticateResult> {
     this.logDebug('Executing authenticate');
 
     // Check if already authenticated
@@ -46,7 +58,7 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler<typeof authentica
       this.logInfo('Authentication completed successfully');
       return { authenticationCompleted: true, authenticated: true };
     } catch (error) {
-      this.logError('Authentication failed:', { error } as any);
+      this.logError('Authentication failed:', { error });
       throw error;
     }
   }
@@ -54,7 +66,7 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler<typeof authentica
   /**
    * Customize success response
    */
-  protected createSuccessResponse(result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(result: AuthenticateResult, _context: ToolExecutionContext): McpToolResponse {
     if (result.alreadyAuthenticated) {
       return responseBuilder.alreadyAuthenticated();
     }

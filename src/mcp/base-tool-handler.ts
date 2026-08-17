@@ -57,7 +57,8 @@ export function normalizeToolArgs(args: Record<string, unknown>): Record<string,
  * Provides common processing (authentication check, validation, error handling)
  */
 export abstract class BaseToolHandler<
-  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
+  TResult = unknown
 > {
   protected readonly toolName: string;
   protected readonly requiresAuth: boolean;
@@ -87,7 +88,7 @@ export abstract class BaseToolHandler<
    *
    * 引数は getSchema() で検証済みの値。各ハンドラで再度 parse する必要はない。
    */
-  abstract execute(validatedArgs: z.infer<TSchema>, context: ToolExecutionContext): Promise<unknown>;
+  abstract execute(validatedArgs: z.infer<TSchema>, context: ToolExecutionContext): Promise<TResult>;
 
   /**
    * Check authentication status
@@ -124,7 +125,7 @@ export abstract class BaseToolHandler<
       const validatedArgs = this.getSchema().parse(processedArgs);
       return { isValid: true, validatedArgs };
     } catch (error) {
-      logger.error(`Validation error in ${this.toolName}:`, { error } as LoggerMeta);
+      logger.error(`Validation error in ${this.toolName}:`, { error });
 
       if (error instanceof z.ZodError) {
         // zod 4 で ZodError.errors は .issues に改名された
@@ -157,7 +158,7 @@ export abstract class BaseToolHandler<
       const authCheck = this.checkAuthentication();
       if (!authCheck.isAuthenticated) {
         logger.warn(`[${this.toolName}] Authentication failed`);
-        return authCheck.errorResponse!;
+        return authCheck.errorResponse ?? mcpErrorHandler.createAuthError();
       }
 
       // 2. Input validation
@@ -189,11 +190,11 @@ export abstract class BaseToolHandler<
       return response;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      logger.error(`[MCP] Error in tool ${this.toolName} (${executionTime}ms):`, { error } as LoggerMeta);
+      logger.error(`[MCP] Error in tool ${this.toolName} (${executionTime}ms):`, { error });
 
       return mcpErrorHandler.handleError(error, {
         toolName: this.toolName,
-        args: args as LoggerMeta,
+        args,
         executionTime,
       });
     }
@@ -202,7 +203,7 @@ export abstract class BaseToolHandler<
   /**
    * Generate success response (can be overridden by subclasses)
    */
-  protected createSuccessResponse(result: unknown, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(result: TResult, _context: ToolExecutionContext): McpToolResponse {
     return responseBuilder.success(result);
   }
 
@@ -246,8 +247,9 @@ export abstract class BaseToolHandler<
  * Base class for tools that don't require authentication
  */
 export abstract class BaseNoAuthToolHandler<
-  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
-> extends BaseToolHandler<TSchema> {
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
+  TResult = unknown
+> extends BaseToolHandler<TSchema, TResult> {
   constructor(toolName: string) {
     super(toolName, false);
   }
@@ -257,8 +259,9 @@ export abstract class BaseNoAuthToolHandler<
  * Base class for calendar operation tools
  */
 export abstract class BaseCalendarToolHandler<
-  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>
-> extends BaseToolHandler<TSchema> {
+  TSchema extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>,
+  TResult = unknown
+> extends BaseToolHandler<TSchema, TResult> {
   constructor(toolName: string) {
     super(toolName, true);
   }

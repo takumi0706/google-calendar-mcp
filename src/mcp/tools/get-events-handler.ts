@@ -3,13 +3,14 @@ import { BaseCalendarToolHandler } from '../base-tool-handler';
 import { ToolExecutionContext } from '../base-tool-handler';
 import { getEventsParamsSchema } from '../schemas';
 import calendarApi from '../../calendar/calendar-api';
+import type { EventsListResponse } from '../../calendar/types';
 import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
  * Handler for the getEvents tool
  */
-export class GetEventsHandler extends BaseCalendarToolHandler<typeof getEventsParamsSchema> {
+export class GetEventsHandler extends BaseCalendarToolHandler<typeof getEventsParamsSchema, EventsListResponse> {
   constructor() {
     super('getEvents');
   }
@@ -28,7 +29,7 @@ export class GetEventsHandler extends BaseCalendarToolHandler<typeof getEventsPa
   /**
    * Execute the actual processing
    */
-  async execute(params: z.infer<typeof getEventsParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+  async execute(params: z.infer<typeof getEventsParamsSchema>, _context: ToolExecutionContext): Promise<EventsListResponse> {
     this.logDebug('Executing getEvents', params);
 
     
@@ -45,7 +46,7 @@ export class GetEventsHandler extends BaseCalendarToolHandler<typeof getEventsPa
   /**
    * Customize success response
    */
-  protected createSuccessResponse(result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(result: EventsListResponse, _context: ToolExecutionContext): McpToolResponse {
     if (result.data && Array.isArray(result.data)) {
       return responseBuilder.eventsList(result.data, result.content);
     }

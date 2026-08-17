@@ -1,3 +1,17 @@
+import type { calendar_v3 } from 'googleapis';
+
+/**
+ * Google Calendar API がそのまま返してくるイベント表現。
+ *
+ * 自前の CalendarEvent とは別物である点に注意。API 側は全フィールドが
+ * optional かつ null を取りうるのに対し、CalendarEvent は summary / start / end
+ * を必須にしている。両者は toCalendarEvent() で明示的に変換する。
+ */
+export type GoogleCalendarEvent = calendar_v3.Schema$Event;
+
+/** Google Calendar API が返すカレンダー本体の表現 */
+export type GoogleCalendar = calendar_v3.Schema$Calendar;
+
 // Type definitions related to Google Calendar Event
 export interface CalendarEvent {
   id?: string;
@@ -42,10 +56,12 @@ export interface CalendarApiResponse<T = unknown> {
   data?: T;
 }
 
-// Specialized API response types
-export type EventsListResponse = CalendarApiResponse<CalendarEvent[]>;
-export type SingleEventResponse = CalendarApiResponse<CalendarEvent>;
+// Specialized API response types.
+// data には Google API のレスポンスがそのまま入るため GoogleCalendarEvent を使う。
+export type EventsListResponse = CalendarApiResponse<GoogleCalendarEvent[] | undefined>;
+export type SingleEventResponse = CalendarApiResponse<GoogleCalendarEvent>;
 export type CalendarResourceResponse = CalendarApiResponse<CalendarResource>;
+export type GoogleCalendarResponse = CalendarApiResponse<GoogleCalendar>;
 export type DeleteEventResponse = CalendarApiResponse<void>;
 
 // Parameter type for retrieving event list

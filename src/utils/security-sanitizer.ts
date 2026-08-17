@@ -91,21 +91,28 @@ export function sanitizeText(text: string): string {
 }
 
 /**
+ * プレーンなオブジェクトかどうかを判定する型ガード。
+ * 型アサーションを使わずに unknown を Record へ絞り込むために使う。
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
  * Sanitize object by removing or redacting sensitive fields
  */
 export function sanitizeObject(obj: unknown): unknown {
-  if (!obj || typeof obj !== 'object') {
-    return obj;
-  }
-
   if (Array.isArray(obj)) {
     return obj.map(sanitizeObject);
   }
 
-  const sanitized: Record<string, unknown> = {};
-  const objRecord = obj as Record<string, unknown>;
+  if (!isRecord(obj)) {
+    return obj;
+  }
 
-  Object.entries(objRecord).forEach(([key, value]) => {
+  const sanitized: Record<string, unknown> = {};
+
+  Object.entries(obj).forEach(([key, value]) => {
     const lowerKey = key.toLowerCase();
     
     // Check if field name is sensitive
@@ -151,8 +158,11 @@ export function sanitizeErrorForLogging(error: unknown): unknown {
       stack: process.env.NODE_ENV === 'production' ? '[REDACTED]' : sanitizeText(error.stack || '')
     };
     
-    const sanitizedError = sanitizeObject(error) as Record<string, unknown>;
-    return sanitizeObject({ ...baseErrorInfo, ...sanitizedError });
+    const sanitizedError = sanitizeObject(error);
+    return sanitizeObject({
+      ...baseErrorInfo,
+      ...(isRecord(sanitizedError) ? sanitizedError : {})
+    });
   }
   
   return sanitizeObject(error);
@@ -168,7 +178,7 @@ export function sanitizeRequestContext(context: {
   headers?: Record<string, unknown>;
   [key: string]: unknown;
 }): Record<string, unknown> {
-  return sanitizeObject({
+  const sanitized = sanitizeObject({
     path: context.path,
     method: context.method,
     url: context.url ? sanitizeText(context.url) : undefined,
@@ -177,7 +187,9 @@ export function sanitizeRequestContext(context: {
     userAgent: typeof context.userAgent === 'string' ? sanitizeText(context.userAgent) : undefined,
     timestamp: context.timestamp,
     requestId: context.requestId
-  }) as Record<string, unknown>;
+  });
+
+  return isRecord(sanitized) ? sanitized : {};
 }
 
 /**

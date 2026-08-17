@@ -103,7 +103,7 @@ class TokenManager {
         logger.debug(`Token stored for user: ${userId}, expires: ${new Date(expiryTime).toISOString()}`);
       }
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       if (typeof logger.error === 'function') {
         logger.error('Failed to encrypt and store token', { userId, error: error.message });
       }
@@ -151,7 +151,7 @@ class TokenManager {
 
       return decrypted;
     } catch (err: unknown) {
-      const error = err as Error;
+      const error = err instanceof Error ? err : new Error(String(err));
       if (typeof logger.error === 'function') {
         logger.error('Failed to decrypt token', { userId, error: error.message });
       }

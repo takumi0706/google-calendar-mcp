@@ -3,13 +3,14 @@ import { BaseCalendarToolHandler } from '../base-tool-handler';
 import { ToolExecutionContext } from '../base-tool-handler';
 import { deleteEventParamsSchema } from '../schemas';
 import calendarApi from '../../calendar/calendar-api';
+import type { CalendarApiResponse } from '../../calendar/types';
 import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
  * Handler for the deleteEvent tool
  */
-export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEventParamsSchema> {
+export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEventParamsSchema, CalendarApiResponse> {
   constructor() {
     super('deleteEvent');
   }
@@ -28,7 +29,7 @@ export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEve
   /**
    * Execute the actual processing
    */
-  async execute(params: z.infer<typeof deleteEventParamsSchema>, _context: ToolExecutionContext): Promise<unknown> {
+  async execute(params: z.infer<typeof deleteEventParamsSchema>, _context: ToolExecutionContext): Promise<CalendarApiResponse> {
     this.logDebug('Executing deleteEvent', params);
 
     
@@ -45,7 +46,7 @@ export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEve
   /**
    * Customize success response
    */
-  protected createSuccessResponse(_result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(_result: CalendarApiResponse, _context: ToolExecutionContext): McpToolResponse {
     return responseBuilder.deleteSuccess('Event');
   }
 }

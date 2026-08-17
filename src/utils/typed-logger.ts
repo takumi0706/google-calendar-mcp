@@ -199,7 +199,9 @@ export class TypedLogger implements TypeSafeLogger {
         message: error.message,
         stack: this.config.enableStackTrace ? error.stack : undefined
       },
-      errorCode: (error as any).code,
+      // Node の system error は code を持つが Error 型には現れないため、
+      // 型アサーションではなく実行時に確認する
+      errorCode: 'code' in error && typeof error.code === 'string' ? error.code : undefined,
       stackTrace: this.config.enableStackTrace ? error.stack : undefined
     };
     

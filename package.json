@@ -13,13 +13,23 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "build": "tsc",
-    "postbuild": "chmod +x dist/index.js",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "pnpm run clean && tsc && node -e \"require('fs').chmodSync('dist/index.js',0o755)\"",
     "start": "node dist/index.js",
+    "dev": "pnpm run build && pnpm start",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:types": "tsc --project tsconfig.test.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
     "check-circular": "node scripts/check-circular-deps.js",
-    "prepublishOnly": "npm run build && npm test && npm run lint && npm run check-circular"
+    "security": "pnpm audit && pnpm run lint",
+    "validate": "pnpm run typecheck && pnpm run test:types && pnpm run lint && pnpm test && pnpm run check-circular",
+    "prepublishOnly": "pnpm run validate && pnpm run build"
   },
   "repository": {
     "type": "git",
@@ -54,17 +64,19 @@
     "typescript": "~5.5.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "dotenv": "^16.4.5",
-    "googleapis": "^148.0.0",
-    "hono": "^4.6.3",
     "@hono/node-server": "^1.12.2",
     "@hono/oauth-providers": "^0.8.2",
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "dotenv": "^16.4.5",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^148.0.0",
+    "hono": "^4.6.3",
     "open": "^10.1.0",
     "zod": "^3.24.2"
   },
+  "packageManager": "pnpm@10.28.2",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.0.0"
   },
   "publishConfig": {
     "access": "public"

@@ -5,50 +5,95 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # Weekly run so the dependency audit catches newly disclosed advisories
+    - cron: '0 0 * * 0'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [20.x, 22.x, 24.x]
+
+    env:
+      NODE_ENV: test
+      GOOGLE_CLIENT_ID: test-client-id-for-ci
+      GOOGLE_CLIENT_SECRET: test-client-secret-for-ci
+      GOOGLE_REDIRECT_URI: http://localhost:4153/oauth2callback
 
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v5
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v5
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    
+        cache: 'pnpm'
+
     - name: Install dependencies
-      run: npm install
-      
-    - name: Create test environment file
-      run: |
-        echo "GOOGLE_CLIENT_ID=test-client-id-for-ci" > .env
-        echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-ci" >> .env
-        echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
-        echo "NODE_ENV=test" >> .env
-    
-    - name: TypeScript Check
-      run: npx tsc --noEmit
-    
-    - name: Lint
-      run: npm run lint
-    
+      run: pnpm install --frozen-lockfile
+
+    - name: Validate (typecheck, test types, lint, test, circular deps)
+      run: pnpm run validate
+
     - name: Build
-      run: npm run build
-      env:
-        NODE_ENV: test
-        GOOGLE_CLIENT_ID: test-client-id-for-ci
-        GOOGLE_CLIENT_SECRET: test-client-secret-for-ci
-      
-    - name: Test
-      run: npm test
-      env:
-        NODE_ENV: test
-        GOOGLE_CLIENT_ID: test-client-id-for-ci
-        GOOGLE_CLIENT_SECRET: test-client-secret-for-ci
+      run: pnpm run build
+
+  coverage:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      GOOGLE_CLIENT_ID: test-client-id-for-ci
+      GOOGLE_CLIENT_SECRET: test-client-secret-for-ci
+      GOOGLE_REDIRECT_URI: http://localhost:4153/oauth2callback
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Test with coverage
+      run: pnpm run test:coverage
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./coverage/lcov.info
+        fail_ci_if_error: false
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Audit dependencies
+      run: pnpm audit --audit-level=high

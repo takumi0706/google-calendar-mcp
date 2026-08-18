@@ -46,10 +46,24 @@ jobs:
       - name: Verify stdout stays clean at startup
         run: pnpm run check-stdio
 
+      # Trusted publishing (OIDC) needs npm >= 11.5.1; the npm bundled with
+      # Node 22 is still 10.x.
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
+
       # Published with the npm CLI rather than `pnpm publish` because only the
-      # npm CLI supports --provenance. Lifecycle scripts are skipped since
-      # validate and build already ran above.
+      # npm CLI supports trusted publishing and --provenance.
+      #
+      # Authentication is OIDC-based (npm trusted publishing), so no NPM_TOKEN
+      # is involved. Long-lived tokens kept breaking this job: first an expired
+      # token (404 on PUT), then a 403 because the account requires 2FA for
+      # publishing and CI cannot answer an OTP prompt. Trusted publishing is
+      # exempt from that policy and issues short-lived, workflow-scoped
+      # credentials instead.
+      #
+      # Requires a trusted publisher configured on npmjs.com for this package:
+      #   repository = takumi0706/google-calendar-mcp, workflow = publish.yml
+      #
+      # Lifecycle scripts are skipped since validate and build already ran.
       - name: Publish to npm
         run: npm publish --provenance --access public --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -14,6 +14,23 @@ import {
 // corrupts the MCP message stream.
 config({ quiet: true });
 
+/**
+ * このサーバーが要求する OAuth スコープ。
+ *
+ * - calendar.events : 5 つのツールが行うイベントの読み書き
+ * - calendar.readonly : resources/read が返すカレンダーのメタデータ取得
+ *   (calendar.calendars.get)。events スコープだけでは
+ *   "Request had insufficient authentication scopes." になる。
+ *
+ * 以前は oauth-handler.ts に 'https://www.googleapis.com/auth/calendar'
+ * (フルスコープ) がハードコードされていて、ここの設定は使われていなかった。
+ * 上の 2 つはフルスコープより狭く、カレンダー自体の作成・削除権限は含まない。
+ */
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.readonly',
+];
+
 type LogLevelName = Config['security']['logLevel'];
 
 /** 網羅性を型で保証するためのレベル集合 */
@@ -125,10 +142,6 @@ class ValidatedConfigManager {
    * Create configuration object from validated environment
    */
   private createConfigObject(env: Environment): unknown {
-    const SCOPES = [
-      'https://www.googleapis.com/auth/calendar.events',
-    ];
-
     const authPort = parseInt(env.AUTH_PORT || '4153', 10);
     const authHost = env.AUTH_HOST || 'localhost';
 
@@ -161,10 +174,6 @@ class ValidatedConfigManager {
    * Create development fallback configuration
    */
   private createDevelopmentFallbackConfig(): Config {
-    const SCOPES = [
-      'https://www.googleapis.com/auth/calendar.events',
-    ];
-
     // Allow dummy values in test environment, require real values in production
     const isTestEnvironment = process.env.NODE_ENV === 'test';
     const clientId = process.env.GOOGLE_CLIENT_ID || (isTestEnvironment ? 'test-client-id' : undefined);

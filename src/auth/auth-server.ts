@@ -5,7 +5,7 @@ import readline from 'readline';
 import { OAuthHandler } from './oauth-handler';
 import { tokenManager } from './token-manager';
 import config from '../config/config';
-import logger, { LoggerMeta } from '../utils/logger';
+import logger from '../utils/logger';
 import { sanitizeErrorForLogging, sanitizeText } from '../utils/security-sanitizer';
 
 /**
@@ -39,31 +39,60 @@ export class AuthServer {
   /**
    * Start the OAuth server
    */
-  public startServer(): void {
-    if (!this.isServerRunning) {
-      try {
-        this.server = serve({
+  public startServer(): Promise<void> {
+    if (this.isServerRunning) {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+
+      const server = serve(
+        {
           fetch: this.honoApp.fetch,
           port: config.auth.port,
           hostname: config.auth.host
-        });
-
-        logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
-        this.isServerRunning = true;
-
-      } catch (err: unknown) {
-        const error = err as { code?: string };
-        if (error.code === 'EADDRINUSE') {
-          logger.warn(`Port ${config.auth.port} is already in use, assuming OAuth server is already running`);
-          // Set server object to null to indicate that we're using an existing server
-          this.server = null;
-          this.isServerRunning = false;
-        } else {
-          logger.error('OAuth server error:', { error } as LoggerMeta);
-          this.isServerRunning = false;
+        },
+        () => {
+          settled = true;
+          this.server = server;
+          this.isServerRunning = true;
+          logger.info(`OAuth server started on ${config.auth.host}:${config.auth.port}`);
+          resolve();
         }
-      }
-    }
+      );
+
+      // serve() は非同期に listen するため、EADDRINUSE は同期的に throw されず
+      // 'error' イベントで届く。以前は try/catch で捕まえようとしていたので
+      // 実際には一度も発火せず、しかも捕まえた場合は「他プロセスが認証サーバー
+      // として動いている」とみなして処理を継続していた。その仮定は危険で、
+      // 同一ホストの任意のプロセスが 4153 番を先に押さえておくだけで、
+      // ユーザーのブラウザをそのプロセスへ誘導できてしまう。
+      server.on('error', (error: NodeJS.ErrnoException) => {
+        this.server = null;
+        this.isServerRunning = false;
+
+        if (settled) {
+          logger.error('OAuth server error after startup:', { error });
+          return;
+        }
+
+        settled = true;
+
+        if (error.code === 'EADDRINUSE') {
+          reject(
+            new Error(
+              `Port ${config.auth.port} is already in use. Another process is listening on it, ` +
+                'so authentication cannot proceed safely. Stop that process or set AUTH_PORT ' +
+                'to a free port.'
+            )
+          );
+          return;
+        }
+
+        reject(error);
+      });
+    });
   }
 
   /**
@@ -96,8 +125,9 @@ export class AuthServer {
       return this.authorizationPromise;
     }
 
-    // Regular authentication flow with local server
-    this.startServer();
+    // Regular authentication flow with local server.
+    // サーバーが起動できなければ認証は成立しないので、ここで失敗させる。
+    await this.startServer();
     this.authorizationPromise = this.startAuthenticationFlow(oauth2Client, userId);
     return this.authorizationPromise;
   }
@@ -109,8 +139,8 @@ export class AuthServer {
     try {
       // Generate authentication URL for manual auth
       const redirectUri = `http://${config.auth.host}:${config.auth.port}/auth-success`;
-      const authUrlResult = this.oauthHandler.generateAuthUrl(userId, redirectUri, true);
-      const { authUrl, state } = typeof authUrlResult === 'string' 
+      const authUrlResult = await this.oauthHandler.generateAuthUrl(userId, redirectUri, true);
+      const { authUrl, state } = typeof authUrlResult === 'string'
         ? { authUrl: authUrlResult, state: 'manual-auth' }
         : authUrlResult;
 
@@ -158,7 +188,7 @@ export class AuthServer {
     } catch (error) {
       logger.error('Error in manual authentication:', { 
         error: sanitizeErrorForLogging(error) 
-      } as LoggerMeta);
+      });
       throw error;
     }
   }
@@ -168,28 +198,30 @@ export class AuthServer {
    */
   private startAuthenticationFlow(oauth2Client: OAuth2Client, userId: string): Promise<OAuth2Client> {
     return new Promise((resolve, reject) => {
-      try {
-        logger.debug('Starting authentication flow for user:', { userId } as LoggerMeta);
-        this.generateAndOpenAuthUrl(userId);
-        this.setupTokenMonitoring(oauth2Client, userId, resolve, reject);
-      } catch (error) {
-        this.handleAuthenticationError(error, reject);
-      }
+      logger.debug('Starting authentication flow for user:', { userId });
+
+      this.generateAndOpenAuthUrl(userId)
+        .then(() => {
+          this.setupTokenMonitoring(oauth2Client, userId, resolve, reject);
+        })
+        .catch((error) => {
+          this.handleAuthenticationError(error, reject);
+        });
     });
   }
 
   /**
    * Generate authentication URL and open in browser
    */
-  private generateAndOpenAuthUrl(userId: string): void {
+  private async generateAndOpenAuthUrl(userId: string): Promise<void> {
     const redirectUri = `http://${config.auth.host}:${config.auth.port}/auth-success`;
-    const authUrlResult = this.oauthHandler.generateAuthUrl(userId, redirectUri);
-    
+    const authUrlResult = await this.oauthHandler.generateAuthUrl(userId, redirectUri);
+
     const authUrl = typeof authUrlResult === 'string' ? authUrlResult : authUrlResult.authUrl;
 
     const sanitizedUrl = sanitizeText(authUrl);
     logger.info(`Please authorize this app by visiting this URL: ${sanitizedUrl}`);
-    this.openAuthUrl(authUrl);
+    await this.openAuthUrl(authUrl);
   }
 
   /**
@@ -201,7 +233,7 @@ export class AuthServer {
       await openModule.default(authUrl);
       logger.info('Opening browser for authorization...');
     } catch (error) {
-      logger.warn('Failed to open browser automatically:', { error } as LoggerMeta);
+      logger.warn('Failed to open browser automatically:', { error });
       logger.info(`Please open this URL manually: ${authUrl}`);
     }
   }
@@ -225,11 +257,15 @@ export class AuthServer {
           return result;
         }
       } catch (error) {
-        logger.error('Error checking token:', { error } as LoggerMeta);
+        logger.error('Error checking token:', { error });
       }
     };
 
-    const intervalId = setInterval(checkToken, 1000);
+    // checkToken は async。void を期待する setInterval に直接渡すと
+    // 失敗が未処理の rejection になるため明示的に切り離す。
+    const intervalId = setInterval(() => {
+      void checkToken();
+    }, 1000);
     const timeoutId = setTimeout(() => {
       this.handleAuthenticationTimeout(intervalId, timeoutId, reject);
     }, 5 * 60 * 1000);
@@ -305,7 +341,7 @@ export class AuthServer {
   private handleAuthenticationError(error: unknown, reject: (error: Error) => void): void {
     logger.error('Error in authorization:', { 
       error: sanitizeErrorForLogging(error) 
-    } as LoggerMeta);
+    });
     this.authorizationPromise = null;
     this.shutdownServer();
     reject(error instanceof Error ? error : new Error('Authentication error occurred'));
@@ -317,7 +353,9 @@ export class AuthServer {
   private createReadlineInterface(): readline.Interface {
     return readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      // プロンプトは必ず stderr に出す。stdout は MCP の JSON-RPC 専用であり、
+      // ここに出力するとメッセージストリームが壊れる。
+      output: process.stderr
     });
   }
 

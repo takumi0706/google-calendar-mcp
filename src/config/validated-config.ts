@@ -8,8 +8,50 @@ import {
   type Environment
 } from './config-schema';
 
-// Load .env file first
-config();
+// Load .env file first.
+// quiet: true is mandatory here — dotenv v17+ prints an "injected env" banner to
+// stdout, and this process speaks JSON-RPC over stdio. Any stray byte on stdout
+// corrupts the MCP message stream.
+config({ quiet: true });
+
+/**
+ * このサーバーが要求する OAuth スコープ。
+ *
+ * - calendar.events : 5 つのツールが行うイベントの読み書き
+ * - calendar.readonly : resources/read が返すカレンダーのメタデータ取得
+ *   (calendar.calendars.get)。events スコープだけでは
+ *   "Request had insufficient authentication scopes." になる。
+ *
+ * 以前は oauth-handler.ts に 'https://www.googleapis.com/auth/calendar'
+ * (フルスコープ) がハードコードされていて、ここの設定は使われていなかった。
+ * 上の 2 つはフルスコープより狭く、カレンダー自体の作成・削除権限は含まない。
+ */
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.readonly',
+];
+
+type LogLevelName = Config['security']['logLevel'];
+
+/** 網羅性を型で保証するためのレベル集合 */
+const LOG_LEVEL_NAMES: Record<LogLevelName, true> = {
+  error: true,
+  warn: true,
+  info: true,
+  debug: true
+};
+
+function isLogLevelName(value: string): value is LogLevelName {
+  return Object.prototype.hasOwnProperty.call(LOG_LEVEL_NAMES, value);
+}
+
+/**
+ * LOG_LEVEL 環境変数を実行時に絞り込む。
+ * 未知の値はフォールバックへ倒す（型アサーションは使わない）。
+ */
+function toLogLevel(value: string | undefined, fallback: LogLevelName): LogLevelName {
+  return value !== undefined && isLogLevelName(value) ? value : fallback;
+}
 
 /**
  * Validated configuration manager
@@ -100,10 +142,6 @@ class ValidatedConfigManager {
    * Create configuration object from validated environment
    */
   private createConfigObject(env: Environment): unknown {
-    const SCOPES = [
-      'https://www.googleapis.com/auth/calendar.events',
-    ];
-
     const authPort = parseInt(env.AUTH_PORT || '4153', 10);
     const authHost = env.AUTH_HOST || 'localhost';
 
@@ -136,10 +174,6 @@ class ValidatedConfigManager {
    * Create development fallback configuration
    */
   private createDevelopmentFallbackConfig(): Config {
-    const SCOPES = [
-      'https://www.googleapis.com/auth/calendar.events',
-    ];
-
     // Allow dummy values in test environment, require real values in production
     const isTestEnvironment = process.env.NODE_ENV === 'test';
     const clientId = process.env.GOOGLE_CLIENT_ID || (isTestEnvironment ? 'test-client-id' : undefined);
@@ -168,7 +202,7 @@ class ValidatedConfigManager {
       security: {
         enableDetailedErrors: false, // Always disabled for production safety
         sanitizeLogs: process.env.SANITIZE_LOGS !== 'false',
-        logLevel: (process.env.LOG_LEVEL as 'error' | 'warn' | 'info' | 'debug') || 'warn',
+        logLevel: toLogLevel(process.env.LOG_LEVEL, 'warn'),
         redactSensitiveData: process.env.REDACT_SENSITIVE_DATA !== 'false',
       },
     };

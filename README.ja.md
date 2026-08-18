@@ -3,10 +3,11 @@
 
 
 > **🔔 バージョン更新のお知らせ 🔔**  
-> バージョン1.0.5では、`createEvent`と`updateEvent`ツールの両方に`recurrence`パラメータを追加し、定期的なイベントのサポートを追加しました。これにより、作成後に手動で設定することなく、直接定期的なイベントを作成および変更できるようになりました。
+> バージョン2.0.0で MCP プロトコル `2026-07-28` に対応し、OAuth フローに PKCE を実装しました。
+> **Node.js 20 以上**が必要です。変更点の詳細は下部のバージョン履歴を参照してください。
 
 ![](https://badge.mcpx.dev?type=server 'MCP Server')
-![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 [![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
@@ -30,10 +31,10 @@ Google Calendar MCP Serverは、GoogleカレンダーとClaude Desktopの間の�
 このプロジェクトでは以下を使用しています：
 
 - **TypeScript**: 型安全なコード開発のため
-- **MCP SDK**: Claude Desktopとの統合のために`@modelcontextprotocol/sdk`を使用
+- **MCP SDK**: `@modelcontextprotocol/server` v2 を使用（プロトコル `2026-07-28`。旧クライアント向けに 2025 系も同時に提供）
 - **Google API**: Google Calendar APIアクセスのために`googleapis`を使用
 - **Hono**: 認証サーバー用の軽量で高速なWebフレームワーク
-- **OAuth2 Providers**: PKCE対応のOAuth2フローのために`@hono/oauth-providers`を使用
+- **google-auth-library**: PKCE (S256) 付きOAuth2認可コードフローの実行に使用
 - **Zod**: リクエスト/レスポンスデータのスキーマ検証を実装
 - **環境ベースの設定**: 設定管理にdotenvを使用
 - **AES-256-GCM**: Node.js cryptoモジュールを使用したトークン暗号化
@@ -121,10 +122,11 @@ Googleカレンダーに再認証します。これは、Claudeを再起動せ�
 ### コード構造
 
 - **src/**: ソースコードディレクトリ
-  - **auth/**: 認証処理
-  - **config/**: 設定
+  - **auth/**: 認証処理（PKCE付きOAuthフロー、トークン保管）
+  - **calendar/**: Google Calendar API 連携
+  - **config/**: 設定と検証
   - **mcp/**: MCPサーバー実装
-  - **tools/**: Googleカレンダーツール実装
+    - **tools/**: Googleカレンダーツールハンドラ
   - **utils/**: ユーティリティ関数とヘルパー
 
 ### ベストプラクティス
@@ -151,11 +153,12 @@ Googleカレンダーに再認証します。これは、Claudeを再起動せ�
 このパッケージはnpmで`@takumi0706/google-calendar-mcp`として公開されています：
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.7
+npx @takumi0706/google-calendar-mcp@2.0.0
 ```
 
 ### 前提条件
 
+0. **Node.js 20 以上**
 1. Google Cloudプロジェクトを作成し、Google Calendar APIを有効にする
 2. Google Cloud ConsoleでOAuth2認証情報を設定する
 3. 環境変数を設定する：
@@ -203,13 +206,17 @@ USE_MANUAL_AUTH=true
 
 ## セキュリティに関する考慮事項
 
-- **OAuthトークン**はメモリにのみ保存されます（ファイルベースのストレージには保存されません）
+- **OAuthトークン**はメモリにのみ保存されます（ファイルベースのストレージには保存されません）。
+  再起動で失われるため、都度再認証が必要です。
 - **機密認証情報**は環境変数として提供する必要があります
-- **トークン暗号化**：安全な保存のためにAES-256-GCMを使用
-- **PKCE実装**：明示的なcode_verifierとcode_challenge生成
-- **状態パラメータ検証**：CSRF保護のため
-- **レート制限**：APIエンドポイント保護のため
+- **トークン暗号化**：メモリ上のトークンをAES-256-GCMで暗号化します。ただし鍵と暗号文は
+  同一プロセス上に存在するため、プロセスメモリを読める攻撃者に対する防御にはなりません。
+- **PKCE (S256)**：認可リクエストごとにcode_verifierを生成し、認可エンドポイントには送信しません
+- **stateパラメータ検証**：CSRF対策として256ビットのCSPRNG値を使用し、定数時間比較・使い捨て・
+  10分で失効させます
+- **redirect_uriの固定**：リクエストのHostヘッダではなく設定値を使用します
 - **入力検証**：Zodスキーマを使用
+- **HTMLエスケープ**：OAuth結果ページに埋め込む全ての値をエスケープします
 
 詳細については、[SECURITY.md](SECURITY.md)を参照してください。
 
@@ -238,6 +245,31 @@ USE_MANUAL_AUTH=true
 - **MCPパラメータ検証エラー**：空文字列パラメータでエラー-32602が発生する場合は、空文字列、null、undefined値を適切に処理するバージョン1.0.7以降にアップデートしてください。
 
 ## バージョン履歴
+
+### バージョン2.0.0の変更点
+
+**セキュリティ**
+- OAuth 認可コードフローに PKCE (S256) を実装しました。従来のバージョンは PKCE を謳っていましたが `code_challenge` を一切送っていませんでした。
+- `state` を 256 ビットの CSPRNG 値に変更し、定数時間比較・使い捨て・10 分で失効するようにしました。従来は `Math.random()` 生成でした。
+- OAuth エラーページの反射型 XSS を修正しました。エラー詳細はページに出さずログに残し、埋め込む値は全てエスケープします。
+- `redirect_uri` をリクエストの `Host` ヘッダ由来ではなく設定値に固定しました。
+- ローカル認証サーバーは、ポートが既に使用中の場合に「他のインスタンスが動作中」とみなさず処理を中断するようになりました。
+- `TOKEN_ENCRYPTION_KEY` は 64 桁の16進数が必須になりました。不正な値や全ゼロの鍵は起動時に拒否されます。
+- 本番依存の既知の脆弱性を全て解消しました。
+
+**プロトコル**
+- `@modelcontextprotocol/server` v2 / プロトコル `2026-07-28` へ移行しました。2025 系も同時に提供するため既存クライアントはそのまま動作します。
+- `tools/list` が実際のスキーマを広告するようになり、`createEvent` の `event` のようなネストしたオブジェクトのプロパティが見えるようになりました。従来は不透明でした。
+- `prompts/get` を実装しました。従来は 10 個のプロンプトを広告しながら取得できませんでした。
+- `resources/read` が仕様どおりの形式を返すようになりました。
+- `initialize` の `capabilities` から Zod の内部構造が漏れないようになりました。
+
+**破壊的変更**
+- Node.js 20 以上が必要です。
+
+**その他**
+- ツールチェーンを pnpm へ移行し、`googleapis` / `hono` / `zod` を更新、`@hono/oauth-providers` を除去しました。
+- 出荷コードから `any` と型アサーションを排除し、lint で強制するようにしました。
 
 ### バージョン1.0.7の変更点
 - MCPツールのパラメータ検証を強化し、空文字列、null、undefined値を適切に処理

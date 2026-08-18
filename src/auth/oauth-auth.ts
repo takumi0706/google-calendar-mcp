@@ -47,7 +47,7 @@ class OAuthAuth {
     try {
       // Try to get or refresh existing token
       return await this.tokenProcessor.getOrRefreshToken(this.oauth2Client);
-    } catch (error) {
+    } catch {
       // If token operations fail, initiate new authentication
       logger.info('Token operations failed, initiating new authentication');
       return await this.authServer.initiateAuthentication(this.oauth2Client);

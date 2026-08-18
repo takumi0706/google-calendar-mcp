@@ -2,13 +2,17 @@ import { calendar_v3, google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import oauthAuth from '../auth/oauth-auth';
 import logger from '../utils/logger';
+import { describeError } from '../utils/format-error';
 import {
   CalendarApiResponse,
   CreateEventParams,
   DeleteEventParams,
+  EventsListResponse,
   GetEventsParams,
+  SingleEventResponse,
   UpdateEventParams,
   GetCalendarParams,
+  GoogleCalendarResponse,
 } from './types';
 
 /**
@@ -79,7 +83,7 @@ class GoogleCalendarApi {
       
       return client;
     } catch (error) {
-      logger.error(`Failed to initialize Calendar API client: ${error}`);
+      logger.error(`Failed to initialize Calendar API client: ${describeError(error)}`);
       throw error;
     } finally {
       this.authenticationInProgress = false;
@@ -136,9 +140,9 @@ class GoogleCalendarApi {
   /**
    * Get list of events with retry logic
    */
-  async getEvents(params: GetEventsParams): Promise<CalendarApiResponse> {
+  async getEvents(params: GetEventsParams): Promise<EventsListResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -174,17 +178,17 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error getting events after ${maxRetries + 1} attempts: ${lastError}`);
+    logger.error(`Error getting events after ${maxRetries + 1} attempts: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to retrieve events: ${lastError}`,
+      content: `Failed to retrieve events: ${describeError(lastError)}`,
     };
   }
 
   /**
    * Check if error is authentication related
    */
-  private isAuthenticationError(error: any): boolean {
+  private isAuthenticationError(error: unknown): boolean {
     const errorStr = String(error).toLowerCase();
     return errorStr.includes('auth') || 
            errorStr.includes('unauthorized') || 
@@ -195,9 +199,9 @@ class GoogleCalendarApi {
   /**
    * Get a single event by ID with retry logic
    */
-  async getEvent(calendarId: string = 'primary', eventId: string): Promise<CalendarApiResponse> {
+  async getEvent(calendarId: string = 'primary', eventId: string): Promise<SingleEventResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -226,19 +230,19 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error getting event: ${lastError}`);
+    logger.error(`Error getting event: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to retrieve event: ${lastError}`,
+      content: `Failed to retrieve event: ${describeError(lastError)}`,
     };
   }
 
   /**
    * Create a new event with retry logic
    */
-  async createEvent(params: CreateEventParams): Promise<CalendarApiResponse> {
+  async createEvent(params: CreateEventParams): Promise<SingleEventResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -247,7 +251,7 @@ class GoogleCalendarApi {
 
         const response = await calendar.events.insert({
           calendarId,
-          requestBody: params.event as any,
+          requestBody: params.event,
         });
 
         const createdEvent = response.data;
@@ -268,19 +272,19 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error creating event: ${lastError}`);
+    logger.error(`Error creating event: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to create event: ${lastError}`,
+      content: `Failed to create event: ${describeError(lastError)}`,
     };
   }
 
   /**
    * Update an existing event with retry logic
    */
-  async updateEvent(params: UpdateEventParams): Promise<CalendarApiResponse> {
+  async updateEvent(params: UpdateEventParams): Promise<SingleEventResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -290,7 +294,7 @@ class GoogleCalendarApi {
         const response = await calendar.events.update({
           calendarId,
           eventId: params.eventId,
-          requestBody: params.event as any,
+          requestBody: params.event,
         });
 
         const updatedEvent = response.data;
@@ -311,10 +315,10 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error updating event: ${lastError}`);
+    logger.error(`Error updating event: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to update event: ${lastError}`,
+      content: `Failed to update event: ${describeError(lastError)}`,
     };
   }
 
@@ -323,7 +327,7 @@ class GoogleCalendarApi {
    */
   async deleteEvent(params: DeleteEventParams): Promise<CalendarApiResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -351,19 +355,19 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error deleting event: ${lastError}`);
+    logger.error(`Error deleting event: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to delete event: ${lastError}`,
+      content: `Failed to delete event: ${describeError(lastError)}`,
     };
   }
 
   /**
    * Get calendar resource with retry logic
    */
-  async getCalendar(params: GetCalendarParams): Promise<CalendarApiResponse> {
+  async getCalendar(params: GetCalendarParams): Promise<GoogleCalendarResponse> {
     const maxRetries = 2;
-    let lastError: any;
+    let lastError: unknown;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -392,10 +396,10 @@ class GoogleCalendarApi {
       }
     }
     
-    logger.error(`Error getting calendar: ${lastError}`);
+    logger.error(`Error getting calendar: ${describeError(lastError)}`);
     return {
       success: false,
-      content: `Failed to retrieve calendar: ${lastError}`,
+      content: `Failed to retrieve calendar: ${describeError(lastError)}`,
     };
   }
   /**

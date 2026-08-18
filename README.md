@@ -3,10 +3,11 @@
 
 
 > **🔔 VERSION UPDATE NOTICE 🔔**  
-> Version 1.0.5 adds support for recurring events through the `recurrence` parameter in both `createEvent` and `updateEvent` tools. This allows you to create and modify recurring events directly without having to set them up manually after creation.
+> Version 2.0.0 moves to MCP protocol revision `2026-07-28` and implements PKCE on the OAuth flow.
+> It requires **Node.js 20 or newer**. See the version history below for the full list of changes.
 
 ![](https://badge.mcpx.dev?type=server 'MCP Server')
-![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 [![日本語](https://img.shields.io/badge/日本語-クリック-青)](README.ja.md)
@@ -31,10 +32,10 @@ Google Calendar MCP Server is an MCP (Model Context Protocol) server implementat
 This project uses:
 
 - **TypeScript**: For type-safe code development
-- **MCP SDK**: Uses `@modelcontextprotocol/sdk` for integration with Claude Desktop
+- **MCP SDK**: Uses `@modelcontextprotocol/server` v2 (protocol revision `2026-07-28`, with the 2025 revisions still served for older clients)
 - **Google API**: Uses `googleapis` for Google Calendar API access
 - **Hono**: Lightweight and fast web framework for the authentication server
-- **OAuth2 Providers**: Uses `@hono/oauth-providers` for PKCE-enabled OAuth2 flow
+- **google-auth-library**: Drives the OAuth2 authorization code flow with PKCE (S256)
 - **Zod**: Implements schema validation for request/response data
 - **Environment-based configuration**: Uses dotenv for configuration management
 - **AES-256-GCM**: For token encryption using Node.js crypto module
@@ -122,10 +123,11 @@ The version script will automatically run `npm install` when the version is upda
 ### Code Structure
 
 - **src/**: Source code directory
-  - **auth/**: Authentication handling
-  - **config/**: Configuration settings
+  - **auth/**: Authentication handling (OAuth flow with PKCE, token storage)
+  - **calendar/**: Google Calendar API integration
+  - **config/**: Configuration settings and validation
   - **mcp/**: MCP server implementation
-  - **tools/**: Google Calendar tool implementations
+    - **tools/**: Google Calendar tool handlers
   - **utils/**: Utility functions and helpers
 
 ### Best Practices
@@ -152,11 +154,12 @@ The version script will automatically run `npm install` when the version is upda
 This package is published on npm as `@takumi0706/google-calendar-mcp`:
 
 ```bash
-npx @takumi0706/google-calendar-mcp@1.0.7
+npx @takumi0706/google-calendar-mcp@2.0.0
 ```
 
 ### Prerequisites
 
+0. **Node.js 20 or newer**
 1. Create a Google Cloud Project and enable the Google Calendar API
 2. Configure OAuth2 credentials in the Google Cloud Console
 3. Set up environment variables:
@@ -203,13 +206,19 @@ Add the server to your `claude_desktop_config.json`. If you're running in an env
 
 ## Security Considerations
 
-- **OAuth tokens** are stored in memory only (not stored in a file-based storage)
+- **OAuth tokens** are stored in memory only (not stored in a file-based storage). They are
+  lost on restart, which means re-authentication is required after every restart.
 - **Sensitive credentials** must be provided as environment variables
-- **Token encryption** using AES-256-GCM for secure storage
-- **PKCE implementation** with explicit code_verifier and code_challenge generation
-- **State parameter validation** for CSRF protection
-- **Rate limiting** for API endpoint protection
+- **Token encryption** using AES-256-GCM while tokens sit in memory. Note that the key lives
+  in the same process as the ciphertext, so this protects against casual inspection of process
+  memory, not against an attacker who can already read this process's memory.
+- **PKCE (S256)** on the authorization code flow, with a `code_verifier` generated per request
+  and never sent to the authorization endpoint
+- **State parameter validation** for CSRF protection: 256-bit CSPRNG state, compared in constant
+  time, single-use, and expiring after 10 minutes
+- **Fixed redirect URI** taken from configuration rather than from the request's `Host` header
 - **Input validation** with Zod schema
+- **HTML escaping** on every value interpolated into the OAuth result pages
 
 For more details, see [SECURITY.md](SECURITY.md).
 
@@ -237,6 +246,31 @@ If you encounter any issues:
 - **MCP Parameter Validation Errors**: If you see error -32602 with empty string parameters, update to version 1.0.7 or later which handles empty strings, null, and undefined values properly.
 
 ## Version History
+
+### Version 2.0.0 Changes
+
+**Security**
+- Implemented PKCE (S256) on the OAuth authorization code flow. Earlier versions documented PKCE but never sent a `code_challenge`.
+- The `state` parameter is now a 256-bit CSPRNG value, compared in constant time, single-use, and expiring after 10 minutes. It was previously generated with `Math.random()`.
+- Fixed a reflected XSS in the OAuth error page: error details are now logged instead of being interpolated into HTML, and every interpolated value is escaped.
+- `redirect_uri` is pinned to the configured value instead of being derived from the request's `Host` header.
+- The local authorization server now aborts when its port is already taken, instead of assuming another instance is serving the flow.
+- `TOKEN_ENCRYPTION_KEY` must now be exactly 64 hexadecimal characters; invalid and all-zero keys are rejected at startup.
+- Resolved all known vulnerabilities in production dependencies.
+
+**Protocol**
+- Migrated to `@modelcontextprotocol/server` v2 and protocol revision `2026-07-28`. The 2025 revisions are still served, so existing clients keep working.
+- `tools/list` now advertises the real schema, so nested objects such as `createEvent`'s `event` argument expose their properties. They were previously opaque.
+- `prompts/get` is now implemented. The server advertised ten prompts that could not be fetched.
+- `resources/read` now returns the shape the specification requires.
+- `initialize` no longer leaks Zod internals through `capabilities`.
+
+**Breaking**
+- Requires Node.js 20 or newer.
+
+**Other**
+- Migrated the toolchain to pnpm, upgraded `googleapis`, `hono` and `zod`, and removed `@hono/oauth-providers`.
+- Removed `any` and type assertions from the shipped code, enforced by lint.
 
 ### Version 1.0.7 Changes
 - Enhanced parameter validation for MCP tools to properly handle empty strings, null, and undefined values

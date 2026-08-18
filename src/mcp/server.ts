@@ -1,212 +1,152 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { McpServer } from '@modelcontextprotocol/server';
+import { serveStdio, type StdioServerHandle } from '@modelcontextprotocol/server/stdio';
 import logger from '../utils/logger';
-import {
-  JSONRPCMessage,
-  ListResourcesRequestSchema,
-  ListPromptsRequestSchema,
-  ListToolsRequestSchema
-} from '@modelcontextprotocol/sdk/types.js';
-import { readResourceRequestSchema } from './schemas';
 import toolsManager from './tools';
 import { version } from '../../package.json';
-import { MessageProcessor } from './message-processor';
 import { ResourceProvider } from './resource-provider';
 import { PromptProvider } from './prompt-provider';
-import { ToolSchemaRegistry } from './tool-schema-registry';
 import calendarApi from '../calendar/calendar-api';
 import { tokenManager } from '../auth/token-manager';
+import { describeError } from '../utils/format-error';
+
+/**
+ * Build a fully configured MCP server instance.
+ *
+ * serveStdio は接続ごとにこのファクトリを呼ぶ。プロトコルのどの世代で
+ * 応答するかは開始時のやり取りで決まり、その接続の間は1つのインスタンスが
+ * 固定される。したがってサーバーはモジュール読み込み時ではなく、
+ * ここで組み立てる必要がある。
+ */
+export function buildServer(): McpServer {
+  const server = new McpServer({
+    name: 'google-calendar-mcp',
+    version,
+  });
+
+  // capabilities は registerTool / registerPrompt / registerResource の
+  // 呼び出しから SDK が導出する。以前は registerCapabilities に Zod の生
+  // インスタンスを渡しており、initialize レスポンスに Zod の内部構造が
+  // そのまま載っていた（仕様上 capabilities.tools は listChanged のみ）。
+  toolsManager.registerTools(server);
+  registerPrompts(server);
+  registerResources(server);
+
+  return server;
+}
+
+/**
+ * プロンプトを登録する
+ *
+ * 以前は prompts/list だけを setRequestHandler で実装しており、
+ * prompts/get のハンドラが無かったため、広告した10個のプロンプトはどれも
+ * 取得できず Method not found になっていた。registerPrompt を使えば
+ * list と get の両方が SDK 側で用意される。
+ */
+function registerPrompts(server: McpServer): void {
+  const promptProvider = new PromptProvider();
+
+  for (const prompt of promptProvider.getPromptList().prompts) {
+    server.registerPrompt(
+      prompt.name,
+      { description: prompt.description },
+      () => ({
+        messages: [
+          {
+            role: 'user',
+            content: { type: 'text', text: prompt.text },
+          },
+        ],
+      })
+    );
+  }
+
+  logger.debug(`Registered ${promptProvider.getPromptList().prompts.length} prompts`);
+}
+
+/**
+ * リソースを登録する
+ */
+function registerResources(server: McpServer): void {
+  const resourceProvider = new ResourceProvider();
+
+  for (const resource of resourceProvider.getResourceList().resources) {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      { description: resource.description, mimeType: 'application/json' },
+      async () => {
+        logger.debug(`Handling resources/read request with URI: ${resource.uri}`);
+        const result = await resourceProvider.readResource(resource.uri);
+
+        // ResourceProvider は { resource: { uri, data, contents } } を返すが、
+        // MCP の ReadResourceResult は { contents: [{ uri, mimeType, text }] }。
+        // 従来はそのまま返しており、しかも contents は常に空だった。
+        return {
+          contents: [
+            {
+              uri: result.resource.uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(result.resource.data, null, 2),
+            },
+          ],
+        };
+      }
+    );
+  }
+
+  logger.debug(`Registered ${resourceProvider.getResourceList().resources.length} resources`);
+}
 
 class GoogleCalendarMcpServer {
-  private server: McpServer;
-  private stdioTransport: StdioServerTransport;
-  private isRunning = false;
-  private messageProcessor: MessageProcessor;
-  private resourceProvider: ResourceProvider;
-  private promptProvider: PromptProvider;
-  private toolSchemaRegistry: ToolSchemaRegistry;
+  private handle: StdioServerHandle | null = null;
 
-  constructor() {
-    // MCP server configuration
-    this.server = new McpServer({ 
-      name: 'google-calendar-mcp',
-      version: version,
-    });
-
-    // Stdio transport configuration
-    this.stdioTransport = new StdioServerTransport();
-
-    // Initialize provider instances
-    this.messageProcessor = new MessageProcessor(this.stdioTransport);
-    this.resourceProvider = new ResourceProvider();
-    this.promptProvider = new PromptProvider();
-    this.toolSchemaRegistry = new ToolSchemaRegistry();
-
-    // Original message processing will be overridden by MessageProcessor
-    this.stdioTransport.onmessage = async (_message: JSONRPCMessage): Promise<void> => {};
-
-    // Set up message processing using MessageProcessor
-    this.messageProcessor.setupMessageProcessing();
-
-    // Register tools (execute first to set the tools property)
-    this.registerTools();
-
-    // Implement resources and prompts list functionality (execute after tool registration)
-    this.implementResourcesAndPrompts();
-    
-    // Setup cleanup handlers for graceful shutdown
-    this.setupCleanupHandlers();
-  }
-
-
-  // Implement resources and prompts methods
-  private implementResourcesAndPrompts() {
-    // Register capabilities (including tools)
-    this.server.server.registerCapabilities({
-      resources: {},
-      prompts: {},
-      tools: toolsManager.tools // Explicitly include tools
-    });
-
-    // Implement resources/list method using ResourceProvider
-    this.server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      logger.debug('Handling resources/list request');
-      return this.resourceProvider.getResourceList();
-    });
-
-    // Implement prompts/list method using PromptProvider
-    this.server.server.setRequestHandler(ListPromptsRequestSchema, async () => {
-      logger.debug('Handling prompts/list request');
-      return this.promptProvider.getPromptList();
-    });
-
-    // Implement resources/read method using ResourceProvider
-    this.server.server.setRequestHandler(readResourceRequestSchema, async (params) => {
-      logger.debug(`Handling resources/read request with URI: ${params.params.uri}`);
-      
-      try {
-        return await this.resourceProvider.readResource(params.params.uri);
-      } catch (error) {
-        logger.error(`Error handling resources/read request: ${error}`);
-        throw error;
-      }
-    });
-
-    // Implement tools/list method using ToolSchemaRegistry
-    this.server.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      logger.debug('Handling tools/list request');
-      return this.toolSchemaRegistry.getToolSchemas();
-    });
-  }
-
-  private registerTools() {
-    // Register tools using ToolsManager
-    toolsManager.registerTools(this.server);
-  }
-
-  public async start(): Promise<void> {
-    if (this.isRunning) {
+  public start(): void {
+    if (this.handle) {
       return;
     }
 
-    try {
-      logger.debug('Initializing server...');
+    logger.debug('Initializing server...');
 
-      // Connect server to STDIO transport
-      await this.server.connect(this.stdioTransport);
-      logger.debug('STDIO transport connected');
+    this.handle = serveStdio(() => buildServer(), {
+      onerror: (error) => {
+        logger.error(`STDIO transport error: ${error.message}`, { context: 'stdio-transport' });
+      },
+    });
 
-      // Setup error handling for STDIO transport
-      this.stdioTransport.onerror = (error: Error): void => {
-        logger.error(`STDIO transport error: ${error}`, { context: 'stdio-transport' });
-      };
-
-      this.stdioTransport.onclose = (): void => {
-        logger.debug('STDIO transport closed');
-        this.isRunning = false;
-        this.cleanup(); // Clean up resources when transport closes
-      };
-
-      logger.debug(`Server started and connected successfully with STDIO transport`);
-      this.isRunning = true;
-    } catch (error) {
-      logger.error(`Failed to start server: ${error}`);
-      throw error;
-    }
+    logger.debug('Server started and connected successfully with STDIO transport');
   }
 
   /**
    * Clean up resources to prevent memory leaks
    */
-  private cleanup(): void {
+  public cleanup(): void {
     try {
-      // Clean up message processor
-      if ('destroy' in this.messageProcessor && typeof (this.messageProcessor as any).destroy === 'function') {
-        (this.messageProcessor as any).destroy();
-      }
-      
-      // Clean up calendar API client cache
-      if ('destroy' in calendarApi && typeof (calendarApi as any).destroy === 'function') {
-        (calendarApi as any).destroy();
-      }
-      
-      // Stop token manager cleanup timer
+      calendarApi.destroy();
       tokenManager.stopCleanupTimer();
-      
       logger.debug('Resources cleaned up successfully');
     } catch (error) {
-      logger.error(`Error during cleanup: ${error}`);
+      logger.error(`Error during cleanup: ${describeError(error)}`);
     }
   }
 
-  /**
-   * Setup process cleanup handlers
-   */
-  private setupCleanupHandlers(): void {
-    const cleanup = () => {
-      logger.debug('Process cleanup initiated');
-      this.cleanup();
-    };
-
-    // Handle various termination signals
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
-    process.on('exit', cleanup);
-    
-    // Handle uncaught exceptions
-    process.on('uncaughtException', (error) => {
-      logger.error(`Uncaught exception: ${error}`);
-      cleanup();
-      process.exit(1);
-    });
-    
-    process.on('unhandledRejection', (reason) => {
-      logger.error(`Unhandled rejection: ${reason}`);
-      cleanup();
-      process.exit(1);
-    });
-  }
-
   public async stop(): Promise<void> {
-    if (!this.isRunning) {
+    if (!this.handle) {
       return;
     }
 
     try {
-      // Clean up resources before stopping
       this.cleanup();
-      
-      // Close STDIO transport via server
-      await this.server.close();
-      logger.debug('STDIO transport stopped');
-
-      this.isRunning = false;
+      await this.handle.close();
+      this.handle = null;
       logger.debug('MCP Server stopped');
     } catch (error) {
-      logger.error(`Error stopping server: ${error}`);
+      logger.error(`Error stopping server: ${describeError(error)}`);
       throw error;
     }
   }
 }
 
+// プロセスシグナルの購読は index.ts が一元的に行う。以前はここでも
+// SIGINT/SIGTERM/uncaughtException を登録しており、index.ts 側の
+// 「ログを流し切ってから終了する」処理を必ず追い越して落ちていた。
 export default new GoogleCalendarMcpServer();

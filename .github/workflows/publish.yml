@@ -5,42 +5,51 @@ on:
     types: [created]
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Required for npm provenance attestation
+      id-token: write
+
+    env:
+      NODE_ENV: test
+      GOOGLE_CLIENT_ID: test-client-id-for-publish
+      GOOGLE_CLIENT_SECRET: test-client-secret-for-publish
+      GOOGLE_REDIRECT_URI: http://localhost:4153/oauth2callback
+
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
-          node-version: '18.x'
+          node-version: 22.x
           registry-url: 'https://registry.npmjs.org/'
-      
+          cache: 'pnpm'
+
+      # --frozen-lockfile fails the build if pnpm-lock.yaml is out of sync with
+      # package.json. Never fall back to a non-locked install here.
       - name: Install dependencies
-        run: npm ci || npm install
-      
-      - name: Create test environment file  
-        run: |
-          echo "GOOGLE_CLIENT_ID=test-client-id-for-publish" > .env
-          echo "GOOGLE_CLIENT_SECRET=test-client-secret-for-publish" >> .env
-          echo "GOOGLE_REDIRECT_URI=http://localhost:4153/oauth2callback" >> .env
-          echo "NODE_ENV=test" >> .env
-      
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate
+        run: pnpm run validate
+
       - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: test
-          GOOGLE_CLIENT_ID: test-client-id-for-publish
-          GOOGLE_CLIENT_SECRET: test-client-secret-for-publish
-      
-      - name: Test
-        run: npm test
-        env:
-          NODE_ENV: test
-          GOOGLE_CLIENT_ID: test-client-id-for-publish
-          GOOGLE_CLIENT_SECRET: test-client-secret-for-publish
-      
+        run: pnpm run build
+
+      - name: Verify stdout stays clean at startup
+        run: pnpm run check-stdio
+
+      # Published with the npm CLI rather than `pnpm publish` because only the
+      # npm CLI supports --provenance. Lifecycle scripts are skipped since
+      # validate and build already ran above.
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --provenance --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

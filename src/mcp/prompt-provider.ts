@@ -165,10 +165,10 @@ export class PromptProvider {
     const allWords = this.prompts.flatMap(p => 
       (p.description + ' ' + p.text).toLowerCase().split(/\s+/)
     );
-    const wordCount = allWords.reduce((acc, word) => {
+    const wordCount = allWords.reduce<Record<string, number>>((acc, word) => {
       acc[word] = (acc[word] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
+    }, {});
     
     const mostCommonWords = Object.entries(wordCount)
       .sort(([,a], [,b]) => b - a)

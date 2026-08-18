@@ -46,7 +46,7 @@ describe('Security Sanitizer', () => {
         }
       ];
 
-      testCases.forEach(({ input, description }) => {
+      testCases.forEach(({ input }) => {
         const result = sanitizeText(input);
         expect(result).toContain('[REDACTED]');
         expect(result).not.toBe(input); // Should be different from original

@@ -20,7 +20,10 @@ yarn-error.log*
 .idea/
 .junie/
 .vscode/
-.claude/
+# .claude/ 配下はマシン固有の設定を含むため既定で除外するが、
+# cc-sdd が生成する Skills はチームで共有する開発ハーネスなので追跡する。
+.claude/*
+!.claude/skills/
 *.swp
 *.swo
 CLAUDE.local.md

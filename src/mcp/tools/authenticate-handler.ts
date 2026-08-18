@@ -7,24 +7,40 @@ import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
+ * authenticate ツールの実行結果
+ */
+interface AuthenticateResult {
+  alreadyAuthenticated?: boolean;
+  authenticationCompleted?: boolean;
+  authenticated?: boolean;
+}
+
+/**
  * Handler for the authenticate tool
  */
-export class AuthenticateHandler extends BaseNoAuthToolHandler {
+export class AuthenticateHandler extends BaseNoAuthToolHandler<
+  typeof authenticateParamsSchema,
+  AuthenticateResult
+> {
   constructor() {
     super('authenticate');
+  }
+
+  getDescription(): string {
+    return 'Start the Google Calendar OAuth flow. Opens a browser window for consent and stores the resulting tokens in memory.';
   }
 
   /**
    * Define Zod schema
    */
-  getSchema(): z.ZodRawShape {
-    return {};
+  getSchema(): typeof authenticateParamsSchema {
+    return authenticateParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: any, _context: ToolExecutionContext): Promise<any> {
+  async execute(_params: z.infer<typeof authenticateParamsSchema>, _context: ToolExecutionContext): Promise<AuthenticateResult> {
     this.logDebug('Executing authenticate');
 
     // Check if already authenticated
@@ -33,9 +49,6 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
       return { alreadyAuthenticated: true };
     }
 
-    // Validate parameters (empty object)
-    authenticateParamsSchema.parse(validatedArgs);
-    
     this.logInfo('Starting authentication flow...');
     
     try {
@@ -45,7 +58,7 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
       this.logInfo('Authentication completed successfully');
       return { authenticationCompleted: true, authenticated: true };
     } catch (error) {
-      this.logError('Authentication failed:', { error } as any);
+      this.logError('Authentication failed:', { error });
       throw error;
     }
   }
@@ -53,7 +66,7 @@ export class AuthenticateHandler extends BaseNoAuthToolHandler {
   /**
    * Customize success response
    */
-  protected createSuccessResponse(result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(result: AuthenticateResult, _context: ToolExecutionContext): McpToolResponse {
     if (result.alreadyAuthenticated) {
       return responseBuilder.alreadyAuthenticated();
     }

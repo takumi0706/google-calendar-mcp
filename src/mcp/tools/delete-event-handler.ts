@@ -3,35 +3,35 @@ import { BaseCalendarToolHandler } from '../base-tool-handler';
 import { ToolExecutionContext } from '../base-tool-handler';
 import { deleteEventParamsSchema } from '../schemas';
 import calendarApi from '../../calendar/calendar-api';
+import type { CalendarApiResponse } from '../../calendar/types';
 import responseBuilder from '../../utils/response-builder';
 import { McpToolResponse } from '../../utils/error-handler';
 
 /**
  * Handler for the deleteEvent tool
  */
-export class DeleteEventHandler extends BaseCalendarToolHandler {
+export class DeleteEventHandler extends BaseCalendarToolHandler<typeof deleteEventParamsSchema, CalendarApiResponse> {
   constructor() {
     super('deleteEvent');
+  }
+
+  getDescription(): string {
+    return 'Delete an event from a Google Calendar by its event ID.';
   }
 
   /**
    * Define Zod schema
    */
-  getSchema(): z.ZodRawShape {
-    return {
-      calendarId: z.string().optional().describe('Calendar ID (uses primary calendar if omitted)'),
-      eventId: z.string().min(1).describe('ID of the event to delete (required)'),
-    };
+  getSchema(): typeof deleteEventParamsSchema {
+    return deleteEventParamsSchema;
   }
 
   /**
    * Execute the actual processing
    */
-  async execute(validatedArgs: any, _context: ToolExecutionContext): Promise<any> {
-    this.logDebug('Executing deleteEvent', validatedArgs);
+  async execute(params: z.infer<typeof deleteEventParamsSchema>, _context: ToolExecutionContext): Promise<CalendarApiResponse> {
+    this.logDebug('Executing deleteEvent', params);
 
-    // Re-validate parameters (for safety)
-    const params = deleteEventParamsSchema.parse(validatedArgs);
     
     // Call Calendar API
     const result = await calendarApi.deleteEvent(params);
@@ -46,7 +46,7 @@ export class DeleteEventHandler extends BaseCalendarToolHandler {
   /**
    * Customize success response
    */
-  protected createSuccessResponse(_result: any, _context: ToolExecutionContext): McpToolResponse {
+  protected createSuccessResponse(_result: CalendarApiResponse, _context: ToolExecutionContext): McpToolResponse {
     return responseBuilder.deleteSuccess('Event');
   }
 }
